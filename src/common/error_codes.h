@@ -14,7 +14,8 @@ ENUM_DEFINE(ErrorCode)
     ErrorDatabase,
     ErrorSql,
     ErrorSyncPrimitive,
-    ErrorShareMemInit
+    ErrorShareMemInit,
+    ErrorConsole
 };
 
 #endif//_EQP_ERROR_CODES_H_

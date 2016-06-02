@@ -22,6 +22,11 @@ STRUCT_DEFINE(Master)
     // Core MUST be the first member of this struct
     Core core;
     
+    // Master IPC
+    IpcBuffer*      ipcMaster;
+    ShmViewer       shmViewerMaster;
+    ShmCreator      shmCreatorMaster;
+    
     // Child processes and associated shared memory
     ChildProcess    procCharSelect;
     ChildProcess    procLogWriter;

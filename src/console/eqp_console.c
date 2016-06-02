@@ -1,0 +1,298 @@
+
+#include "eqp_console.h"
+
+STRUCT_DEFINE(ConsoleCommand)
+{
+    uint32_t    argCount;
+    uint32_t    optionCount;
+    byte        data[0];
+};
+
+void console_init(R(Console*) console)
+{
+    basic_init(B(console), EQP_SOURCE_ID_CONSOLE, NULL);
+    
+    console->ipcSend = NULL;
+    shm_viewer_init(&console->shmViewerMaster);
+    
+    ipc_buffer_shm_create_init(B(console), &console->ipcRecv, &console->shmCreatorConsole, &console->shmViewerConsole, EQP_CONSOLE_SHM_PATH);
+}
+
+void console_deinit(R(Console*) console)
+{
+    basic_deinit(B(console));
+    
+    share_mem_destroy(&console->shmCreatorConsole, &console->shmViewerConsole);
+}
+
+static int console_command_is_start(int argc, R(const char**) argv)
+{
+    int i;
+    
+    for (i = 1; i < argc; i++)
+    {
+        R(const char*) arg = argv[i];
+        
+        if (*arg == '-')
+            continue;
+        
+        return (strcmp(arg, "start") == 0);
+    }
+    
+    return false;
+}
+
+static int console_command_has_force_option(int argc, R(const char**) argv)
+{
+    int i;
+    
+    for (i = 1; i < argc; i++)
+    {
+        R(const char*) arg = argv[i];
+        
+        if (*arg != '-')
+            continue;
+        
+        while (*arg == '-') arg++;
+        
+        if (strcmp(arg, "f") == 0 || strcmp(arg, "force") == 0)
+            return true;
+    }
+    
+    return false;
+}
+
+#define CONSOLE_ERR_BADDIR          "Directory 'shm' does not exist!"
+#define CONSOLE_ERR_NO_MASTER       "eqp-master process is not running. It must be running to accept commands.\nUse 'eqp start' to start the eqp-master process."
+#define CONSOLE_ERR_MASTER_LAUNCH   "failed to launch eqp-master process"
+#define CONSOLE_ERR_TIMEOUT         "timed out waiting for a response."
+#define CONSOLE_ERR_ARG_LENGTH      "too many arguments provided."
+#define CONSOLE_ERR_MASTER_ALREADY  "eqp-master process already appears to be running.\nIf it previously crashed, this may be a false positive.\nUse the -f or -force option if you believe this is the case."
+#define CONSOLE_MASTER_SHM          "eqp-master-"
+
+static void console_launch_master_process(R(Basic*) basic)
+{
+    pid_t pid = fork();
+    
+    if (pid == 0)
+    {
+        const char* argv[] = {"./eqp-master", NULL};
+        
+        if (execv("./eqp-master", (char**)argv))
+        {
+            // This will be called in the context of the the forked Master process.. yeah
+            printf(TERM_RED "[console_launch_master_process] child process execv() failed attempting to execute './eqp-master', aborting\n" TERM_DEFAULT);
+            abort();
+        }
+    }
+    else if (pid < 0)
+    {
+        // Fork failed
+        exception_throw_message(basic, ErrorConsole, CONSOLE_ERR_MASTER_LAUNCH, sizeof(CONSOLE_ERR_MASTER_LAUNCH) - 1);
+    }
+}
+
+static void console_master_ipc_open(R(Console*) console, R(const char*) name)
+{
+    char path[512];
+    snprintf(path, sizeof(path), "shm/%s", name);
+    
+    shm_viewer_open(B(console), &console->shmViewerMaster, path, sizeof(IpcBuffer));
+    console->ipcSend = shm_viewer_memory_type(&console->shmViewerMaster, IpcBuffer);
+}
+
+static int console_find_master_ipc(R(Console*) console)
+{
+#ifdef EQP_WINDOWS
+    
+#else
+    DIR* shmDir = opendir("shm");
+    int ret     = false;
+    struct dirent entry;
+    struct dirent* result;
+    
+    if (!shmDir)
+        exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_BADDIR, sizeof(CONSOLE_ERR_BADDIR) - 1);
+    
+    while (!readdir_r(shmDir, &entry, &result))
+    {
+        if (result == NULL)
+            break;
+        
+        if (strncmp(entry.d_name, CONSOLE_MASTER_SHM, sizeof(CONSOLE_MASTER_SHM) - 1) == 0)
+        {
+            console_master_ipc_open(console, entry.d_name);
+            ret = true;
+            break;
+        }
+    }
+
+    closedir(shmDir);
+    return ret;
+#endif
+}
+
+static void console_force_start_master(R(Console*) console)
+{
+#ifdef EQP_WINDOWS
+    
+#else
+    DIR* shmDir = opendir("shm");
+    struct dirent entry;
+    struct dirent* result;
+    
+    if (!shmDir)
+        exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_BADDIR, sizeof(CONSOLE_ERR_BADDIR) - 1);
+    
+    while (!readdir_r(shmDir, &entry, &result))
+    {
+        if (result == NULL)
+            break;
+        
+        if (strncmp(entry.d_name, CONSOLE_MASTER_SHM, sizeof(CONSOLE_MASTER_SHM) - 1) == 0)
+        {
+            char path[512];
+            snprintf(path, sizeof(path), "shm/%s", entry.d_name);
+            remove(path);
+        }
+    }
+
+    closedir(shmDir);
+#endif
+    
+    console_launch_master_process(B(console));
+}
+
+static void console_add_arg(R(Console*) console, R(byte*) data, R(const char*) arg, uint32_t* length)
+{
+    uint32_t len = strlen(arg);
+    uint32_t pos = *length;
+    
+    *length += sizeof(uint32_t) + len + 1;
+    
+    if (*length > EQP_IPC_PACKET_MAX_SIZE)
+        exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_ARG_LENGTH, sizeof(CONSOLE_ERR_ARG_LENGTH) - 1);
+    
+    memcpy(data + pos, &len, sizeof(uint32_t));
+    len++; // Include null terminator
+    memcpy(data + pos + sizeof(uint32_t), arg, len);
+}
+
+static void console_do_send(R(Console*) console, int argc, R(const char**) argv)
+{
+    byte data[EQP_IPC_PACKET_MAX_SIZE];
+    uint32_t length     = sizeof(ConsoleCommand);
+    ConsoleCommand* cmd = (ConsoleCommand*)data;
+    int i;
+    
+    memset(data, 0, EQP_IPC_PACKET_MAX_SIZE);
+        
+    // Arguments
+    for (i = 1; i < argc; i++)
+    {
+        R(const char*) arg = argv[i];
+        
+        if (*arg == '-')
+            continue;
+        
+        console_add_arg(console, data, arg, &length);
+        cmd->argCount++;
+    }
+    
+    // Options
+    for (i = 1; i < argc; i++)
+    {
+        R(const char*) opt = argv[i];
+        
+        if (*opt != '-')
+            continue;
+        
+        while (*opt == '-') opt++;
+        
+        console_add_arg(console, data, opt, &length);
+        cmd->optionCount++;
+    }
+    
+    ipc_buffer_write(B(console), console->ipcSend, ServerOpConsoleCommand, EQP_SOURCE_ID_CONSOLE, length, data);
+}
+
+int console_send(R(Console*) console, int argc, R(const char**) argv)
+{
+    int isStart = console_command_is_start(argc, argv);
+    
+    if (!console_find_master_ipc(console))
+    {
+        if (!isStart)
+            exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_NO_MASTER, sizeof(CONSOLE_ERR_NO_MASTER) - 1);
+        
+        printf("Attempting to start eqp-master...\n");
+        console_launch_master_process(B(console));
+        return false;
+    }
+    else if (isStart)
+    {
+        if (console_command_has_force_option(argc, argv))
+        {
+            console_force_start_master(console);
+            return false;
+        }
+        
+        exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_MASTER_ALREADY, sizeof(CONSOLE_ERR_MASTER_ALREADY) - 1);
+    }
+    
+    console_do_send(console, argc, argv);
+    return true;
+}
+
+static void console_write_packet(R(IpcPacket*) packet)
+{
+    uint32_t i;
+    uint32_t n = ipc_packet_length(packet);
+    char* data = (char*)ipc_packet_data(packet);
+    
+    for (i = 0; i < n; i++)
+    {
+        char c = data[i];
+        
+        if (c)
+            fputc(c, stdout);
+    }
+}
+
+void console_recv(R(Console*) console)
+{
+    uint32_t time   = clock_milliseconds();
+    int run         = true;
+    
+    while (run)
+    {
+        IpcPacket packet;
+        
+        if ((clock_milliseconds() - time) >= EQP_CONSOLE_TIMEOUT_MILLISECONDS)
+            exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_TIMEOUT, sizeof(CONSOLE_ERR_TIMEOUT) - 1);
+        
+        if (ipc_buffer_read(B(console), console->ipcRecv, &packet))
+        {
+            switch (ipc_packet_opcode(&packet))
+            {
+            case ServerOpConsoleMessage:
+                console_write_packet(&packet);
+                time = clock_milliseconds();
+                break;
+            
+            case ServerOpConsoleClose:
+                run = false;
+                break;
+                
+            default:
+                break;
+            }
+            
+            ipc_packet_deinit(&packet);
+        }
+        else
+        {
+            clock_sleep_milliseconds(10);
+        }
+    }
+}

@@ -15,9 +15,7 @@ void master_init(R(Master*) M)
     child_proc_init(&M->procLogin);
     
     // Create the IPC shared memory buffer for the log writer process early
-    share_mem_create(B(M), &M->procLogWriter.shmCreator, &M->procLogWriter.shmViewer, EQP_LOG_SHM_PATH, sizeof(IpcBuffer));
-    M->procLogWriter.ipc = shm_viewer_memory_type(&M->procLogWriter.shmViewer, IpcBuffer);
-    ipc_buffer_init(B(M), M->procLogWriter.ipc);
+    ipc_buffer_shm_create_init(B(M), &M->procLogWriter.ipc, &M->procLogWriter.shmCreator, &M->procLogWriter.shmViewer, EQP_LOG_SHM_PATH);
     
     core_init(C(M), EQP_SOURCE_ID_MASTER, M->procLogWriter.ipc);
 }
@@ -60,7 +58,7 @@ static pid_t master_spawn_process(R(Master*) M, R(const char*) path, R(const cha
         if (execv(path, (char**)argv))
         {
             // This will be called in the context of the the forked Master child process.. yeah
-            printf("[master_spawn_process] child process execv() failed attempting to execute '%s', aborting", path);
+            printf(TERM_RED "[master_spawn_process] child process execv() failed attempting to execute '%s', aborting\n" TERM_DEFAULT, path);
             abort();
         }
     }

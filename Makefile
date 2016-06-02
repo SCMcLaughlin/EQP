@@ -144,6 +144,26 @@ INCLUDELOGWRITER= -I$(DIRLOGWRITER)
 BINLOGWRITER= $(DIRBIN)eqp-log-writer
 
 ##############################################################################
+# Console
+##############################################################################
+DIRCONSOLE= src/console/
+BCONSOLE= build/$(BUILDTYPE)/console/
+_OCONSOLE= console_main.o \
+ eqp_console.o
+_HCONSOLE= \
+ eqp_console.h
+OCONSOLE= $(patsubst %,$(BCONSOLE)%,$(_OCONSOLE))
+HCONSOLE= $(patsubst %,$(DIRCONSOLE)%,$(_HCONSOLE))
+
+# Console doesn't need much, try to minimize what we link with...
+OCONSOLE+= $(BCOMMON_TIME)eqp_clock.o $(OCOMMON_SYNC) $(BCOMMON_CONTAINER)eqp_string.o \
+ $(BCOMMON)eqp_basic.o $(BCOMMON)exception.o $(BCOMMON)random.o $(BCOMMON)bit.o \
+ $(BCOMMON)file.o $(BCOMMON)eqp_alloc.o  $(BCOMMON_LOG)eqp_log.o
+
+INCLUDECONSOLE= -I$(DIRCONSOLE)
+BINCONSOLE= $(DIRBIN)eqp
+
+##############################################################################
 # Core Linker flags
 ##############################################################################
 LFLAGS= 
@@ -162,13 +182,15 @@ RM= rm -f
 ##############################################################################
 .PHONY: default all clean
 
-default all: master log-writer
+default all: master log-writer console
 
 master: $(BINMASTER)
 
 log-writer: $(BINLOGWRITER)
 
-amalg: amalg-master amalg-log-writer
+console: $(BINCONSOLE)
+
+amalg: amalg-master amalg-log-writer amalg-console
 
 amalg-master: $(BCOMMON)exception.o
 	$(Q)luajit amalg/amalg.lua master src/master/
@@ -182,11 +204,21 @@ amalg-log-writer: $(BCOMMON)exception.o
 	$(E) "Building $(BINLOGWRITER)"
 	$(Q)$(CC) -o $(BINLOGWRITER) amalg/amalg_log_writer.c $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDELOGWRITER)
 
+amalg-console: $(BCOMMON)exception.o
+	$(Q)luajit amalg/amalg.lua console src/console/
+	$(E) "\033[0;32mCreating amalgamated source file\033[0m"
+	$(E) "Building $(BINCONSOLE)"
+	$(Q)$(CC) -o $(BINCONSOLE) amalg/amalg_console.c $^ -lsqlite3 $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDECONSOLE)
+
 $(BINMASTER): $(OMASTER) $(OCOMMON_ALL)
 	$(E) "Linking $@"
 	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS)
 
 $(BINLOGWRITER): $(OLOGWRITER)
+	$(E) "Linking $@"
+	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS)
+
+$(BINCONSOLE): $(OCONSOLE)
 	$(E) "Linking $@"
 	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS)
 
@@ -206,6 +238,10 @@ $(BMASTER)%.o: $(DIRMASTER)%.c $(HMASTER)
 $(BLOGWRITER)%.o: $(DIRLOGWRITER)%.c $(HLOGWRITER)
 	$(E) "\033[0;32mCC      $@\033[0m"
 	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDELOGWRITER)
+
+$(BCONSOLE)%.o: $(DIRCONSOLE)%.c $(HCONSOLE)
+	$(E) "\033[0;32mCC      $@\033[0m"
+	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDECONSOLE)
 
 ##############################################################################
 # Clean rules

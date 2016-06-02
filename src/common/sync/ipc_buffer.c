@@ -1,6 +1,7 @@
 
 #include "ipc_buffer.h"
 #include "eqp_basic.h"
+#include "share_mem.h"
 
 void ipc_buffer_init(R(Basic*) basic, R(IpcBuffer*) ipc)
 {
@@ -29,6 +30,13 @@ void ipc_buffer_init(R(Basic*) basic, R(IpcBuffer*) ipc)
     atomic_init(&ipc->writeEnd, 0);
     
     semaphore_init(basic, &ipc->semaphore);
+}
+
+void ipc_buffer_shm_create_init(R(Basic*) basic, R(IpcBuffer**) ipc, R(ShmCreator*) creator, R(ShmViewer*) viewer, R(const char*) path)
+{
+    share_mem_create(basic, creator, viewer, path, sizeof(IpcBuffer));
+    *ipc = shm_viewer_memory_type(viewer, IpcBuffer);
+    ipc_buffer_init(basic, *ipc);
 }
 
 static void ipc_buffer_do_write(R(Basic*) basic, R(IpcBuffer*) ipc, R(IpcBlock*) block, ServerOp opcode, int sourceId, uint32_t length, R(void*) data)

@@ -24,7 +24,7 @@ int log_main(R(LogWriter*) logWriter, R(const char*) ipcPath)
         exception_handled(B(logWriter));
         ret = ex;
         break;
-    } // switch
+    }
     
     exception_end_try_with_finally(B(logWriter));
     

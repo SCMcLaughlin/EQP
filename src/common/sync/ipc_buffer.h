@@ -14,6 +14,8 @@
 #define EQP_IPC_BUFFER_NUM_PACKETS (EQP_IPC_BUFFER_SIZE / EQP_IPC_PACKET_MAX_SIZE)
 
 STRUCT_DECLARE(Basic);
+STRUCT_DECLARE(ShmViewer);
+STRUCT_DECLARE(ShmCreator);
 
 STRUCT_DEFINE(IpcPacket)
 {
@@ -45,6 +47,7 @@ STRUCT_DEFINE(IpcBuffer)
 };
 
 void    ipc_buffer_init(R(Basic*) basic, R(IpcBuffer*) ipc);
+void    ipc_buffer_shm_create_init(R(Basic*) basic, R(IpcBuffer**) ipc, R(ShmCreator*) creator, R(ShmViewer*) viewer, R(const char*) path);
 
 #define ipc_buffer_wait(basic, ipc) semaphore_wait((basic), &(ipc)->semaphore)
 int     ipc_buffer_write(R(Basic*) basic, R(IpcBuffer*) ipc, ServerOp opcode, int sourceId, uint32_t length, R(void*) data);

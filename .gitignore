@@ -1,0 +1,7 @@
+*
+!Makefile
+!.gitignore
+!amalg/
+!bin/
+!build/
+!src/

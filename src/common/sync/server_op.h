@@ -13,10 +13,9 @@ ENUM_DEFINE(ServerOp)
     ServerOpLogClose,
     ServerOpLogMessage,
     // Console
-    ServerOpConsoleOpen,
-    ServerOpConsoleClose,
     ServerOpConsoleCommand,
     ServerOpConsoleMessage,
+    ServerOpConsoleFinish,
     ServerOpCOUNT
 };
 

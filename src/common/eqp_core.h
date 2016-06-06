@@ -30,10 +30,6 @@ STRUCT_DEFINE(Core)
 void    core_init(R(Core*) core, int sourceId, R(IpcBuffer*) logIpc);
 void    core_deinit(R(Core*) core);
 
-void    core_start_threads(R(Core*) core);
-void    core_send_stop_signal_to_threads(R(Core*) core);
-void    core_wait_for_threads_to_stop(R(Core*) core);
-
 #define core_is_master(core) ((core)->isMaster)
 
 #define core_db(core) (&(core)->database)

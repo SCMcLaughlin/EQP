@@ -17,6 +17,7 @@ BUILDTYPE= debug
 #endif
 
 DIRBIN= bin/
+CINCLUDE+= -I/usr/local/include/luajit-2.1
 
 ##############################################################################
 # Common
@@ -114,9 +115,9 @@ HCOMMON_ALL+= $(HCOMMON_TIME)
 DIRMASTER= src/master/
 BMASTER= build/$(BUILDTYPE)/master/
 _OMASTER= master_main.o \
- eqp_master.o
+ eqp_master.o master_ipc.o
 _HMASTER= \
- eqp_master.h
+ eqp_master.h master_ipc.h
 OMASTER= $(patsubst %,$(BMASTER)%,$(_OMASTER))
 HMASTER= $(patsubst %,$(DIRMASTER)%,$(_HMASTER))
 
@@ -168,7 +169,8 @@ BINCONSOLE= $(DIRBIN)eqp
 ##############################################################################
 LFLAGS= 
 LSTATIC= 
-LDYNAMIC= -lm -pthread -lrt -lsqlite3 -lz
+LDYNAMIC= -pthread -lrt -lsqlite3 -lz -lm -ldl
+LDYNCORE= -lluajit-5.1 $(LDYNAMIC)
 
 ##############################################################################
 # Util
@@ -196,7 +198,7 @@ amalg-master: $(BCOMMON)exception.o
 	$(Q)luajit amalg/amalg.lua master src/master/
 	$(E) "\033[0;32mCreating amalgamated source file\033[0m"
 	$(E) "Building $(BINMASTER)"
-	$(Q)$(CC) -o $(BINMASTER) amalg/amalg_master.c $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEMASTER)
+	$(Q)$(CC) -o $(BINMASTER) amalg/amalg_master.c $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEMASTER)
 
 amalg-log-writer: $(BCOMMON)exception.o
 	$(Q)luajit amalg/amalg.lua log_writer src/log/
@@ -212,7 +214,7 @@ amalg-console: $(BCOMMON)exception.o
 
 $(BINMASTER): $(OMASTER) $(OCOMMON_ALL)
 	$(E) "Linking $@"
-	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS)
+	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS)
 
 $(BINLOGWRITER): $(OLOGWRITER)
 	$(E) "Linking $@"

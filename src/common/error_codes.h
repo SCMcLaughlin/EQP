@@ -1,6 +1,6 @@
 
-#ifndef _EQP_ERROR_CODES_H_
-#define _EQP_ERROR_CODES_H_
+#ifndef EQP_ERROR_CODES_H
+#define EQP_ERROR_CODES_H
 
 #include "define.h"
 
@@ -15,7 +15,10 @@ ENUM_DEFINE(ErrorCode)
     ErrorSql,
     ErrorSyncPrimitive,
     ErrorShareMemInit,
-    ErrorConsole
+    ErrorConsole,
+    ErrorLua,
+    ErrorIpc,
+    ErrorThread
 };
 
-#endif//_EQP_ERROR_CODES_H_
+#endif//EQP_ERROR_CODES_H

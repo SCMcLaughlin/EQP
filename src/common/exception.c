@@ -59,8 +59,11 @@ int exception_try(R(Basic*) basic, R(ExceptionScope*) scope)
 
 void exception_handled(R(Basic*) basic)
 {
+    String* errMsg = basic->exceptionState.errMsg;
     basic->exceptionState.state = Try;
-    string_clear(basic->exceptionState.errMsg);
+    
+    if (errMsg)
+        string_clear(errMsg);
 }
 
 void exception_end_try(R(Basic*) basic)

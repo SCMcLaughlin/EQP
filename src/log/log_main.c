@@ -20,7 +20,7 @@ int log_main(R(LogWriter*) logWriter, R(const char*) ipcPath)
         break;
     
     default:
-        printf("[log_main] Unhandled exception type %i: %s\n", ex, string_data(exception_get_message(B(logWriter))));
+        printf("[log_main] Unhandled exception (%i): %s\n", ex, string_data(exception_get_message(B(logWriter))));
         exception_handled(B(logWriter));
         ret = ex;
         break;

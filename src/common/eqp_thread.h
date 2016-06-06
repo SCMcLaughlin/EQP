@@ -36,4 +36,6 @@ void    thread_wait_until_stopped(R(Thread*) thread);
 #define thread_trigger(basic, thread) semaphore_trigger(basic, &(thread)->semaphore)
 #define thread_should_stop(thread) (atomic_mutex_try_lock(&(thread)->mutexShouldContinue))
 
+#define thread_is_running(thread) (!atomic_mutex_try_lock(&(thread)->mutexLifetime))
+
 #endif//EQP_THREAD_H

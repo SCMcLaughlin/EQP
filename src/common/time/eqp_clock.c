@@ -60,7 +60,7 @@ void clock_sleep_milliseconds(uint32_t ms)
 #else
     struct timespec t;
     t.tv_sec    = ms / 1000;
-    t.tv_nsec   = ms * 1000000;
+    t.tv_nsec   = (ms % 1000) * 1000000;
     nanosleep(&t, NULL);
 #endif
 }

@@ -22,6 +22,7 @@ void console_deinit(R(Console*) console)
 {
     basic_deinit(B(console));
     
+    shm_viewer_close(&console->shmViewerMaster);
     share_mem_destroy(&console->shmCreatorConsole, &console->shmViewerConsole);
 }
 
@@ -186,6 +187,9 @@ static void console_do_send(R(Console*) console, int argc, R(const char**) argv)
     int i;
     
     memset(data, 0, EQP_IPC_PACKET_MAX_SIZE);
+    
+    // The first string is always the path to the console's ipc buffer
+    console_add_arg(console, data, share_mem_path(&console->shmCreatorConsole), &length);
         
     // Arguments
     for (i = 1; i < argc; i++)
@@ -250,6 +254,7 @@ static void console_write_packet(R(IpcPacket*) packet)
     uint32_t n = ipc_packet_length(packet);
     char* data = (char*)ipc_packet_data(packet);
     
+    // Don't assume result is null-terminated...
     for (i = 0; i < n; i++)
     {
         char c = data[i];
@@ -280,7 +285,7 @@ void console_recv(R(Console*) console)
                 time = clock_milliseconds();
                 break;
             
-            case ServerOpConsoleClose:
+            case ServerOpConsoleFinish:
                 run = false;
                 break;
                 

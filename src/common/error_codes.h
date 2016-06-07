@@ -9,6 +9,7 @@ ENUM_DEFINE(ErrorCode)
     Try,
     Finally,
     ErrorOutOfMemory,
+    ErrorOutOfBounds,
     ErrorFormatString,
     ErrorSpawnProcess,
     ErrorDatabase,

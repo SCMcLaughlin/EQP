@@ -39,7 +39,7 @@ void ipc_buffer_shm_create_init(R(Basic*) basic, R(IpcBuffer**) ipc, R(ShmCreato
     ipc_buffer_init(basic, *ipc);
 }
 
-static void ipc_buffer_do_write(R(Basic*) basic, R(IpcBuffer*) ipc, R(IpcBlock*) block, ServerOp opcode, int sourceId, uint32_t length, R(void*) data)
+static void ipc_buffer_do_write(R(Basic*) basic, R(IpcBuffer*) ipc, R(IpcBlock*) block, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data)
 {
     int written = 1;
     
@@ -73,7 +73,7 @@ static void ipc_buffer_do_write(R(Basic*) basic, R(IpcBuffer*) ipc, R(IpcBlock*)
     semaphore_trigger(basic, &ipc->semaphore);
 }
 
-int ipc_buffer_write(R(Basic*) basic, R(IpcBuffer*) ipc, ServerOp opcode, int sourceId, uint32_t length, R(void*) data)
+int ipc_buffer_write(R(Basic*) basic, R(IpcBuffer*) ipc, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data)
 {
     uint64_t timestamp = clock_milliseconds();
     

@@ -110,6 +110,38 @@ OCOMMON_ALL+= $(OCOMMON_TIME)
 HCOMMON_ALL+= $(HCOMMON_TIME)
 
 ##############################################################################
+# Non-Master
+##############################################################################
+DIRNONMASTER= src/non_master/
+BNONMASTER= build/$(BUILDTYPE)/non_master/
+_ONONMASTER= \
+ aligned.o crc.o
+_HNONMASTER = \
+ aligned.h crc.h
+ONONMASTER= $(patsubst %,$(BNONMASTER)%,$(_ONONMASTER))
+HNONMASTER= $(patsubst %,$(DIRNONMASTER)%,$(_HNONMASTER))
+
+INCLUDENONMASTER= -I$(DIRNONMASTER)
+ONONMASTER_ALL= $(ONONMASTER)
+HNONMASTER_ALL= $(HNONMASTER)
+
+##############################################################################
+# Non-Master / Net
+##############################################################################
+DIRNONMASTER_NET= $(DIRNONMASTER)net/
+BNONMASTER_NET= $(BNONMASTER)net/
+_ONONMASTER_NET= \
+ packet_trilogy.o
+_HNONMASTER_NET = \
+ packet_trilogy.h
+ONONMASTER_NET= $(patsubst %,$(BNONMASTER_NET)%,$(_ONONMASTER_NET))
+HNONMASTER_NET= $(patsubst %,$(DIRNONMASTER_NET)%,$(_HNONMASTER_NET))
+
+INCLUDENONMASTER+= -I$(DIRNONMASTER_NET)
+ONONMASTER_ALL+= $(ONONMASTER_NET)
+HNONMASTER_ALL+= $(HNONMASTER_NET)
+
+##############################################################################
 # Master
 ##############################################################################
 DIRMASTER= src/master/
@@ -123,6 +155,19 @@ HMASTER= $(patsubst %,$(DIRMASTER)%,$(_HMASTER))
 
 INCLUDEMASTER= -I$(DIRMASTER)
 BINMASTER= $(DIRBIN)eqp-master
+
+##############################################################################
+# Login
+##############################################################################
+DIRLOGIN= src/login/
+BLOGIN= build/$(BUILDTYPE)/login/
+_OLOGIN= login_main.o
+_HLOGIN= 
+OLOGIN= $(patsubst %,$(BLOGIN)%,$(_OLOGIN))
+HLOGIN= $(patsubst %,$(DIRLOGIN)%,$(_HLOGIN))
+
+INCLUDELOGIN= -I$(DIRLOGIN)
+BINLOGIN= $(DIRBIN)eqp-login
 
 ##############################################################################
 # Log Writer
@@ -167,7 +212,7 @@ BINCONSOLE= $(DIRBIN)eqp
 ##############################################################################
 # Core Linker flags
 ##############################################################################
-LFLAGS= 
+LFLAGS= -rdynamic
 LSTATIC= 
 LDYNAMIC= -pthread -lrt -lsqlite3 -lz -lm -ldl
 LDYNCORE= -lluajit-5.1 $(LDYNAMIC)
@@ -184,9 +229,11 @@ RM= rm -f
 ##############################################################################
 .PHONY: default all clean
 
-default all: master log-writer console
+default all: master login log-writer console
 
 master: $(BINMASTER)
+
+login: $(BINLOGIN)
 
 log-writer: $(BINLOGWRITER)
 
@@ -216,6 +263,10 @@ $(BINMASTER): $(OMASTER) $(OCOMMON_ALL)
 	$(E) "Linking $@"
 	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS)
 
+$(BINLOGIN): $(OLOGIN) $(OCOMMON_ALL) $(ONONMASTER_ALL)
+	$(E) "Linking $@"
+	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS)
+
 $(BINLOGWRITER): $(OLOGWRITER)
 	$(E) "Linking $@"
 	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS)
@@ -233,9 +284,17 @@ $(BCOMMON)%.o: $(DIRCOMMON)%.c $(HCOMMON_ALL)
 	$(E) "\033[0;32mCC      $@\033[0m"
 	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE)
 
+$(BNONMASTER)%.o: $(DIRNONMASTER)%.c $(HNONMASTER_ALL)
+	$(E) "\033[0;32mCC      $@\033[0m"
+	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDENONMASTER)
+
 $(BMASTER)%.o: $(DIRMASTER)%.c $(HMASTER)
 	$(E) "\033[0;32mCC      $@\033[0m"
 	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEMASTER)
+
+$(BLOGIN)%.o: $(DIRLOGIN)%.c $(HLOGIN)
+	$(E) "\033[0;32mCC      $@\033[0m"
+	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDELOGIN) $(INCLUDENONMASTER)
 
 $(BLOGWRITER)%.o: $(DIRLOGWRITER)%.c $(HLOGWRITER)
 	$(E) "\033[0;32mCC      $@\033[0m"
@@ -257,15 +316,29 @@ clean-common:
 	$(Q)$(RM) $(BCOMMON_TIME)*.o
 	$(E) "Cleaned common"
 
+clean-non-master:
+	$(Q)$(RM) $(BNONMASTER)*.o
+	$(E) "Cleaned non-master"
+
 clean-master:
 	$(Q)$(RM) $(BMASTER)*.o
 	$(Q)$(RM) $(BINMASTER)
 	$(E) "Cleaned master"
+
+clean-login:
+	$(Q)$(RM) $(BLOGIN)*.o
+	$(Q)$(RM) $(BINLOGIN)
+	$(E) "Cleaned login"
 
 clean-log-writer:
 	$(Q)$(RM) $(BLOGWRITER)*.o
 	$(Q)$(RM) $(BINLOGWRITER)
 	$(E) "Cleaned log-writer"
 
-clean: clean-common clean-master clean-log-writer
+clean-console:
+	$(Q)$(RM) $(BCONSOLE)*.o
+	$(Q)$(RM) $(BINCONSOLE)
+	$(E) "Cleaned console"
+
+clean: clean-common clean-non-master clean-master clean-login clean-log-writer clean-console
 

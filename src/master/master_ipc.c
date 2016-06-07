@@ -9,6 +9,30 @@ void master_ipc_thread_init(R(Master*) M, R(MasterIpcThread*) ipcThread)
     ipcThread->master = M;
 }
 
+void master_ipc_thread_console_reply(R(MasterIpcThread*) ipcThread, R(IpcBuffer*) ipc, R(const char*) src, R(const char*) msg)
+{
+    if (!src)
+    {
+        ipc_buffer_write(B(ipcThread), ipc, ServerOpConsoleMessage, EQP_SOURCE_ID_MASTER, strlen(msg) + 1, msg);
+    }
+    else
+    {
+        char buf[EQP_IPC_PACKET_MAX_SIZE];
+        int len1 = strlen(src) + 1;
+        int len2 = strlen(msg) + 1;
+        
+        memcpy(buf, src, len1);
+        memcpy(buf + len1, msg, len2);
+        
+        ipc_buffer_write(B(ipcThread), ipc, ServerOpConsoleMessage, EQP_SOURCE_ID_MASTER, len1 + len2, buf);
+    }
+}
+
+void master_ipc_thread_console_finish(R(MasterIpcThread*) ipcThread, R(IpcBuffer*) ipc, R(const char*) src)
+{
+    ipc_buffer_write(B(ipcThread), ipc, ServerOpConsoleFinish, EQP_SOURCE_ID_MASTER, src ? (strlen(src) + 1) : 0, src);
+}
+
 static uint32_t master_ipc_thread_console_message_push_string(R(MasterIpcThread*) ipcThread, R(lua_State*) L, R(byte*) data, uint32_t pos, const uint32_t length)
 {
     uint32_t* arglen = (uint32_t*)(data + pos);

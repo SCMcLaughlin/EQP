@@ -32,4 +32,7 @@ void    master_ipc_thread_main_loop(R(Thread*) thread);
 #define master_ipc_thread_start(basic, thread) thread_start_and_detach((basic), T(thread), master_ipc_thread_main_loop)
 #define master_ipc_thread_shutdown_received(thread) atomic_mutex_try_lock(&(thread)->mutexShutdown)
 
+EQP_API void master_ipc_thread_console_reply(R(MasterIpcThread*) ipcThread, R(IpcBuffer*) ipc, R(const char*) src, R(const char*) msg);
+EQP_API void master_ipc_thread_console_finish(R(MasterIpcThread*) ipcThread, R(IpcBuffer*) ipc, R(const char*) src);
+
 #endif//EQP_MASTER_IPC_H

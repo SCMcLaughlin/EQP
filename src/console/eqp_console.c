@@ -262,6 +262,8 @@ static void console_write_packet(R(IpcPacket*) packet)
         if (c)
             fputc(c, stdout);
     }
+    
+    fputc('\n', stdout);
 }
 
 void console_recv(R(Console*) console)

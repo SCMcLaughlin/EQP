@@ -62,4 +62,6 @@ typedef _Bool bool;
     
 #define R(ptrType) ptrType restrict
 
+#define sizeof_field(type, name) sizeof(((type*)0)->name)
+
 #endif//EQP_DEFINE_H

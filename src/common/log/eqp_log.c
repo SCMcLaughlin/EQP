@@ -12,7 +12,7 @@ static uint32_t log_construct_message(R(Basic*) basic, R(char*) message, LogType
     int wrote           = 0;
     
     if (pos == 0)
-        exception_throw_message(basic, ErrorFormatString, ERR_STRFTIME, sizeof(ERR_STRFTIME) - 1);
+        exception_throw_literal(basic, ErrorFormatString, ERR_STRFTIME);
     
     switch (type)
     {

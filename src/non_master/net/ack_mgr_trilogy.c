@@ -1,0 +1,69 @@
+
+#include "ack_mgr_trilogy.h"
+
+void ack_mgr_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(AckMgrTrilogy*) ackMgr)
+{
+    network_client_trilogy_init(sock, client, &ackMgr->client);
+    
+    ackMgr->nextAckToRequest    = 0;
+    ackMgr->nextSeqToSend       = 0;
+    ackMgr->nextSeqToReceive    = 0;
+    ackMgr->nextFragGroup       = 0;
+    
+    ackMgr->ackCounterAlwaysOne = 1;
+    ackMgr->ackCounterRequest   = 0;
+}
+
+void ack_mgr_trilogy_deinit(R(AckMgrTrilogy*) ackMgr)
+{
+    network_client_trilogy_deinit(&ackMgr->client);
+}
+
+void ack_mgr_trilogy_recv_ack_response(R(AckMgrTrilogy*) ackMgr, uint16_t ack)
+{
+    //check queue of sent packets for the one that requested this ack...
+    (void)ackMgr;
+    (void)ack;
+}
+
+void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*) packet, int noAckRequest)
+{
+    OutputPacketTrilogy wrapper;
+    uint16_t header     = 0;
+    uint16_t fragCount  = packet_trilogy_frag_count(packet);
+    noAckRequest        = (noAckRequest && fragCount == 0);
+    
+    memset(&wrapper, 0, sizeof(OutputPacketTrilogy));
+    
+    wrapper.seq = ackMgr->nextSeqToSend;
+    ackMgr->nextSeqToSend += fragCount + 1;
+    
+    if (!noAckRequest)
+    {
+        if (ackMgr->nextAckToRequest == 0)
+        {
+            header |= PacketTrilogyIsFirstPacket;
+            ackMgr->nextAckToRequest = random_uint16() | 1; // Make sure the final value can't be zero
+        }
+        
+        wrapper.ackRequest = ackMgr->nextAckToRequest;
+        ackMgr->nextAckToRequest += fragCount + 1;
+        
+        wrapper.ackCounterAlwaysOne = ackMgr->ackCounterAlwaysOne;
+        wrapper.ackCounterRequest   = ackMgr->ackCounterRequest++;
+        
+        header |= PacketTrilogyHasAckRequest | PacketTrilogyHasAckCounter;
+    }
+    
+    if (fragCount > 0)
+    {
+        header |= PacketTrilogyIsFragment;
+        wrapper.fragGroup   = ackMgr->nextFragGroup++;
+        wrapper.fragCount   = fragCount;
+    }
+    
+    wrapper.header = header;
+    wrapper.packet = packet;
+    
+    network_client_trilogy_schedule_packet(&ackMgr->client, &wrapper);
+}

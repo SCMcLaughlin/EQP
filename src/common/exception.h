@@ -27,6 +27,7 @@ void    exception_init(R(Basic*) basic);
 void    exception_deinit(R(Basic*) basic);
 void    exception_throw(R(Basic*) basic, ErrorCode errcode);
 void    exception_throw_message(R(Basic*) basic, ErrorCode errcode, R(const char*) msg, uint32_t len);
+#define exception_throw_literal(basic, errcode, literal) exception_throw_message((basic), (errcode), (literal), sizeof((literal)) - 1)
 void    exception_throw_format(R(Basic*) basic, ErrorCode errcode, R(const char*) fmt, ...);
 int     exception_try(R(Basic*) basic, R(ExceptionScope*) scope);
 void    exception_handled(R(Basic*) basic);

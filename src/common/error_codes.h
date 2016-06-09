@@ -19,7 +19,8 @@ ENUM_DEFINE(ErrorCode)
     ErrorConsole,
     ErrorLua,
     ErrorIpc,
-    ErrorThread
+    ErrorThread,
+    ErrorNetwork
 };
 
 #endif//EQP_ERROR_CODES_H

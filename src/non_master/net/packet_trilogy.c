@@ -2,10 +2,8 @@
 #include "packet_trilogy.h"
 #include "eqp_basic.h"
 
-#define MAX_HEADER_SIZE (sizeof(uint16_t) * 9)
 #define CRC_SIZE sizeof(uint32_t)
-#define DATA_OFFSET MAX_HEADER_SIZE
-#define DATA_SPACE (512 - MAX_HEADER_SIZE - CRC_SIZE)
+#define DATA_SPACE (512 - EQP_PACKET_TRILOGY_HEADER_SIZE - CRC_SIZE)
 
 static uint32_t packet_trilogy_calc_length_and_frag_count(uint32_t length, uint16_t* fragCount)
 {
@@ -14,7 +12,7 @@ static uint32_t packet_trilogy_calc_length_and_frag_count(uint32_t length, uint1
     if (length <= DATA_SPACE)
     {
         *fragCount = 0;
-        return sizeof(PacketTrilogy) + MAX_HEADER_SIZE + length + CRC_SIZE;
+        return sizeof(PacketTrilogy) + EQP_PACKET_TRILOGY_HEADER_SIZE + length + CRC_SIZE;
     }
     else
     {
@@ -25,7 +23,7 @@ static uint32_t packet_trilogy_calc_length_and_frag_count(uint32_t length, uint1
             count++;
         
         *fragCount = count - 1;
-        return sizeof(PacketTrilogy) + (MAX_HEADER_SIZE * count) + length + (CRC_SIZE * count);
+        return sizeof(PacketTrilogy) + (EQP_PACKET_TRILOGY_HEADER_SIZE * count) + length + (CRC_SIZE * count);
     }
 }
 
@@ -63,7 +61,5 @@ void packet_trilogy_fragmentize(R(PacketTrilogy*) packet)
     (void)packet;
 }
 
-#undef MAX_HEADER_SIZE
 #undef CRC_SIZE
-#undef DATA_OFFSET
 #undef DATA_SPACE

@@ -72,7 +72,10 @@ const byte* query_get_blob(R(Query*) query, int col, R(uint32_t*) len);
 #define     query_get_state(q) ((q)->state)
 #define     query_get_last_insert_id(q) ((q)->lastInsertId)
 #define     query_get_userdata(q) ((q)->userdata)
+#define     query_userdata_type(q, type) ((type*)(q)->userdata)
 #define     query_get_user_int(q) ((q)->userInt)
 #define     query_get_id(q) ((q)->queryId)
+
+#define     query_set_userdata(q, ud) ((q)->userdata = (ud))
 
 #endif//EQP_QUERY_H

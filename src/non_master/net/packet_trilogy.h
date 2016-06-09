@@ -9,6 +9,9 @@
 #include "aligned.h"
 #include <stdatomic.h>
 
+#define EQP_PACKET_TRILOGY_HEADER_SIZE (sizeof(uint16_t) * 9)
+#define EQP_PACKET_TRILOGY_DATA_OFFSET EQP_PACKET_TRILOGY_HEADER_SIZE
+
 /*
     The full packet header looks something like this. We work backwards from the opcode;
     all fields are filled in at the protocol level, just before sending-time
@@ -60,11 +63,16 @@ STRUCT_DEFINE(PacketTrilogy)
 };
 
 PacketTrilogy*  packet_trilogy_create(R(Basic*) basic, uint16_t opcode, uint32_t length);
+#define         packet_trilogy_create_type(basic, opcode, type) packet_trilogy_create((basic), (opcode), sizeof(type))
 void            packet_trilogy_grab(R(PacketTrilogy*) packet);
 void            packet_trilogy_drop(R(PacketTrilogy*) packet);
 
-#define         packet_trilogy_data(packet) ((packet)->data)
+#define         packet_trilogy_opcode(packet) ((packet)->opcode)
+#define         packet_trilogy_data(packet) (&(packet)->data[EQP_PACKET_TRILOGY_DATA_OFFSET])
+#define         packet_trilogy_data_raw(packet) (&(packet)->data[0])
 #define         packet_trilogy_length(packet) ((packet)->dataLength)
+#define         packet_trilogy_length_raw(packet) ((packet)->dataLength + EQP_PACKET_TRILOGY_DATA_OFFSET + sizeof(uint32_t))
+#define         packet_trilogy_frag_count(packet) ((packet)->fragCount)
 
 void            packet_trilogy_fragmentize(R(PacketTrilogy*) packet);
 

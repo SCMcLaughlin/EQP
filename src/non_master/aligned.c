@@ -29,7 +29,7 @@ uint32_t aligned_advance(R(Aligned*) a, uint32_t len)
     a->cursor += len;
     
     if (a->cursor > a->length)
-        exception_throw_message(a->basic, ErrorOutOfBounds, ERR_ADVANCE, sizeof(ERR_ADVANCE) - 1);
+        exception_throw_literal(a->basic, ErrorOutOfBounds, ERR_ADVANCE);
     
     return c;
 }
@@ -40,7 +40,7 @@ uint32_t aligned_reverse(R(Aligned*) a, uint32_t len)
     int cursor = ((int)a->cursor) - ((int)len);
     
     if (cursor < 0)
-        exception_throw_message(a->basic, ErrorOutOfBounds, ERR_REVERSE, sizeof(ERR_REVERSE) - 1);
+        exception_throw_literal(a->basic, ErrorOutOfBounds, ERR_REVERSE);
     
     a->cursor = (uint32_t)cursor;
     
@@ -52,7 +52,7 @@ void aligned_check(R(Aligned*) a, uint32_t len)
     uint32_t c = a->cursor + len;
     
     if (c > a->length)
-        exception_throw_message(a->basic, ErrorOutOfBounds, ERR_CHECK, sizeof(ERR_CHECK) - 1);
+        exception_throw_literal(a->basic, ErrorOutOfBounds, ERR_CHECK);
 }
 
 int aligned_advance_null_terminator(R(Aligned*) a)
@@ -77,6 +77,13 @@ int aligned_advance_null_terminator(R(Aligned*) a)
 void aligned_reinit(R(Aligned*) a, R(void*) ptr, uint32_t len)
 {
     a->cursor   = 0;
+    a->length   = len;
+    a->buffer   = (byte*)ptr;
+}
+
+void aligned_reinit_cursor(R(Aligned*) a, R(void*) ptr, uint32_t len, uint32_t cursor)
+{
+    a->cursor   = cursor;
     a->length   = len;
     a->buffer   = (byte*)ptr;
 }
@@ -216,6 +223,16 @@ void aligned_write_zeroes(R(Aligned*) a, uint32_t count)
 {
     uint32_t c = aligned_advance(a, count);
     memset(a->buffer + c, 0, count);
+}
+
+void aligned_write_snprintf_full_advance(R(Aligned*) a, uint32_t n, R(const char*) fmt, ...)
+{
+    uint32_t c = aligned_advance(a, n);
+    va_list args;
+    
+    va_start(args, fmt);
+    vsnprintf((char*)(a->buffer + c), n, fmt, args);
+    va_end(args);
 }
 
 void aligned_write_reverse_uint8(R(Aligned*) a, uint8_t v)

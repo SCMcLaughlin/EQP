@@ -21,7 +21,8 @@ ENUM_DEFINE(LogType)
     LogFatal,
     LogError,
     LogInfo,
-    LogSql
+    LogSql,
+    LogNetwork
 };
 
 STRUCT_DEFINE(LogIpc)

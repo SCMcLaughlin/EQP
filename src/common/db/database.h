@@ -33,6 +33,7 @@ void                db_deinit(R(Database*) db);
 EQP_API void        db_open(R(Database*) db, R(const char*) dbPath, R(const char*) schemaPath);
 
 EQP_API void        db_prepare(R(Database*) db, R(Query*) query, R(const char*) sql, int len, QueryCallback callback);
+#define             db_prepare_literal(db, query, sql, callback) db_prepare(db, query, sql, sizeof(sql) - 1, callback)
 void                db_exec(R(Database*) db, R(const char*)sql, R(const char*) exceptionFormat);
 
 EQP_API void        db_schedule(R(Database*) db, R(Query*) query);

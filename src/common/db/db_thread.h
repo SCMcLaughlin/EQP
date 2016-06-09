@@ -7,6 +7,8 @@
 #include "eqp_array.h"
 #include "query.h"
 
+#define EQP_DB_CALC_LENGTH (-1)
+
 STRUCT_DEFINE(DbThread)
 {
     Thread      thread;

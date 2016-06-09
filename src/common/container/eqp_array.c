@@ -63,7 +63,7 @@ void* array_back(R(Array*) array)
 void array_get_copy(R(Array*) array, uint32_t index, void* copyTo)
 {
     uint32_t size = array->elementSize;
-    memcpy(&array->data[index * size], copyTo, size);
+    memcpy(copyTo, &array->data[index * size], size);
 }
 
 void array_back_copy(R(Array*) array, void* copyTo)
@@ -72,7 +72,7 @@ void array_back_copy(R(Array*) array, void* copyTo)
     uint32_t size   = array->elementSize;
     
     if (count > 0)
-        memcpy(&array->data[(count - 1) * size], copyTo, size);
+        memcpy(copyTo, &array->data[(count - 1) * size], size);
 }
 
 void array_set(R(Array*) array, uint32_t index, void* value)

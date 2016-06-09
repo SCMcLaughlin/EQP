@@ -89,7 +89,7 @@ static void console_launch_master_process(R(Basic*) basic)
     else if (pid < 0)
     {
         // Fork failed
-        exception_throw_message(basic, ErrorConsole, CONSOLE_ERR_MASTER_LAUNCH, sizeof(CONSOLE_ERR_MASTER_LAUNCH) - 1);
+        exception_throw_literal(basic, ErrorConsole, CONSOLE_ERR_MASTER_LAUNCH);
     }
 }
 
@@ -113,7 +113,7 @@ static int console_find_master_ipc(R(Console*) console)
     struct dirent* result;
     
     if (!shmDir)
-        exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_BADDIR, sizeof(CONSOLE_ERR_BADDIR) - 1);
+        exception_throw_literal(B(console), ErrorConsole, CONSOLE_ERR_BADDIR);
     
     while (!readdir_r(shmDir, &entry, &result))
     {
@@ -143,7 +143,7 @@ static void console_force_start_master(R(Console*) console)
     struct dirent* result;
     
     if (!shmDir)
-        exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_BADDIR, sizeof(CONSOLE_ERR_BADDIR) - 1);
+        exception_throw_literal(B(console), ErrorConsole, CONSOLE_ERR_BADDIR);
     
     while (!readdir_r(shmDir, &entry, &result))
     {
@@ -172,7 +172,7 @@ static void console_add_arg(R(Console*) console, R(byte*) data, R(const char*) a
     *length += sizeof(uint32_t) + len + 1;
     
     if (*length > EQP_IPC_PACKET_MAX_SIZE)
-        exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_ARG_LENGTH, sizeof(CONSOLE_ERR_ARG_LENGTH) - 1);
+        exception_throw_literal(B(console), ErrorConsole, CONSOLE_ERR_ARG_LENGTH);
     
     memcpy(data + pos, &len, sizeof(uint32_t));
     len++; // Include null terminator
@@ -227,7 +227,7 @@ int console_send(R(Console*) console, int argc, R(const char**) argv)
     if (!console_find_master_ipc(console))
     {
         if (!isStart)
-            exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_NO_MASTER, sizeof(CONSOLE_ERR_NO_MASTER) - 1);
+            exception_throw_literal(B(console), ErrorConsole, CONSOLE_ERR_NO_MASTER);
         
         printf("Attempting to start eqp-master...\n");
         console_launch_master_process(B(console));
@@ -241,7 +241,7 @@ int console_send(R(Console*) console, int argc, R(const char**) argv)
             return false;
         }
         
-        exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_MASTER_ALREADY, sizeof(CONSOLE_ERR_MASTER_ALREADY) - 1);
+        exception_throw_literal(B(console), ErrorConsole, CONSOLE_ERR_MASTER_ALREADY);
     }
     
     console_do_send(console, argc, argv);
@@ -276,7 +276,7 @@ void console_recv(R(Console*) console)
         IpcPacket packet;
         
         if ((clock_milliseconds() - time) >= EQP_CONSOLE_TIMEOUT_MILLISECONDS)
-            exception_throw_message(B(console), ErrorConsole, CONSOLE_ERR_TIMEOUT, sizeof(CONSOLE_ERR_TIMEOUT) - 1);
+            exception_throw_literal(B(console), ErrorConsole, CONSOLE_ERR_TIMEOUT);
         
         if (ipc_buffer_read(B(console), console->ipcRecv, &packet))
         {

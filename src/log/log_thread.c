@@ -195,12 +195,17 @@ static FILE* log_thread_determine_filename_and_open(R(LogThread*) logThread, int
 
 static void log_thread_open(R(LogThread*) logThread, R(IpcPacket*) packet)
 {
-    int sourceId    = ipc_packet_source_id(packet);
-    FILE* fp        = log_thread_determine_filename_and_open(logThread, sourceId);
+    int sourceId        = ipc_packet_source_id(packet);
+    LogThreadFile* old  = log_thread_get_file(logThread, sourceId, NULL); // Is it already open?
+    FILE* fp;
+
+    if (old)
+        fp = old->fp;
+    else
+        fp = log_thread_determine_filename_and_open(logThread, sourceId);
     
     if (fp)
     {
-        LogThreadFile file;
         char message[2048];
         time_t rawTime      = time(NULL);
         struct tm* curTime  = localtime(&rawTime);
@@ -212,10 +217,15 @@ static void log_thread_open(R(LogThread*) logThread, R(IpcPacket*) packet)
             fflush(fp);
         }
         
-        file.sourceId   = sourceId;
-        file.fp         = fp;
-        
-        array_push_back(B(logThread), &logThread->logFiles, &file);
+        if (!old)
+        {
+            LogThreadFile file;
+            
+            file.sourceId   = sourceId;
+            file.fp         = fp;
+            
+            array_push_back(B(logThread), &logThread->logFiles, &file);
+        }
     }
 }
 

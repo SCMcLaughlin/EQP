@@ -142,60 +142,6 @@ void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
             ackResponse = 0;
             dataLength -= space;
         }
-        
-        /*R(OutputPacketTrilogy*) wrapper = &array[i];
-        uint16_t header                 = wrapper->header;
-        R(PacketTrilogy*) packet        = wrapper->packet;
-        uint32_t len                    = packet_trilogy_length(packet);
-        
-        aligned_reinit_cursor(a, packet_trilogy_data_raw(packet), EQP_PACKET_TRILOGY_DATA_OFFSET + len + sizeof(uint32_t), EQP_PACKET_TRILOGY_DATA_OFFSET);
-        
-        // opcode
-        aligned_write_reverse_uint16(a, packet_trilogy_opcode(packet));
-        
-        // ackCounters
-        if (header & PacketTrilogyHasAckRequest)
-        {
-            aligned_write_reverse_uint8(a, wrapper->ackCounterRequest);
-            aligned_write_reverse_uint8(a, wrapper->ackCounterAlwaysOne);
-        }
-        
-        // fragment info
-        if (header & PacketTrilogyIsFragment)
-        {
-            
-        }
-        
-        // ackRequest
-        if (header & PacketTrilogyHasAckRequest)
-            aligned_write_reverse_uint16(a, toNetworkUint16(wrapper->ackRequest));
-        
-        // ackResponse
-        if (ackResponse)
-        {
-            header |= PacketTrilogyHasAckResponse;
-            aligned_write_reverse_uint16(a, toNetworkUint16(ackResponse));
-            ackResponse = 0;
-        }
-        
-        // sequence
-        aligned_write_reverse_uint16(a, toNetworkUint16(wrapper->seq));
-        
-        // header
-        aligned_write_reverse_uint16(a, header);
-        
-        // crc
-        {
-            R(byte*) data   = packet_trilogy_data_raw(packet) + aligned_position(a);
-            uint32_t clen   = aligned_remaining(a) - sizeof(uint32_t);
-            uint32_t crc    = crc_calc32_network(data, clen);
-            
-            aligned_advance(a, clen);
-            aligned_write_uint32(a, crc);
-        
-            network_client_send(&client->base, data, clen + sizeof(uint32_t));
-        }
-        */
     }
     
     if (ackResponse)

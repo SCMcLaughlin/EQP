@@ -68,7 +68,7 @@ void packet_trilogy_fragmentize(R(PacketTrilogy*) packet)
     if (n == 0)
         return;
     
-    dataLength  = packet->dataLength + sizeof(uint16_t);
+    dataLength  = packet->dataLength;
     src         = dataLength + EQP_PACKET_TRILOGY_DATA_OFFSET - 1;
     dst         = packet_trilogy_length_raw(packet) - CRC_SIZE - 1;
     data        = packet->data;

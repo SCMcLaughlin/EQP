@@ -163,7 +163,7 @@ static void login_trilogy_handle_op_banner(R(LoginClient*) client, R(ProtocolHan
 
 #define SERVER_NAME "EQP Test%02u"
 #define SERVER_IP "127.0.0.1"
-#define NUM 32
+#define NUM 50
 static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(ProtocolHandler*) handler)
 {
     R(Basic*) basic;

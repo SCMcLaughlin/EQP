@@ -3,6 +3,9 @@
 #include "eqp_login.h"
 
 #define ERR_CREDENTIALS "Error: Invalid username/password"
+#define SERVER_LIST_COUNT_MAX 255
+#define SERVER_DOWN -1
+#define SERVER_LOCKED -2
 
 void* client_create_from_new_connection_trilogy(R(ProtocolHandler*) handler)
 {
@@ -86,9 +89,10 @@ static void login_trilogy_credentials_callback(R(Query*) query)
             success = true;
             login_client_set_state(client, LoginClientTrilogy_AcceptedCredentials);
         /*}
+        
+        login_crypto_clear(crypto);
     }*/
     
-    login_crypto_clear(crypto);
     login_client_clear_password_temp(client);
     
     if (!success)
@@ -161,49 +165,123 @@ static void login_trilogy_handle_op_banner(R(LoginClient*) client, R(ProtocolHan
     login_trilogy_schedule_packet(handler, packet);
 }
 
-#define SERVER_NAME "EQP Test%02u"
+#define SERVER_NAME "EQP Test%u"
 #define SERVER_IP "127.0.0.1"
 #define NUM 50
+static uint32_t temp_add_test_servers(R(Basic*) basic, R(ServerList*) list)
+{
+    uint32_t i;
+    ServerListing server;
+    
+    for (i = 0; i < NUM; i++)
+    {
+        server.status       = (i%10 == 0) ? ((i%20 == 0) ? ServerStatus_Locked : ServerStatus_Down) : ServerStatus_Up;
+        server.rank         = (i%2 == 0) ? ServerRank_Preferred : ServerRank_Standard;
+        server.playerCount  = i;
+        
+        server.name = string_create(basic);
+        string_set_from_format(basic, &server.name, SERVER_NAME, i*i);
+        server.ipAddress = string_create_from_cstr(basic, SERVER_IP, sizeof(SERVER_IP) - 1);
+        
+        server_list_add(list, &server);
+    }
+    
+    return NUM;
+}
+
 static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(ProtocolHandler*) handler)
 {
-    R(Basic*) basic;
+    R(Login*) login;
+    R(ServerList*) list;
+    R(ServerListing*) data;
     R(PacketTrilogy*) packet;
     Aligned write;
     R(Aligned*) w = &write;
-    
+    uint32_t count;
+    uint32_t length;
+    uint32_t n;
     uint32_t i;
     
     if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
         return;
     
-    //fake for now...
-    basic   = protocol_handler_basic(handler);
-    packet  = packet_trilogy_create(basic, TrilogyOp_ServerList, sizeof(LoginTrilogy_ServerListHeader) +
-        //sizeof(SERVER_NAME) + sizeof(SERVER_IP) + sizeof(LoginTrilogy_ServerFooter) + sizeof(LoginTrilogy_ServerListFooter));
-        ((11 + sizeof(SERVER_IP) + sizeof(LoginTrilogy_ServerFooter)) * NUM) + sizeof(LoginTrilogy_ServerListFooter));
+    login   = (Login*)protocol_handler_basic(handler);
+    list    = login_server_list(login);
+    count   = server_list_count(list);
     
-    aligned_init(basic, w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+    ////////
+    if (count == 0)
+        count = temp_add_test_servers(B(login), list);
+    ////////
+    
+    // Figure out how long the packet will be
+    data    = server_list_data(list);
+    length  = sizeof(LoginTrilogy_ServerListHeader) + sizeof(LoginTrilogy_ServerListFooter);
+    n       = 0;
+    
+    for (i = 0; i < count; i++)
+    {
+        R(ServerListing*) server = &data[i];
+        
+        if (!server_listing_name(server) || !server_listing_ip_address(server))
+            continue;
+        
+        length += server_listing_strings_length(server);
+        length += sizeof(LoginTrilogy_ServerFooter);
+        
+        if (++n == SERVER_LIST_COUNT_MAX)
+            break;
+    }
+    
+    // Create and fill the packet
+    packet = packet_trilogy_create(B(login), TrilogyOp_ServerList, length);
+    aligned_init(B(login), w, packet_trilogy_data(packet), packet_trilogy_length(packet));
     
     /* ServerListHeader */
     // serverCount
-    aligned_write_uint8(w, NUM);
+    aligned_write_uint8(w, n);
     // unknown (2 bytes)
     aligned_write_zeroes(w, sizeof(uint8_t) * 2);
     // showNumPlayers
     aligned_write_uint8(w, 0xff); // Show actual numbers rather than just "Up"
     
-    for (i = 0; i < NUM; i++)
+    /* Server entries and footers */
+    n = 0;
+    
+    for (i = 0; i < count; i++)
     {
-        /* Server entry and footer */
+        int playerCount;
+        R(ServerListing*) server = &data[i];
+        
+        if (!server_listing_name(server) || !server_listing_ip_address(server))
+            continue;
+        
+        switch (server_listing_status(server))
+        {
+        case ServerStatus_Down:
+            playerCount = SERVER_DOWN;
+            break;
+        
+        case ServerStatus_Locked:
+            playerCount = SERVER_LOCKED;
+            break;
+        
+        default:
+            playerCount = server_listing_player_count(server);
+            break;
+        }
+        
         // server name
-        //aligned_write_literal_null_terminated(w, SERVER_NAME);
-        aligned_write_snprintf_full_advance(w, 11, SERVER_NAME, i);
+        aligned_write_string_null_terminated(w, server_listing_name(server));
         // ip address
-        aligned_write_literal_null_terminated(w, SERVER_IP);
+        aligned_write_string_null_terminated(w, server_listing_ip_address(server));
         // isGreenName
-        aligned_write_uint8(w, 1);
+        aligned_write_bool(w, (server_listing_rank(server) != ServerRank_Standard));
         // playerCount
-        aligned_write_uint32(w, i);
+        aligned_write_int32(w, playerCount);
+        
+        if (++n == SERVER_LIST_COUNT_MAX)
+            break;
     }
     
     /* ServerListFooter */
@@ -252,3 +330,6 @@ void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a
 }
 
 #undef ERR_CREDENTIALS
+#undef SERVER_LIST_COUNT_MAX
+#undef SERVER_DOWN
+#undef SERVER_LOCKED

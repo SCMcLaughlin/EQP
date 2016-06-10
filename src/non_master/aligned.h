@@ -4,6 +4,7 @@
 
 #include "define.h"
 #include "random.h"
+#include "eqp_string.h"
 
 STRUCT_DECLARE(Basic);
 
@@ -67,7 +68,8 @@ void        aligned_write_uint32(R(Aligned*) a, uint32_t v);
 void        aligned_write_uint64(R(Aligned*) a, uint64_t v);
 #define     aligned_write_int64(a, v) (aligned_write_uint64((a), (uint64_t)(v)))
 void        aligned_write_buffer(R(Aligned*) a, R(const void*) data, uint32_t len);
-#define     aligned_write_literal_null_terminated(a, str) aligned_write_buffer(a, str, sizeof(str))
+#define     aligned_write_string_null_terminated(a, str) aligned_write_buffer((a), string_data(str), (string_length(str) + 1))
+#define     aligned_write_literal_null_terminated(a, str) aligned_write_buffer((a), str, sizeof(str))
 void        aligned_write_random(R(Aligned*) a, int bytes);
 void        aligned_write_zeroes(R(Aligned*) a, uint32_t count);
 // Always advances n characters, regardless of how many are actually written

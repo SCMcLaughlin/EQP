@@ -34,6 +34,7 @@ void network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) client, ui
 
 void network_client_trilogy_schedule_packet(R(NetworkClientTrilogy*) client, R(OutputPacketTrilogy*) packet)
 {
+    packet_trilogy_grab(packet->packet);
     array_push_back(network_client_trilogy_basic(client), &client->outputPackets, packet);
 }
 
@@ -122,13 +123,12 @@ void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
     {
         R(OutputPacketTrilogy*) wrapper = &array[i];
         R(PacketTrilogy*) packet        = wrapper->packet;
-        uint32_t length                 = packet_trilogy_length_raw(packet);
         uint32_t dataLength             = packet_trilogy_length(packet);
         uint16_t opcode                 = packet_trilogy_opcode(packet);
         uint16_t fragCount              = wrapper->fragCount;
         uint16_t fragIndex;
         
-        aligned_reinit(a, packet_trilogy_data_raw(packet), length);
+        aligned_reinit(a, packet_trilogy_data_raw(packet), packet_trilogy_length_raw(packet));
         
         for (fragIndex = 0; fragIndex < fragCount; fragIndex++)
         {

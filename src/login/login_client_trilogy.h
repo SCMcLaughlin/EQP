@@ -20,6 +20,7 @@ ENUM_DEFINE(LoginOpcodesTrilogy)
     TrilogyOp_Credentials   = 0x0001,
     TrilogyOp_Error         = 0x0002,
     TrilogyOp_Session       = 0x0004,
+    TrilogyOp_Exit          = 0x0005,
     TrilogyOp_ServerList    = 0x0046,
     TrilogyOp_Banner        = 0x0052,
     TrilogyOp_Version       = 0x0059

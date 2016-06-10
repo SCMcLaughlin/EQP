@@ -6,6 +6,8 @@ void login_init(R(Login*) login, R(const char*) ipcPath, R(const char*) masterIp
     (void)ipcPath;
     (void)masterIpcPath;
     
+    server_list_init(B(login), &login->serverList);
+    
     shm_viewer_init(&login->shmViewerLogWriter);
     shm_viewer_open(B(login), &login->shmViewerLogWriter, logWriterIpcPath, sizeof(IpcBuffer));
     // Tell the log writer to open our log file
@@ -23,6 +25,7 @@ void login_deinit(R(Login*) login)
 {
     core_deinit(C(login));
     shm_viewer_close(&login->shmViewerLogWriter);
+    server_list_deinit(&login->serverList);
     
     if (login->socket)
     {

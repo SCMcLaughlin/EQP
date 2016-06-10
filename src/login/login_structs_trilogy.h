@@ -29,7 +29,7 @@ STRUCT_DEFINE(LoginTrilogy_ServerListHeader)
 STRUCT_DEFINE(LoginTrilogy_ServerFooter)
 {
     uint8_t     isGreenName;
-    uint32_t    playerCount;
+    int         playerCount; // -1 for "DOWN", -2 for "LOCKED"
 };
 
 STRUCT_DEFINE(LoginTrilogy_ServerListFooter)

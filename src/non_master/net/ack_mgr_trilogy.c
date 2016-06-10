@@ -32,9 +32,9 @@ void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*)
     uint16_t fragCount  = packet_trilogy_frag_count(packet);
     noAckRequest        = (noAckRequest && fragCount == 0);
     
-    memset(&wrapper, 0, sizeof(OutputPacketTrilogy));
-    
     fragCount++;
+    
+    memset(&wrapper, 0, sizeof(OutputPacketTrilogy));
     
     wrapper.fragCount   = fragCount;
     wrapper.packet      = packet;

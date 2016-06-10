@@ -5,6 +5,8 @@
 #include "udp_client.h"
 #include "eqp_basic.h"
 
+#define MIN_PACKET_LENGTH 10
+
 void protocol_handler_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler)
 {
     ack_mgr_trilogy_init(sock, client, &handler->trilogy.ackMgr);
@@ -24,8 +26,14 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     uint16_t header;
     uint16_t seq;
     uint16_t opcode;
-    R(AckMgrTrilogy*) ackMgr    = &handler->ackMgr;
-    R(void*) clientObject       = handler->clientObject;
+    R(AckMgrTrilogy*) ackMgr;
+    R(void*) clientObject;
+    
+    if (len < MIN_PACKET_LENGTH)
+        return;
+    
+    ackMgr          = &handler->ackMgr;
+    clientObject    = handler->clientObject;
     
     aligned_init(protocol_handler_trilogy_basic(handler), a, data, len);
     
@@ -96,3 +104,5 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     if (opcode)
         client_recv_packet_trilogy(clientObject, opcode, a);
 }
+
+#undef MIN_PACKET_LENGTH

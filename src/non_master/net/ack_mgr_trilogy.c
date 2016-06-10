@@ -6,7 +6,6 @@ void ack_mgr_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(AckMgrTril
     network_client_trilogy_init(sock, client, &ackMgr->client);
     
     ackMgr->nextAckToRequest    = 0;
-    ackMgr->nextSeqToSend       = 0;
     ackMgr->nextSeqToReceive    = 0;
     ackMgr->nextFragGroup       = 0;
     
@@ -35,8 +34,11 @@ void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*)
     
     memset(&wrapper, 0, sizeof(OutputPacketTrilogy));
     
-    wrapper.seq = ackMgr->nextSeqToSend;
-    ackMgr->nextSeqToSend += fragCount + 1;
+    fragCount++;
+    
+    wrapper.fragCount   = fragCount;
+    wrapper.packet      = packet;
+    wrapper.seq         = network_client_trilogy_get_next_seq_to_send_and_increment(&ackMgr->client, fragCount);
     
     if (!noAckRequest)
     {
@@ -47,7 +49,7 @@ void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*)
         }
         
         wrapper.ackRequest = ackMgr->nextAckToRequest;
-        ackMgr->nextAckToRequest += fragCount + 1;
+        ackMgr->nextAckToRequest += fragCount;
         
         wrapper.ackCounterAlwaysOne = ackMgr->ackCounterAlwaysOne;
         wrapper.ackCounterRequest   = ackMgr->ackCounterRequest++;
@@ -55,15 +57,13 @@ void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*)
         header |= PacketTrilogyHasAckRequest | PacketTrilogyHasAckCounter;
     }
     
-    if (fragCount > 0)
+    if (fragCount > 1)
     {
         header |= PacketTrilogyIsFragment;
-        wrapper.fragGroup   = ackMgr->nextFragGroup++;
-        wrapper.fragCount   = fragCount;
+        wrapper.fragGroup = ackMgr->nextFragGroup++;
     }
     
     wrapper.header = header;
-    wrapper.packet = packet;
     
     network_client_trilogy_schedule_packet(&ackMgr->client, &wrapper);
 }

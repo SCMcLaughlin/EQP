@@ -13,6 +13,7 @@
 #include "login_structs_trilogy.h"
 
 #define EQP_LOGIN_TRILOGY_VERSION "8-09-2001 14:25"
+#define EQP_LOGIN_TRILOGY_BANNER_MESSAGE "Welcome to EQP!" /* Make this runtime configurable? */
 
 ENUM_DEFINE(LoginOpcodesTrilogy)
 {

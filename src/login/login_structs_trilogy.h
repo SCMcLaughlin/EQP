@@ -19,6 +19,28 @@ STRUCT_DEFINE(LoginTrilogy_Session)
     uint32_t    unknown;
 };
 
+STRUCT_DEFINE(LoginTrilogy_ServerListHeader)
+{
+    uint8_t     serverCount;
+    uint8_t     unknown[2];
+    uint8_t     showNumPlayers; // 0xff to show the count, 0 to show "UP"
+};
+
+STRUCT_DEFINE(LoginTrilogy_ServerFooter)
+{
+    uint8_t     isGreenName;
+    uint32_t    playerCount;
+};
+
+STRUCT_DEFINE(LoginTrilogy_ServerListFooter)
+{
+    uint32_t    admin;
+    uint8_t     zeroesA[8];
+    uint8_t     kunark;
+    uint8_t     velious;
+    uint8_t     zeroesB[12];
+};
+
 #pragma pack()
 
 #endif//EQP_LOGIN_STRUCTS_TRILOGY_H

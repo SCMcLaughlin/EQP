@@ -30,7 +30,7 @@ void network_client_deinit(R(NetworkClient*) client)
 int network_client_send_no_increment(R(NetworkClient*) client, R(const void*) data, uint32_t len)
 {
     uint32_t i;
-    printf("Send raw:\n");
+    printf("Send raw (%u):\n", len);
     for (i = 0; i < len; i++) printf("%02x ", ((byte*)data)[i]); printf("\n");
     return sendto(client->socketFd, (const char*)data, len, 0, (struct sockaddr*)&client->address, sizeof(IpAddress));
 }

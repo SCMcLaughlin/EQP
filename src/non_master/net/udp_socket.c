@@ -90,7 +90,7 @@ void udp_socket_recv(R(UdpSocket*) sock)
             return;
         }
         
-        printf("Recv raw:\n");
+        printf("Recv raw (%i):\n", len);
         for (i = 0; i < (uint32_t)len; i++) printf("%02x ", buffer[i]); printf("\n");
         
         // Do we already know about this client?

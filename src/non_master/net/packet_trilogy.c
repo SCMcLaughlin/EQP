@@ -3,21 +3,20 @@
 #include "eqp_basic.h"
 
 #define CRC_SIZE sizeof(uint32_t)
-#define DATA_SPACE (512 - EQP_PACKET_TRILOGY_HEADER_SIZE - CRC_SIZE)
 
 static uint32_t packet_trilogy_calc_length_and_frag_count(uint32_t length, uint16_t* fragCount)
 {
     // Not trying to be as space-efficient as possible, bit headache-inducing...
     
-    if (length <= DATA_SPACE)
+    if (length <= EQP_PACKET_TRILOGY_DATA_SPACE)
     {
         *fragCount = 0;
         return sizeof(PacketTrilogy) + EQP_PACKET_TRILOGY_HEADER_SIZE + length + CRC_SIZE;
     }
     else
     {
-        uint32_t count  = length / DATA_SPACE;
-        uint32_t rem    = length % DATA_SPACE;
+        uint32_t count  = length / EQP_PACKET_TRILOGY_DATA_SPACE;
+        uint32_t rem    = length % EQP_PACKET_TRILOGY_DATA_SPACE;
         
         if (rem)
             count++;
@@ -58,8 +57,43 @@ void packet_trilogy_drop(R(PacketTrilogy*) packet)
 
 void packet_trilogy_fragmentize(R(PacketTrilogy*) packet)
 {
-    (void)packet;
+    uint16_t n = packet->fragCount;
+    uint32_t dataLength;
+    uint32_t dst;
+    uint32_t src;
+    uint16_t i;
+    uint32_t j;
+    R(byte*) data;
+    
+    if (n == 0)
+        return;
+    
+    dataLength  = packet->dataLength + sizeof(uint16_t);
+    src         = dataLength + EQP_PACKET_TRILOGY_DATA_OFFSET - 1;
+    dst         = packet_trilogy_length_raw(packet) - CRC_SIZE - 1;
+    data        = packet->data;
+    
+    // The opcode counts towards the size of the first fragment; any non-final fragment
+    // that doesn't make use of its full size will be rejected by the client. We add
+    // the size of the opcode here so that 2 extra bytes will go towards the final
+    // packet, effectively shifting everything over without increasing the 'actual'
+    // data size. (Yes, it is a bit confusing.)
+    dataLength += sizeof(uint16_t);
+    dataLength %= EQP_PACKET_TRILOGY_DATA_SPACE;
+    
+    if (dataLength == 0)
+        dataLength = EQP_PACKET_TRILOGY_DATA_SPACE;
+    
+    for (i = 0; i < n; i++)
+    {
+        for (j = 0; j < dataLength; j++)
+        {
+            data[dst--] = data[src--];
+        }
+        
+        dst -= EQP_PACKET_TRILOGY_DATA_OFFSET + CRC_SIZE;
+        dataLength = EQP_PACKET_TRILOGY_DATA_SPACE;
+    }
 }
 
 #undef CRC_SIZE
-#undef DATA_SPACE

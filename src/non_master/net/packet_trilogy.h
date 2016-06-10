@@ -11,6 +11,7 @@
 
 #define EQP_PACKET_TRILOGY_HEADER_SIZE (sizeof(uint16_t) * 9)
 #define EQP_PACKET_TRILOGY_DATA_OFFSET EQP_PACKET_TRILOGY_HEADER_SIZE
+#define EQP_PACKET_TRILOGY_DATA_SPACE 512
 
 /*
     The full packet header looks something like this. We work backwards from the opcode;
@@ -71,7 +72,7 @@ void            packet_trilogy_drop(R(PacketTrilogy*) packet);
 #define         packet_trilogy_data(packet) (&(packet)->data[EQP_PACKET_TRILOGY_DATA_OFFSET])
 #define         packet_trilogy_data_raw(packet) (&(packet)->data[0])
 #define         packet_trilogy_length(packet) ((packet)->dataLength)
-#define         packet_trilogy_length_raw(packet) ((packet)->dataLength + EQP_PACKET_TRILOGY_DATA_OFFSET + sizeof(uint32_t))
+#define         packet_trilogy_length_raw(packet) ((packet)->dataLength + ((EQP_PACKET_TRILOGY_DATA_OFFSET + sizeof(uint32_t)) * ((packet)->fragCount + 1)))
 #define         packet_trilogy_frag_count(packet) ((packet)->fragCount)
 
 void            packet_trilogy_fragmentize(R(PacketTrilogy*) packet);

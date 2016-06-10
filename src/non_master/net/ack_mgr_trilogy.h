@@ -18,7 +18,7 @@ STRUCT_DEFINE(AckMgrTrilogy)
     NetworkClientTrilogy    client;
     
     uint16_t    nextAckToRequest;
-    uint16_t    nextSeqToSend;
+    //uint16_t    nextSeqToSend;
     uint16_t    nextSeqToReceive;
     uint16_t    nextFragGroup;
     

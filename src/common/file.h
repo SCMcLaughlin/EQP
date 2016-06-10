@@ -1,6 +1,6 @@
 
-#ifndef _EQP_FILE_H_
-#define _EQP_FILE_H_
+#ifndef EQP_FILE_H
+#define EQP_FILE_H
 
 #include "define.h"
 #include "eqp_core.h"
@@ -8,4 +8,4 @@
 
 uint64_t    file_calc_size(R(FILE*) fp);
 
-#endif//_EQP_FILE_H_
+#endif//EQP_FILE_H

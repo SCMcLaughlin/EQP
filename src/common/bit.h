@@ -1,6 +1,6 @@
 
-#ifndef _EQP_BIT_H_
-#define _EQP_BIT_H_
+#ifndef EQP_BIT_H
+#define EQP_BIT_H
 
 #include "define.h"
 
@@ -26,4 +26,4 @@ uint64_t    bit_next_pow2_u64(uint64_t n);
 #define bit_pow2_greater_than(n) ((bit_is_pow2(n)) ? ((n) << 1) : (bit_next_pow2_selector((n))))
 #define bit_pow2_greater_or_equal(n) ((bit_is_pow2(n)) ? (n) : (bit_next_pow2_selector((n))))
 
-#endif//_EQP_BIT_H_
+#endif//EQP_BIT_H

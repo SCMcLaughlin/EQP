@@ -1,6 +1,6 @@
 
-#ifndef _EQP_EXCEPTION_H_
-#define _EQP_EXCEPTION_H_
+#ifndef EQP_EXCEPTION_H
+#define EQP_EXCEPTION_H
 
 #include "define.h"
 #include "error_codes.h"
@@ -35,4 +35,4 @@ void    exception_end_try(R(Basic*) basic);
 void    exception_end_try_with_finally(R(Basic*) basic);
 String* exception_get_message(R(Basic*) basic);
 
-#endif//_EQP_EXCEPTION_H_
+#endif//EQP_EXCEPTION_H

@@ -1,6 +1,6 @@
 
-#ifndef _EQP_TERMINAL_H_
-#define _EQP_TERMINAL_H_
+#ifndef EQP_TERMINAL_H
+#define EQP_TERMINAL_H
 
 #ifndef EQP_NO_TERMINAL_COLORS
 
@@ -36,4 +36,4 @@
 
 #endif
 
-#endif//_EQP_TERMINAL_H_
+#endif//EQP_TERMINAL_H

@@ -7,6 +7,7 @@
 #include "network_client.h"
 #include "eqp_array.h"
 #include "packet_trilogy.h"
+#include "ack_common.h"
 
 #define EQP_TRILOGY_RESEND_MILLISECONDS 250
 
@@ -30,6 +31,7 @@ STRUCT_DEFINE(NetworkClientTrilogy)
     
     uint16_t        nextAckResponse;
     uint16_t        nextSeqToSend;
+    uint16_t        lastAckReceived;
     
     uint32_t        sendFromIndex;
 };

@@ -9,6 +9,7 @@ void network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(
     client->outputPackets   = array_create_type(udp_socket_basic(sock), OutputPacketTrilogy);
     client->nextAckResponse = 0;
     client->nextSeqToSend   = 0;
+    client->lastAckReceived = 0;
     client->sendFromIndex   = 0;
 }
 
@@ -29,7 +30,8 @@ void network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) client, u
     uint32_t n                      = client->sendFromIndex;
     uint32_t i;
     
-    ack = toHostUint16(ack);
+    ack                     = toHostUint16(ack);
+    client->lastAckReceived = ack;
     
     for (i = 0; i < n; i++)
     {
@@ -144,6 +146,7 @@ void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
     uint32_t n                      = array_count(client->outputPackets);
     R(OutputPacketTrilogy*) array   = array_data_type(client->outputPackets, OutputPacketTrilogy);
     uint16_t ackResponse            = toNetworkUint16(client->nextAckResponse);
+    uint16_t ackReceived            = client->lastAckReceived;
     uint32_t sendFromIndex          = client->sendFromIndex;
     uint64_t time                   = clock_milliseconds();
     uint32_t i;
@@ -159,23 +162,30 @@ void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
         uint16_t fragCount              = wrapper->fragCount;
         uint16_t fragIndex              = 0;
         
+        aligned_reinit(a, packet_trilogy_data_raw(packet), packet_trilogy_length_raw(packet));
+        
         if (i < sendFromIndex)
         {
-            // Should we re-send this un-acked packet?
-            uint16_t ack    = wrapper->ackRequest;
-            uint16_t last   = ack + wrapper->fragCount - 1;
+            uint16_t ack;
             
-            if (last < ackResponse || (time - wrapper->ackTimestamp) < EQP_TRILOGY_RESEND_MILLISECONDS)
+            // Should we re-send this un-acked packet?
+            if ((time - wrapper->ackTimestamp) < EQP_TRILOGY_RESEND_MILLISECONDS)
                 continue;
             
-            while (ackResponse > ack)
+            ack = wrapper->ackRequest;
+            
+            // Figure out if we were last acked in the middle of a fragmented packet
+            while (ack_compare(ackReceived, ack) != AckPast && fragIndex < fragCount)
             {
-                ack++;
+                aligned_advance(a, EQP_PACKET_TRILOGY_DATA_OFFSET + EQP_PACKET_TRILOGY_DATA_SPACE - sizeof(uint16_t) + sizeof(uint32_t));
+                
+                if (fragIndex > 0)
+                    aligned_advance(a, sizeof(uint16_t));
+                
                 fragIndex++;
+                ack++;
             }
         }
-        
-        aligned_reinit(a, packet_trilogy_data_raw(packet), packet_trilogy_length_raw(packet));
         
         for (; fragIndex < fragCount; fragIndex++)
         {

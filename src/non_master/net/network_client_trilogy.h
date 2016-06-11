@@ -8,6 +8,8 @@
 #include "eqp_array.h"
 #include "packet_trilogy.h"
 
+#define EQP_TRILOGY_RESEND_MILLISECONDS 250
+
 STRUCT_DEFINE(OutputPacketTrilogy)
 {
     uint16_t        header;
@@ -17,6 +19,7 @@ STRUCT_DEFINE(OutputPacketTrilogy)
     uint16_t        fragCount;
     uint8_t         ackCounterAlwaysOne;
     uint8_t         ackCounterRequest;
+    uint64_t        ackTimestamp;
     PacketTrilogy*  packet;
 };
 
@@ -29,7 +32,6 @@ STRUCT_DEFINE(NetworkClientTrilogy)
     uint16_t        nextSeqToSend;
     
     uint32_t        sendFromIndex;
-    uint16_t        sendFromFrag;
 };
 
 void        network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkClientTrilogy*) client);

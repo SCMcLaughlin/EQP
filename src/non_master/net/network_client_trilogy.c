@@ -10,7 +10,6 @@ void network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(
     client->nextAckResponse = 0;
     client->nextSeqToSend   = 0;
     client->sendFromIndex   = 0;
-    client->sendFromFrag    = 0;
 }
 
 void network_client_trilogy_deinit(R(NetworkClientTrilogy*) client)
@@ -145,22 +144,40 @@ void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
     uint32_t n                      = array_count(client->outputPackets);
     R(OutputPacketTrilogy*) array   = array_data_type(client->outputPackets, OutputPacketTrilogy);
     uint16_t ackResponse            = toNetworkUint16(client->nextAckResponse);
+    uint32_t sendFromIndex          = client->sendFromIndex;
+    uint64_t time                   = clock_milliseconds();
     uint32_t i;
     
     aligned_set_basic(a, network_client_trilogy_basic(client));
     
-    for (i = client->sendFromIndex; i < n; i++)
+    for (i = 0; i < n; i++)
     {
         R(OutputPacketTrilogy*) wrapper = &array[i];
         R(PacketTrilogy*) packet        = wrapper->packet;
         uint32_t dataLength             = packet_trilogy_length(packet);
         uint16_t opcode                 = packet_trilogy_opcode(packet);
         uint16_t fragCount              = wrapper->fragCount;
-        uint16_t fragIndex;
+        uint16_t fragIndex              = 0;
+        
+        if (i < sendFromIndex)
+        {
+            // Should we re-send this un-acked packet?
+            uint16_t ack    = wrapper->ackRequest;
+            uint16_t last   = ack + wrapper->fragCount - 1;
+            
+            if (last < ackResponse || (time - wrapper->ackTimestamp) < EQP_TRILOGY_RESEND_MILLISECONDS)
+                continue;
+            
+            while (ackResponse > ack)
+            {
+                ack++;
+                fragIndex++;
+            }
+        }
         
         aligned_reinit(a, packet_trilogy_data_raw(packet), packet_trilogy_length_raw(packet));
         
-        for (fragIndex = 0; fragIndex < fragCount; fragIndex++)
+        for (; fragIndex < fragCount; fragIndex++)
         {
             uint32_t space = (fragIndex == 0) ? (EQP_PACKET_TRILOGY_DATA_SPACE - sizeof(uint16_t)) : EQP_PACKET_TRILOGY_DATA_SPACE;
             
@@ -168,6 +185,8 @@ void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
             
             network_client_trilogy_send_fragment(&client->base, wrapper, a,
                 (dataLength > space) ? space : dataLength, opcode, ackResponse, fragIndex);
+            
+            wrapper->ackTimestamp = clock_milliseconds();
             
             ackResponse = 0;
             dataLength -= space;

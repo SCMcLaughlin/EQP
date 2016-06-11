@@ -166,9 +166,11 @@ BINMASTER= $(DIRBIN)eqp-master
 DIRLOGIN= src/login/
 BLOGIN= build/$(BUILDTYPE)/login/
 _OLOGIN= login_main.o \
- eqp_login.o login_crypto.o server_list.o login_client.o login_client_trilogy.o
+ eqp_login.o login_crypto.o server_list.o login_client.o login_client_trilogy.o \
+ tcp_server.o tcp_client.o
 _HLOGIN= \
- eqp_login.h login_crypto.h server_list.h login_client.h login_client_trilogy.h
+ eqp_login.h login_crypto.h server_list.h login_client.h login_client_trilogy.h \
+ tcp_server.h tcp_client.h
 OLOGIN= $(patsubst %,$(BLOGIN)%,$(_OLOGIN))
 HLOGIN= $(patsubst %,$(DIRLOGIN)%,$(_HLOGIN))
 

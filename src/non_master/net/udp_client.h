@@ -17,9 +17,7 @@ STRUCT_DEFINE(UdpClient)
         struct
         {
             uint16_t isDead : 1;
-            uint16_t hasInputPacketsQueued : 1;
-            uint16_t hasOutputPacketsQueued : 1;
-            uint16_t unused : 13;
+            uint16_t unused : 15;
         };
         
         uint16_t flags;

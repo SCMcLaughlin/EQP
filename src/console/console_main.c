@@ -48,6 +48,8 @@ int main(int argc, const char** argv)
         return 0;
     }
     
+    memset(&console, 0, sizeof(Console));
+    
     basic_preinit(B(&console));
     return console_main(&console, argc, argv);
 }

@@ -37,5 +37,6 @@ void    ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilog
 #define ack_mgr_trilogy_basic(ack) network_client_trilogy_basic(&(ack)->client)
 #define ack_mgr_trilogy_update_index(ack, i) network_client_trilogy_update_index(&(ack)->client, i)
 #define ack_mgr_trilogy_flag_connection_as_dead(ack) network_client_trilogy_flag_connection_as_dead(&(ack)->client)
+#define ack_mgr_trilogy_increment_packets_received(ack) network_client_trilogy_increment_packets_received(&(ack)->client)
 
 #endif//EQP_ACK_MGR_TRILOGY_H

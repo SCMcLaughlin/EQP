@@ -11,6 +11,7 @@
 #include "ipc_buffer.h"
 #include "share_mem.h"
 #include "udp_socket.h"
+#include "tcp_server.h"
 #include "login_crypto.h"
 #include "server_list.h"
 
@@ -22,6 +23,7 @@ STRUCT_DEFINE(Login)
     ServerList      serverList;
     ShmViewer       shmViewerLogWriter;
     UdpSocket*      socket;
+    TcpServer       tcpServer;
     LoginCrypto*    crypto;
 };
 

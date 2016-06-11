@@ -10,7 +10,7 @@
 #include "protocol_handler.h"
 
 #define EQP_UDP_SOCKET_BUFFER_SIZE 1024
-#define EQP_UDP_SOCKET_LINKDEAD_TIMEOUT_MILLISECONDS 30000
+#define EQP_UDP_SOCKET_LINKDEAD_TIMEOUT_MILLISECONDS 15000
 
 STRUCT_DECLARE(Basic);
 
@@ -23,7 +23,6 @@ STRUCT_DEFINE(UdpSocket)
     Array*  clients;
     
     byte    compressBuffer[EQP_UDP_SOCKET_BUFFER_SIZE];
-    byte    decompressBuffer[EQP_UDP_SOCKET_BUFFER_SIZE];
 };
 
 UdpSocket*  udp_socket_create(R(Basic*) basic);

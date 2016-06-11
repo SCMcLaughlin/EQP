@@ -18,6 +18,9 @@ void login_init(R(Login*) login, R(const char*) ipcPath, R(const char*) masterIp
     login->socket = udp_socket_create(B(login));
     udp_socket_open(login->socket, 5998);
     
+    tcp_server_init(login, &login->tcpServer);
+    tcp_server_open(&login->tcpServer, 5998);
+    
     login->crypto = login_crypto_create(B(login));
 }
 
@@ -32,11 +35,14 @@ void login_deinit(R(Login*) login)
         udp_socket_destroy(login->socket);
         login->socket = NULL;
     }
+    
+    tcp_server_deinit(&login->tcpServer);
 }
 
 void login_main_loop(R(Login*) login)
 {
     R(UdpSocket*) socket = login->socket;
+    R(TcpServer*) server = &login->tcpServer;
     
     for (;;)
     {
@@ -44,6 +50,9 @@ void login_main_loop(R(Login*) login)
         db_thread_execute_query_callbacks(core_db_thread(C(login)));
         udp_socket_send(socket);
         udp_socket_check_timeouts(socket);
+        
+        tcp_server_accept_new_connections(server);
+        tcp_server_recv(server);
         
         clock_sleep_milliseconds(50);
     }

@@ -28,6 +28,7 @@ int         aligned_advance_null_terminator(R(Aligned*) a);
 #define     aligned_position(a) ((a)->cursor)
 #define     aligned_all(a) ((a)->buffer)
 #define     aligned_current(a) ((a)->buffer + (a)->cursor)
+#define     aligned_current_type(a, type) (type*)aligned_current(a)
 #define     aligned_at_position(a, pos) ((a)->buffer + (pos))
 
 #define     aligned_set_basic(a, b) ((a)->basic = (b))

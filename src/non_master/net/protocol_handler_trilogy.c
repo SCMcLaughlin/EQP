@@ -44,6 +44,8 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     if (crc_calc32_network(data, len) != aligned_read_uint32(a))
         return;
     
+    protocol_handler_trilogy_increment_packets_received(handler);
+    
     aligned_reset(a);
     aligned_reduce_size(a, sizeof(uint32_t));
     

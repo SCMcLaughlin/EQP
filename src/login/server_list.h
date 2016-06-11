@@ -27,7 +27,8 @@ STRUCT_DEFINE(ServerListing)
     uint32_t        unused : 28;
     int             playerCount;
     uint32_t        nameAndIpLength;    // Saves us some dereferences when calculating packet lengths
-    String*         name;
+    String*         longName;
+    String*         shortName;
     String*         ipAddress;
 };
 
@@ -40,7 +41,8 @@ STRUCT_DEFINE(ServerList)
 void        server_list_init(R(Basic*) basic, R(ServerList*) list);
 void        server_list_deinit(R(ServerList*) list);
 
-void        server_list_add(R(ServerList*) list, R(ServerListing*) server);
+uint32_t    server_list_add(R(ServerList*) list, R(ServerListing*) server);
+void        server_list_remove_by_index(R(ServerList*) list, uint32_t index);
 
 #define     server_list_count(list) array_count((list)->array)
 #define     server_list_data(list) array_data_type((list)->array, ServerListing)
@@ -48,7 +50,7 @@ void        server_list_add(R(ServerList*) list, R(ServerListing*) server);
 #define     server_listing_status(server) ((server)->status)
 #define     server_listing_rank(server) ((server)->rank)
 #define     server_listing_player_count(server) ((server)->playerCount)
-#define     server_listing_name(server) ((server)->name)
+#define     server_listing_name(server) ((server)->longName)
 #define     server_listing_ip_address(server) ((server)->ipAddress)
 #define     server_listing_strings_length(server) ((server)->nameAndIpLength)
 

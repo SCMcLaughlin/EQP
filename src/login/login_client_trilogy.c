@@ -165,6 +165,7 @@ static void login_trilogy_handle_op_banner(R(LoginClient*) client, R(ProtocolHan
     login_trilogy_schedule_packet(handler, packet);
 }
 
+#if 0
 #define SERVER_NAME "EQP Test%u"
 #define SERVER_IP "127.0.0.1"
 #define NUM 50
@@ -179,8 +180,8 @@ static uint32_t temp_add_test_servers(R(Basic*) basic, R(ServerList*) list)
         server.rank         = (i%2 == 0) ? ServerRank_Preferred : ServerRank_Standard;
         server.playerCount  = i;
         
-        server.name = string_create(basic);
-        string_set_from_format(basic, &server.name, SERVER_NAME, i*i);
+        server.longName = string_create(basic);
+        string_set_from_format(basic, &server.longName, SERVER_NAME, i*i);
         server.ipAddress = string_create_from_cstr(basic, SERVER_IP, sizeof(SERVER_IP) - 1);
         
         server_list_add(list, &server);
@@ -188,6 +189,7 @@ static uint32_t temp_add_test_servers(R(Basic*) basic, R(ServerList*) list)
     
     return NUM;
 }
+#endif
 
 static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(ProtocolHandler*) handler)
 {
@@ -209,10 +211,12 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     list    = login_server_list(login);
     count   = server_list_count(list);
     
+#if 0
     ////////
     if (count == 0)
         count = temp_add_test_servers(B(login), list);
     ////////
+#endif
     
     // Figure out how long the packet will be
     data    = server_list_data(list);

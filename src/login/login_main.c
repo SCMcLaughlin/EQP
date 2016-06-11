@@ -46,6 +46,8 @@ int main(int argc, const char** argv)
         return 1;
     }
     
+    memset(&login, 0, sizeof(Login));
+    
     basic_preinit(B(&login));
     return login_main(&login, argv);
 }

@@ -35,6 +35,7 @@ STRUCT_DEFINE(NetworkClientTrilogy)
 void        network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkClientTrilogy*) client);
 void        network_client_trilogy_deinit(R(NetworkClientTrilogy*) client);
 
+void        network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) client, uint16_t ack);
 void        network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) client, uint16_t ack);
 
 void        network_client_trilogy_schedule_packet(R(NetworkClientTrilogy*) client, R(OutputPacketTrilogy*) packet);

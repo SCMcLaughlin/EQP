@@ -24,6 +24,36 @@ void network_client_trilogy_deinit(R(NetworkClientTrilogy*) client)
     }
 }
 
+void network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) client, uint16_t ack)
+{
+    R(OutputPacketTrilogy*) array   = array_data_type(client->outputPackets, OutputPacketTrilogy);
+    uint32_t n                      = client->sendFromIndex;
+    uint32_t i;
+    
+    ack = toHostUint16(ack);
+    
+    for (i = 0; i < n; i++)
+    {
+        R(OutputPacketTrilogy*) wrapper = &array[i];
+        uint16_t ackRequest             = wrapper->ackRequest + (wrapper->fragCount - 1);
+        
+        if (ackRequest > ack)
+            break;
+        
+        if (wrapper->packet)
+        {
+            packet_trilogy_drop(wrapper->packet);
+            wrapper->packet = NULL;
+        }
+    }
+    
+    if (i > 0)
+    {
+        array_shift_left(client->outputPackets, i);
+        client->sendFromIndex = 0;
+    }
+}
+
 void network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) client, uint16_t ack)
 {
     ack = toHostUint16(ack);

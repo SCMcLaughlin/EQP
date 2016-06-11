@@ -28,7 +28,7 @@ STRUCT_DEFINE(AckMgrTrilogy)
 void    ack_mgr_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(AckMgrTrilogy*) ackMgr);
 void    ack_mgr_trilogy_deinit(R(AckMgrTrilogy*) ackMgr);
 
-void    ack_mgr_trilogy_recv_ack_response(R(AckMgrTrilogy*) ackMgr, uint16_t ack);
+#define ack_mgr_trilogy_recv_ack_response(ackMgr, ack) network_client_trilogy_recv_ack_response((&(ackMgr)->client), (ack))
 #define ack_mgr_trilogy_recv_ack_request(ackMgr, ack) network_client_trilogy_recv_ack_request((&(ackMgr)->client), (ack))
 
 void    ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*) packet, int noAckRequest);

@@ -18,13 +18,6 @@ void ack_mgr_trilogy_deinit(R(AckMgrTrilogy*) ackMgr)
     network_client_trilogy_deinit(&ackMgr->client);
 }
 
-void ack_mgr_trilogy_recv_ack_response(R(AckMgrTrilogy*) ackMgr, uint16_t ack)
-{
-    //check queue of sent packets for the one that requested this ack...
-    (void)ackMgr;
-    (void)ack;
-}
-
 void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*) packet, int noAckRequest)
 {
     OutputPacketTrilogy wrapper;

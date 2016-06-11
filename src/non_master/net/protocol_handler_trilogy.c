@@ -57,7 +57,7 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     
     if (header & PacketTrilogyHasAckResponse)
     {
-        uint16_t ackResponse = toHostUint16(aligned_read_uint16(a));
+        uint16_t ackResponse = aligned_read_uint16(a);
         ack_mgr_trilogy_recv_ack_response(ackMgr, ackResponse);
         
         // Pure ack?

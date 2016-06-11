@@ -30,6 +30,7 @@ void        array_set(R(Array*) array, uint32_t index, void* value);
 void*       array_push_back(R(Basic*) basic, R(Array**) array, void* value);
 void        array_pop_back(R(Array*) array);
 void        array_swap_and_pop(R(Array*) array, uint32_t index);
+void        array_shift_left(R(Array*) array, uint32_t numIndices);
 
 void        array_reserve(R(Basic*) basic, R(Array**) array, uint32_t count);
 void        array_clear(R(Array*) array);

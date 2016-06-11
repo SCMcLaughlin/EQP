@@ -125,6 +125,24 @@ void array_swap_and_pop(R(Array*) array, uint32_t index)
     }
 }
 
+void array_shift_left(R(Array*) array, uint32_t numIndices)
+{
+    uint32_t count = array_count(array);
+    uint32_t size;
+    
+    if (count <= numIndices)
+    {
+        array_clear(array);
+        return;
+    }
+    
+    count -= numIndices;
+    size = array->elementSize;
+    
+    memmove(array->data, &array->data[numIndices * size], count * size);
+    array->count = count;
+}
+
 void array_reserve(R(Basic*) basic, R(Array**) array, uint32_t count)
 {
     R(Array*) ar = *array;

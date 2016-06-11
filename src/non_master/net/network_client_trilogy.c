@@ -2,9 +2,9 @@
 #include "network_client_trilogy.h"
 #include "udp_socket.h"
 
-void network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkClientTrilogy*) client)
+void network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkClientTrilogy*) client, uint32_t index)
 {
-    network_client_init(sock, udpClient, &client->base);
+    network_client_init(sock, udpClient, &client->base, index);
     
     client->outputPackets   = array_create_type(udp_socket_basic(sock), OutputPacketTrilogy);
     client->nextAckResponse = 0;
@@ -174,16 +174,19 @@ void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
             
             ack = wrapper->ackRequest;
             
-            // Figure out if we were last acked in the middle of a fragmented packet
-            while (ack_compare(ackReceived, ack) != AckPast && fragIndex < fragCount)
+            // Figure out if we were to re-send from if we were last acked in the middle of a fragmented packet
+            if (fragCount > 1)
             {
-                aligned_advance(a, EQP_PACKET_TRILOGY_DATA_OFFSET + EQP_PACKET_TRILOGY_DATA_SPACE - sizeof(uint16_t) + sizeof(uint32_t));
-                
-                if (fragIndex > 0)
-                    aligned_advance(a, sizeof(uint16_t));
-                
-                fragIndex++;
-                ack++;
+                while (ack_compare(ackReceived, ack) != AckPast && fragIndex < fragCount)
+                {
+                    aligned_advance(a, EQP_PACKET_TRILOGY_DATA_OFFSET + EQP_PACKET_TRILOGY_DATA_SPACE - sizeof(uint16_t) + sizeof(uint32_t));
+                    
+                    if (fragIndex > 0)
+                        aligned_advance(a, sizeof(uint16_t));
+                    
+                    fragIndex++;
+                    ack++;
+                }
             }
         }
         

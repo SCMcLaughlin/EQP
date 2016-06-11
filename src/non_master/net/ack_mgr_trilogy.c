@@ -1,9 +1,9 @@
 
 #include "ack_mgr_trilogy.h"
 
-void ack_mgr_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(AckMgrTrilogy*) ackMgr)
+void ack_mgr_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(AckMgrTrilogy*) ackMgr, uint32_t index)
 {
-    network_client_trilogy_init(sock, client, &ackMgr->client);
+    network_client_trilogy_init(sock, client, &ackMgr->client, index);
     
     ackMgr->nextAckToRequest    = 0;
     ackMgr->nextSeqToReceive    = 0;

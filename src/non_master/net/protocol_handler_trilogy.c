@@ -7,9 +7,9 @@
 
 #define MIN_PACKET_LENGTH 10
 
-void protocol_handler_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler)
+void protocol_handler_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, uint32_t index)
 {
-    ack_mgr_trilogy_init(sock, client, &handler->trilogy.ackMgr);
+    ack_mgr_trilogy_init(sock, client, &handler->trilogy.ackMgr, index);
     
     handler->trilogy.clientObject = client_create_from_new_connection_trilogy(handler);
 }
@@ -52,7 +52,8 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     
     if (header & (PacketTrilogyIsClosing | PacketTrilogyIsClosing2))
     {
-        
+        protocol_handler_trilogy_flag_connection_as_dead(handler);
+        client_on_disconnect(clientObject, false);
     }
     
     if (header & PacketTrilogyHasAckResponse)

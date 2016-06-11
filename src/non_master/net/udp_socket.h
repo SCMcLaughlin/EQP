@@ -36,4 +36,6 @@ void        udp_socket_send(R(UdpSocket*) sock);
 #define     udp_socket_fd(sock) ((sock)->socketFd)
 #define     udp_socket_basic(sock) ((sock)->basic)
 
+void        udp_socket_flag_client_as_dead_by_index(R(UdpSocket*) sock, uint32_t index);
+
 #endif//EQP_UDP_SOCKET_H

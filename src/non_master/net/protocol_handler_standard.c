@@ -5,11 +5,12 @@
 #include "udp_client.h"
 #include "eqp_basic.h"
 
-void protocol_handler_standard_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler)
+void protocol_handler_standard_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, uint32_t index)
 {
     (void)sock;
     (void)client;
     (void)handler;
+    (void)index;
 }
 
 void protocol_handler_standard_deinit(R(ProtocolHandlerStandard*) handler)

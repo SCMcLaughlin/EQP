@@ -51,7 +51,7 @@ void* array_data(R(Array*) array)
 
 void* array_get(R(Array*) array, uint32_t index)
 {
-    return &array->data[index * array->elementSize];
+    return (array->count > index) ? &array->data[index * array->elementSize] : NULL;
 }
 
 void* array_back(R(Array*) array)
@@ -62,8 +62,11 @@ void* array_back(R(Array*) array)
 
 void array_get_copy(R(Array*) array, uint32_t index, void* copyTo)
 {
-    uint32_t size = array->elementSize;
-    memcpy(copyTo, &array->data[index * size], size);
+    if (array->count > index)
+    {
+        uint32_t size = array->elementSize;
+        memcpy(copyTo, &array->data[index * size], size);
+    }
 }
 
 void array_back_copy(R(Array*) array, void* copyTo)
@@ -111,7 +114,7 @@ void array_pop_back(R(Array*) array)
         array->count--;
 }
 
-void array_swap_and_pop(R(Array*) array, uint32_t index)
+int array_swap_and_pop(R(Array*) array, uint32_t index)
 {
     if (array->count > 0 && index < array->count)
     {
@@ -121,8 +124,11 @@ void array_swap_and_pop(R(Array*) array, uint32_t index)
         {
             uint32_t size = array->elementSize;
             memcpy(&array->data[index * size], &array->data[back * size], size);
+            return true;
         }
     }
+    
+    return false;
 }
 
 void array_shift_left(R(Array*) array, uint32_t numIndices)

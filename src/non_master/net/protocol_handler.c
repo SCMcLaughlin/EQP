@@ -30,11 +30,19 @@ Basic* protocol_handler_basic(R(ProtocolHandler*) handler)
     R(Basic*) basic;
     
     /*if (handler->isTrilogy == 0)
-        protocol_handler_standard_schedule_packet(&handler->standard);
+        basic = protocol_handler_standard_basic(&handler->standard);
     else*/
         basic = protocol_handler_trilogy_basic(&handler->trilogy);
     
     return basic;
+}
+
+void protocol_handler_update_index(R(ProtocolHandler*) handler, uint32_t index)
+{
+    /*if (handler->isTrilogy == 0)
+        protocol_handler_standard_update_index(&handler->standard, index);
+    else*/
+        protocol_handler_trilogy_update_index(&handler->trilogy, index);
 }
 
 void protocol_handler_recv(R(ProtocolHandler*) handler, R(byte*) data, int len)
@@ -45,7 +53,7 @@ void protocol_handler_recv(R(ProtocolHandler*) handler, R(byte*) data, int len)
         protocol_handler_trilogy_recv(&handler->trilogy, data, len);
 }
 
-void protocol_handler_check_first_packet(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, R(byte*) data, int len)
+void protocol_handler_check_first_packet(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, R(byte*) data, int len, uint32_t index)
 {
     Aligned a;
     uint16_t header;
@@ -61,13 +69,13 @@ void protocol_handler_check_first_packet(R(UdpSocket*) sock, R(UdpClient*) clien
         if (crc_calc32_network(data, len) == aligned_read_uint32(&a))
         {
             handler->isTrilogy = 1;
-            protocol_handler_trilogy_init(sock, client, handler);
+            protocol_handler_trilogy_init(sock, client, handler, index);
             return;
         }
     }
     
     handler->isTrilogy = 0;
-    protocol_handler_standard_init(sock, client, handler);
+    protocol_handler_standard_init(sock, client, handler, index);
 }
 
 void protocol_handler_send_queued(R(ProtocolHandler*) handler)
@@ -81,7 +89,7 @@ void protocol_handler_send_queued(R(ProtocolHandler*) handler)
 void protocol_handler_schedule_packet_opt(R(ProtocolHandler*) handler, R(void*) packet, int noAckRequest)
 {
     /*if (handler->isTrilogy == 0)
-        protocol_handler_standard_schedule_packet(&handler->standard);
+        protocol_handler_standard_schedule_packet_opt(&handler->standard, (Packet*)packet, noAckRequest);
     else*/
         protocol_handler_trilogy_schedule_packet_opt(&handler->trilogy, (PacketTrilogy*)packet, noAckRequest);
 }

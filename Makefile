@@ -324,6 +324,7 @@ clean-common:
 
 clean-non-master:
 	$(Q)$(RM) $(BNONMASTER)*.o
+	$(Q)$(RM) $(BNONMASTER_NET)*.o
 	$(E) "Cleaned non-master"
 
 clean-master:

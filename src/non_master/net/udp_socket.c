@@ -65,6 +65,14 @@ void udp_socket_close(R(UdpSocket*) sock)
     }
 }
 
+static void udp_socket_handle_dead_client(R(UdpSocket*) sock, R(UdpClient*) cli, uint32_t index)
+{
+    udp_client_deinit(cli);
+    if (array_swap_and_pop(sock->clients, index))
+        protocol_handler_update_index(udp_client_handler(array_get_type(sock->clients, index, UdpClient)), index);
+    printf("Destroyed UdpClient at index %u\n", index);
+}
+
 void udp_socket_recv(R(UdpSocket*) sock)
 {
     IpAddress addr;
@@ -108,8 +116,7 @@ void udp_socket_recv(R(UdpSocket*) sock)
             
             if (udp_client_is_dead(cli))
             {
-                udp_client_deinit(cli);
-                array_swap_and_pop(sock->clients, i);
+                udp_socket_handle_dead_client(sock, cli, i);
                 n--;
                 continue;
             }
@@ -126,9 +133,10 @@ void udp_socket_recv(R(UdpSocket*) sock)
         // If we reach here, this is a new client
         client = array_push_back_type(sock->basic, &sock->clients, UdpClient);
         udp_client_init(sock->basic, client, ip, port);
-        protocol_handler_check_first_packet(sock, client, udp_client_handler(client), buffer, len);
+        protocol_handler_check_first_packet(sock, client, udp_client_handler(client), buffer, len, n);
         
     found:
+        udp_client_update_last_recv_time(client);
         protocol_handler_recv(udp_client_handler(client), buffer, len);
     }
 }
@@ -143,6 +151,14 @@ void udp_socket_send(R(UdpSocket*) sock)
     {
         protocol_handler_send_queued(array[i].handler);
     }
+}
+
+void udp_socket_flag_client_as_dead_by_index(R(UdpSocket*) sock, uint32_t index)
+{
+    UdpClient* cli = array_get_type(sock->clients, index, UdpClient);
+    
+    if (cli)
+        udp_client_flag_as_dead(cli);
 }
 
 #undef ERR_SOCKET

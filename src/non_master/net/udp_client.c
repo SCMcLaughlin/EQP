@@ -19,3 +19,8 @@ void udp_client_deinit(R(UdpClient*) client)
         client->handler = NULL;
     }
 }
+
+void udp_client_update_index(R(UdpClient*) client, uint32_t index)
+{
+    protocol_handler_update_index(client->handler, index);
+}

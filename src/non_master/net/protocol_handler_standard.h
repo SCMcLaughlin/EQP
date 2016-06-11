@@ -16,7 +16,7 @@ STRUCT_DEFINE(ProtocolHandlerStandard)
     AckMgrStandard  ackMgr;
 };
 
-void    protocol_handler_standard_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler);
+void    protocol_handler_standard_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, uint32_t index);
 void    protocol_handler_standard_deinit(R(ProtocolHandlerStandard*) handler);
 
 void    protocol_handler_standard_recv(R(ProtocolHandlerStandard*) handler, R(byte*) data, int len);

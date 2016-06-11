@@ -36,7 +36,7 @@ STRUCT_DEFINE(NetworkClientTrilogy)
     uint32_t        sendFromIndex;
 };
 
-void        network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkClientTrilogy*) client);
+void        network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkClientTrilogy*) client, uint32_t index);
 void        network_client_trilogy_deinit(R(NetworkClientTrilogy*) client);
 
 void        network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) client, uint16_t ack);
@@ -48,5 +48,7 @@ void        network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client);
 uint16_t    network_client_trilogy_get_next_seq_to_send_and_increment(R(NetworkClientTrilogy*) client, uint16_t by);
 
 #define     network_client_trilogy_basic(cli) network_client_basic(&(cli)->base)
+#define     network_client_trilogy_update_index(cli, i) network_client_update_udp_client_index(&(cli)->base, i)
+#define     network_client_trilogy_flag_connection_as_dead(cli) network_client_flag_connection_as_dead(&(cli)->base)
 
 #endif//EQP_NETWORK_CLIENT_TRILOGY_H

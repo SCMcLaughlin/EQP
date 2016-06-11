@@ -25,4 +25,6 @@ void*   client_create_from_new_connection_trilogy(R(ProtocolHandler*) handler);
 void    client_recv_packet_standard(R(void*) client, uint16_t opcode, R(Aligned*) a);
 void    client_recv_packet_trilogy(R(void*) client, uint16_t opcode, R(Aligned*) a);
 
+void    client_on_disconnect(R(void*) client, int isLinkdead);
+
 #endif//EQP_NETWORK_INTERFACE_H

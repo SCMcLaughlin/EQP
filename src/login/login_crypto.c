@@ -6,9 +6,7 @@
 STRUCT_DEFINE(LoginCrypto)
 {
     DES_key_schedule    keySchedule;
-    DES_cblock          iv;
     DES_key_schedule    keyScheduleTrilogy;
-    DES_cblock          ivTrilogy;
     byte                buffer[EQP_LOGIN_CRYPTO_BUFFER_SIZE];
 };
 
@@ -22,10 +20,7 @@ LoginCrypto* login_crypto_create(R(Basic*) basic)
     OpenSSL_add_all_algorithms();
     OPENSSL_config(NULL);
     
-    memcpy(&crypto->iv, &iv, sizeof(DES_cblock));
     DES_key_sched(&iv, &crypto->keySchedule);
-    
-    memcpy(&crypto->ivTrilogy, &ivTrilogy, sizeof(DES_cblock));
     DES_key_sched(&ivTrilogy, &crypto->keyScheduleTrilogy);
     
     return crypto;
@@ -61,9 +56,15 @@ uint32_t login_crypto_process(R(LoginCrypto*) crypto, R(const void*) input, uint
         length = EQP_LOGIN_CRYPTO_BUFFER_SIZE;
     
     if (!isTrilogy)
-        DES_ncbc_encrypt((const byte*)input, crypto->buffer, length, &crypto->keySchedule, &crypto->iv, encrypt);
+    {
+        DES_cblock iv = {0, 0, 0, 0, 0, 0, 0, 0};
+        DES_ncbc_encrypt((const byte*)input, crypto->buffer, length, &crypto->keySchedule, &iv, encrypt);
+    }
     else
-        DES_ncbc_encrypt((const byte*)input, crypto->buffer, length, &crypto->keyScheduleTrilogy, &crypto->ivTrilogy, encrypt);
+    {
+        DES_cblock ivTrilogy = {19, 217, 19, 109, 208, 52, 21, 251};
+        DES_ncbc_encrypt((const byte*)input, crypto->buffer, length, &crypto->keyScheduleTrilogy, &ivTrilogy, encrypt);
+    }
     
     return length;
 }

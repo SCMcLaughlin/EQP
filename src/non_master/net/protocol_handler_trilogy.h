@@ -19,12 +19,14 @@ STRUCT_DEFINE(ProtocolHandlerTrilogy)
     void*           clientObject;
 };
 
-void    protocol_handler_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler);
+void    protocol_handler_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, uint32_t index);
 void    protocol_handler_trilogy_deinit(R(ProtocolHandlerTrilogy*) handler);
 
 void    protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) data, int len);
 
 #define protocol_handler_trilogy_basic(handler) ack_mgr_trilogy_basic(&(handler)->ackMgr)
+#define protocol_handler_trilogy_update_index(handler, i) ack_mgr_trilogy_update_index(&(handler)->ackMgr, i)
+#define protocol_handler_trilogy_flag_connection_as_dead(handler) ack_mgr_trilogy_flag_connection_as_dead((&(handler)->ackMgr))
 
 #define protocol_handler_trilogy_schedule_packet(handler, packet) protocol_handler_trilogy_schedule_packet_opt(handler, packet, 0)
 #define protocol_handler_trilogy_schedule_packet_no_ack(handler, packet) protocol_handler_trilogy_schedule_packet_opt(handler, packet, 1)

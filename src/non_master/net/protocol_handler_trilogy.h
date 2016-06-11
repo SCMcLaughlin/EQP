@@ -26,6 +26,7 @@ void    protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte
 
 #define protocol_handler_trilogy_basic(handler) ack_mgr_trilogy_basic(&(handler)->ackMgr)
 #define protocol_handler_trilogy_update_index(handler, i) ack_mgr_trilogy_update_index(&(handler)->ackMgr, i)
+#define protocol_handler_trilogy_client_object(handler) ((handler)->clientObject)
 #define protocol_handler_trilogy_flag_connection_as_dead(handler) ack_mgr_trilogy_flag_connection_as_dead((&(handler)->ackMgr))
 
 #define protocol_handler_trilogy_schedule_packet(handler, packet) protocol_handler_trilogy_schedule_packet_opt(handler, packet, 0)

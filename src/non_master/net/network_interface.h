@@ -17,7 +17,7 @@
     own implementation at link time.
 */
 
-STRUCT_DEFINE(ProtocolHandler);
+STRUCT_DECLARE(ProtocolHandler);
 
 void*   client_create_from_new_connection_standard(R(ProtocolHandler*) handler);
 void*   client_create_from_new_connection_trilogy(R(ProtocolHandler*) handler);

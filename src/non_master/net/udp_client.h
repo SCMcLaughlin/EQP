@@ -40,6 +40,7 @@ void    udp_client_update_index(R(UdpClient*) client, uint32_t index);
 #define udp_client_is_dead(cli) ((cli)->isDead)
 #define udp_client_flag_as_dead(cli) ((cli)->isDead = true)
 
+#define udp_client_last_recv_time(cli) ((cli)->lastRecvTime)
 #define udp_client_update_last_recv_time(cli) ((cli)->lastRecvTime = clock_milliseconds())
 
 #endif//EQP_UDP_CLIENT_H

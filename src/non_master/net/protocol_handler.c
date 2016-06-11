@@ -45,6 +45,18 @@ void protocol_handler_update_index(R(ProtocolHandler*) handler, uint32_t index)
         protocol_handler_trilogy_update_index(&handler->trilogy, index);
 }
 
+void* protocol_handler_client_object(R(ProtocolHandler*) handler)
+{
+    R(void*) clientObject;
+    
+    /*if (handler->isTrilogy == 0)
+        clientObject = protocol_handler_standard_client_object(&handler->standard);
+    else*/
+        clientObject = protocol_handler_trilogy_client_object(&handler->trilogy);
+    
+    return clientObject;
+}
+
 void protocol_handler_recv(R(ProtocolHandler*) handler, R(byte*) data, int len)
 {
     if (handler->isTrilogy == 0)

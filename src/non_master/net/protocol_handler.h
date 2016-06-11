@@ -29,6 +29,7 @@ void                protocol_handler_destroy(R(ProtocolHandler*) handler);
 
 Basic*              protocol_handler_basic(R(ProtocolHandler*) handler);
 void                protocol_handler_update_index(R(ProtocolHandler*) handler, uint32_t index);
+void*               protocol_handler_client_object(R(ProtocolHandler*) handler);
 
 void                protocol_handler_recv(R(ProtocolHandler*) handler, R(byte*) data, int len);
 void                protocol_handler_check_first_packet(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, R(byte*) data, int len, uint32_t index);

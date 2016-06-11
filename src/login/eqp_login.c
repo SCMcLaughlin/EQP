@@ -36,11 +36,14 @@ void login_deinit(R(Login*) login)
 
 void login_main_loop(R(Login*) login)
 {
+    R(UdpSocket*) socket = login->socket;
+    
     for (;;)
     {
-        udp_socket_recv(login->socket);
+        udp_socket_recv(socket);
         db_thread_execute_query_callbacks(core_db_thread(C(login)));
-        udp_socket_send(login->socket);
+        udp_socket_send(socket);
+        udp_socket_check_timeouts(socket);
         
         clock_sleep_milliseconds(50);
     }

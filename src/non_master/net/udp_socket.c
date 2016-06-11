@@ -141,6 +141,34 @@ void udp_socket_recv(R(UdpSocket*) sock)
     }
 }
 
+void udp_socket_check_timeouts(R(UdpSocket*) sock)
+{
+    UdpClient* array    = array_data_type(sock->clients, UdpClient);
+    uint32_t n          = array_count(sock->clients);
+    uint64_t time       = clock_milliseconds();
+    uint32_t i          = 0;
+    
+    while (i < n)
+    {
+        R(UdpClient*) cli = &array[i];
+        
+        if (udp_client_is_dead(cli))
+        {
+            udp_socket_handle_dead_client(sock, cli, i);
+            n--;
+            continue;
+        }
+        
+        if ((udp_client_last_recv_time(cli) + EQP_UDP_SOCKET_LINKDEAD_TIMEOUT_MILLISECONDS) < time)
+        {
+            udp_client_flag_as_dead(cli);
+            client_on_disconnect(protocol_handler_client_object(udp_client_handler(cli)), true);
+        }
+        
+        i++;
+    }
+}
+
 void udp_socket_send(R(UdpSocket*) sock)
 {
     UdpClient* array    = array_data_type(sock->clients, UdpClient);

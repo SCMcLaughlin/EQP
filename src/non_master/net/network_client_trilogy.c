@@ -166,17 +166,15 @@ void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
         
         if (i < sendFromIndex)
         {
-            uint16_t ack;
-            
             // Should we re-send this un-acked packet?
             if ((time - wrapper->ackTimestamp) < EQP_TRILOGY_RESEND_MILLISECONDS)
                 continue;
             
-            ack = wrapper->ackRequest;
-            
             // Figure out if we were to re-send from if we were last acked in the middle of a fragmented packet
             if (fragCount > 1)
             {
+                uint16_t ack = wrapper->ackRequest;
+                
                 while (ack_compare(ackReceived, ack) != AckPast && fragIndex < fragCount)
                 {
                     aligned_advance(a, EQP_PACKET_TRILOGY_DATA_OFFSET + EQP_PACKET_TRILOGY_DATA_SPACE - sizeof(uint16_t) + sizeof(uint32_t));

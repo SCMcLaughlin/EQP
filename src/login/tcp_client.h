@@ -7,9 +7,8 @@
 #include "aligned.h"
 #include "tcp_packet_structs.h"
 #include "server_list.h"
-#include <zlib.h>
 
-#define EQP_TCP_CLIENT_BUFFER_SIZE 2048
+#define EQP_TCP_CLIENT_BUFFER_SIZE 1024
 
 STRUCT_DECLARE(Basic);
 STRUCT_DECLARE(Login);

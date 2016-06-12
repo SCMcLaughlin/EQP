@@ -6,6 +6,7 @@
 
 ENUM_DEFINE(TcpOp)
 {
+    TcpOp_KeepAlive         = 0x0001,
     TcpOp_LoginServerInfo   = 0x1000,
     TcpOp_LoginServerStatus = 0x1001,
     TcpOp_NewLoginServer    = 0x1008,

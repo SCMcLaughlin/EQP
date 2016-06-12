@@ -43,6 +43,7 @@ void        server_list_deinit(R(ServerList*) list);
 
 uint32_t    server_list_add(R(ServerList*) list, R(ServerListing*) server);
 void        server_list_remove_by_index(R(ServerList*) list, uint32_t index);
+void        server_list_update_by_index(R(ServerList*) list, uint32_t index, int playerCount, int status);
 
 #define     server_list_count(list) array_count((list)->array)
 #define     server_list_data(list) array_data_type((list)->array, ServerListing)

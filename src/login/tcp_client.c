@@ -4,6 +4,9 @@
 #include "eqp_basic.h"
 #include "eqp_alloc.h"
 
+#define SERVER_UP 0
+#define SERVER_LOCKED -2
+
 void tcp_client_init(R(Basic*) basic, R(TcpClient*) client, int fd, R(IpAddress*) addr)
 {
     client->socketFd            = fd;
@@ -26,6 +29,34 @@ void tcp_client_deinit(R(TcpClient*) client)
     {
         free(client->recvBuf);
         client->recvBuf = NULL;
+    }
+}
+
+static void tcp_client_keep_alive(R(Login*) login, R(TcpClient*) client)
+{
+    TcpPacketHeader packet;
+    int fd      = client->socketFd;
+    int sent    = 0;
+    
+    packet.opcode = TcpOp_KeepAlive;
+    packet.length = sizeof(TcpPacketHeader);
+    
+    for (;;)
+    {
+        int len = send(fd, ((byte*)&packet) + sent, sizeof(TcpPacketHeader) - sent, 0);
+        
+        if (len == -1)
+        {
+            int err = errno;
+            if (err != EAGAIN && err != EWOULDBLOCK)
+                log_format(B(login), LogNetwork, "[tcp_client_keep_alive] send() syscall failed, errno %i", err);
+            break;
+        }
+        
+        sent += len;
+        
+        if (sent == sizeof(TcpPacketHeader))
+            break;
     }
 }
 
@@ -68,14 +99,37 @@ static void tcp_client_handle_op_new_login_server(R(Login*) login, R(TcpClient*)
 
 static void tcp_client_handle_op_login_server_status(R(Login*) login, R(TcpClient*) client, R(Aligned*) a)
 {
-    (void)login;
-    (void)client;
+    int status;
+    int playerCount;
+    int zones;
     
-    int status      = aligned_read_int32(a);
-    int playerCount = aligned_read_int32(a);
-    int zones       = aligned_read_int32(a);
+    if (!tcp_client_has_login_server(client) || aligned_remaining(a) < sizeof(Tcp_LoginServerStatus))
+        return;
+    
+    status      = aligned_read_int32(a);
+    playerCount = aligned_read_int32(a);
+    zones       = aligned_read_int32(a);
+    
+    switch (status)
+    {
+    case SERVER_UP:
+        status = ServerStatus_Up;
+        break;
+    
+    case SERVER_LOCKED:
+        status = ServerStatus_Locked;
+        break;
+    
+    default:
+        status = ServerStatus_Down;
+        break;
+    }
+    
+    server_list_update_by_index(login_server_list(login), tcp_client_login_server_index(client), playerCount, status);
     
     printf("status: %i, playerCount: %i, zones: %i\n", status, playerCount, zones);
+    
+    tcp_client_keep_alive(login, client);
 }
 
 void tcp_client_handle_packet(R(Login*) login, R(TcpClient*) client)
@@ -87,7 +141,7 @@ void tcp_client_handle_packet(R(Login*) login, R(TcpClient*) client)
     aligned_init(B(login), a, client->recvBuf, client->readLength);
     
     opcode = aligned_read_uint16(a);
-    aligned_advance(a, sizeof(uint16_t)); // We already implicitly know the packet's data length
+    aligned_advance(a, sizeof(uint16_t)); // We already know the packet's data length
     
     printf("TCP packet, opcode: 0x%04x, length: %u\n", opcode, aligned_remaining(a));
     
@@ -105,3 +159,6 @@ void tcp_client_handle_packet(R(Login*) login, R(TcpClient*) client)
         break;
     }
 }
+
+#undef SERVER_UP
+#undef SERVER_LOCKED

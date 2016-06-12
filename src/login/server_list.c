@@ -53,12 +53,10 @@ uint32_t server_list_add(R(ServerList*) list, R(ServerListing*) server)
 
 void server_list_remove_by_index(R(ServerList*) list, uint32_t index)
 {
-    R(ServerListing*) server;
+    R(ServerListing*) server = array_get_type(list->array, index, ServerListing);
     
-    if (index >= array_count(list->array))
+    if (server == NULL)
         return;
-    
-    server = array_get_type(list->array, index, ServerListing);
     
     if (server->longName)
         string_destroy(server->longName);
@@ -70,4 +68,15 @@ void server_list_remove_by_index(R(ServerList*) list, uint32_t index)
         string_destroy(server->ipAddress);
     
     array_swap_and_pop(list->array, index);
+}
+
+void server_list_update_by_index(R(ServerList*) list, uint32_t index, int playerCount, int status)
+{
+    R(ServerListing*) server = array_get_type(list->array, index, ServerListing);
+    
+    if (server == NULL)
+        return;
+    
+    server->status      = status;
+    server->playerCount = playerCount;
 }

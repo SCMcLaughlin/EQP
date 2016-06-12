@@ -133,11 +133,11 @@ BNONMASTER_NET= $(BNONMASTER)net/
 _ONONMASTER_NET= \
  packet_trilogy.o udp_socket.o udp_client.o protocol_handler.o protocol_handler_standard.o \
  protocol_handler_trilogy.o ack_mgr_standard.o ack_mgr_trilogy.o network_client.o \
- network_client_trilogy.o ack_common.o
+ network_client_trilogy.o network_client_standard.o ack_common.o
 _HNONMASTER_NET = \
  packet_trilogy.h udp_socket.h udp_client.h protocol_handler.h protocol_handler_standard.h \
  protocol_handler_trilogy.h ack_mgr_standard.h ack_mgr_trilogy.h network_client.h \
- network_client_trilogy.h ack_common.h
+ network_client_trilogy.h network_client_standard.h ack_common.h
 ONONMASTER_NET= $(patsubst %,$(BNONMASTER_NET)%,$(_ONONMASTER_NET))
 HNONMASTER_NET= $(patsubst %,$(DIRNONMASTER_NET)%,$(_HNONMASTER_NET))
 

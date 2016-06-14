@@ -23,6 +23,11 @@ void aligned_init_cursor(R(Basic*) basic, R(Aligned*) a, R(void*) ptr, uint32_t 
     a->basic    = basic;
 }
 
+void aligned_init_copy(R(Aligned*) dst, R(Aligned*) src)
+{
+    memcpy(dst, src, sizeof(Aligned));
+}
+
 uint32_t aligned_advance(R(Aligned*) a, uint32_t len)
 {
     uint32_t c = a->cursor;

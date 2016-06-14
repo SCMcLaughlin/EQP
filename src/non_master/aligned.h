@@ -18,6 +18,7 @@ STRUCT_DEFINE(Aligned)
 
 void        aligned_init(R(Basic*) basic, R(Aligned*) a, R(void*) ptr, uint32_t len);
 void        aligned_init_cursor(R(Basic*) basic, R(Aligned*) a, R(void*) ptr, uint32_t len, uint32_t cursor);
+void        aligned_init_copy(R(Aligned*) dst, R(Aligned*) src);
 uint32_t    aligned_advance(R(Aligned*) a, uint32_t len);
 uint32_t    aligned_reverse(R(Aligned*) a, uint32_t len);
 void        aligned_check(R(Aligned*) a, uint32_t len);

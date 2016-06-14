@@ -6,11 +6,12 @@ void network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(
 {
     network_client_init(sock, udpClient, &client->base, index);
     
-    client->outputPackets   = array_create_type(udp_socket_basic(sock), OutputPacketTrilogy);
-    client->nextAckResponse = 0;
-    client->nextSeqToSend   = 0;
-    client->lastAckReceived = 0;
-    client->sendFromIndex   = 0;
+    client->outputPackets           = array_create_type(udp_socket_basic(sock), OutputPacketTrilogy);
+    client->nextAckResponse         = 0;
+    client->nextAckRequestExpected  = 0;
+    client->nextSeqToSend           = 0;
+    client->lastAckReceived         = 0;
+    client->sendFromIndex           = 0;
 }
 
 void network_client_trilogy_deinit(R(NetworkClientTrilogy*) client)
@@ -19,6 +20,18 @@ void network_client_trilogy_deinit(R(NetworkClientTrilogy*) client)
     
     if (client->outputPackets)
     {
+        R(OutputPacketTrilogy*) array   = array_data_type(client->outputPackets, OutputPacketTrilogy);
+        uint32_t n                      = array_count(client->outputPackets);
+        uint32_t i;
+        
+        for (i = 0; i < n; i++)
+        {
+            R(PacketTrilogy*) packet = array[i].packet;
+            
+            if (packet)
+                packet_trilogy_drop(packet);
+        }
+        
         array_destroy(client->outputPackets);
         client->outputPackets = NULL;
     }
@@ -55,12 +68,13 @@ void network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) client, u
     }
 }
 
-void network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) client, uint16_t ack)
+void network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) client, uint16_t ack, int isFirstPacket)
 {
-    ack = toHostUint16(ack);
-    
-    if (ack > client->nextAckResponse)
-        client->nextAckResponse = ack;
+    if (isFirstPacket || (ack == (client->nextAckRequestExpected + 1)))
+    {
+        client->nextAckResponse         = ack;
+        client->nextAckRequestExpected  = ack;
+    }
 }
 
 void network_client_trilogy_schedule_packet(R(NetworkClientTrilogy*) client, R(OutputPacketTrilogy*) packet)

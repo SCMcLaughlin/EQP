@@ -26,6 +26,10 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     uint16_t header;
     uint16_t seq;
     uint16_t opcode;
+    uint16_t ackRequest;
+    //uint16_t fragGroup;
+    uint16_t fragCount;
+    uint16_t fragIndex;
     R(AckMgrTrilogy*) ackMgr;
     R(void*) clientObject;
     
@@ -87,25 +91,48 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     // Back to your regularly-scheduled fields
     if (header & PacketTrilogyHasAckRequest)
     {
-        uint16_t ackRequest = aligned_read_uint16(a);
-        ack_mgr_trilogy_recv_ack_request(ackMgr, ackRequest);
+        ackRequest = toHostUint16(aligned_read_uint16(a));
+        ack_mgr_trilogy_recv_ack_request(ackMgr, ackRequest, (header & PacketTrilogyIsFirstPacket));
+    }
+    else
+    {
+        ackRequest = 0;
     }
     
     if (header & PacketTrilogyIsFragment)
     {
+        if (aligned_remaining(a) < (sizeof(uint16_t) * 3))
+            return;
         
+        aligned_advance(a, sizeof(uint16_t));
+        //fragGroup   = toHostUint16(aligned_read_uint16(a));
+        fragIndex   = toHostUint16(aligned_read_uint16(a));
+        fragCount   = toHostUint16(aligned_read_uint16(a));
+    }
+    else
+    {
+        //fragGroup   = 0;
+        fragIndex   = 0;
+        fragCount   = 0;
     }
     
     if (header & PacketTrilogyHasAckCounter)
         aligned_advance(a, (header & PacketTrilogyHasAckRequest) ? (sizeof(uint8_t) * 2) : sizeof(uint8_t)); // Do we have any reason to care about these?
     
-    if (aligned_remaining(a) >= sizeof(uint16_t))
+    if (fragIndex == 0 && aligned_remaining(a) >= sizeof(uint16_t))
         opcode = aligned_read_uint16(a);
     else
         opcode = 0;
     
-    if (opcode)
-        client_recv_packet_trilogy(clientObject, opcode, a);
+    // If it's unsequenced (no ack request), or if it's the one we expect next and not a fragment, handle right away;
+    // otherwise, add it to the Ack Manager's future packet/fragment completion queue
+    if (opcode || fragCount)
+    {
+        if (ackRequest == 0 || (fragCount == 0 && ackRequest == ack_mgr_trilogy_next_ack_response(ackMgr)))
+            client_recv_packet_trilogy(clientObject, opcode, a);
+        else
+            ack_mgr_trilogy_recv_packet(ackMgr, a, clientObject, opcode, ackRequest, fragCount);
+    }
 }
 
 #undef MIN_PACKET_LENGTH

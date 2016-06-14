@@ -19,7 +19,10 @@ void    ack_mgr_standard_init(R(UdpSocket*) sock, R(UdpClient*) client, R(AckMgr
 void    ack_mgr_standard_deinit(R(AckMgrStandard*) ackMgr);
 
 #define ack_mgr_standard_basic(ack) network_client_standard_basic(&(ack)->client)
-
+#define ack_mgr_standard_update_index(ack, i) network_client_standard_update_index(&(ack)->client, i)
+#define ack_mgr_standard_flag_connection_as_dead(ack) network_client_standard_flag_connection_as_dead(&(ack)->client)
 #define ack_mgr_standard_increment_packets_received(ack) network_client_standard_increment_packets_received(&(ack)->client)
+
+#define ack_mgr_standard_send_immediate(ackMgr, data, len) network_client_standard_send_immediate(&(ackMgr)->client, (data), (len))
 
 #endif//EQP_ACK_MGR_STANDARD_H

@@ -7,6 +7,7 @@
 ProtocolHandler* protocol_handler_create(R(Basic*) basic)
 {
     ProtocolHandler* handler = eqp_alloc_type(basic, ProtocolHandler);
+    memset(handler, 0, sizeof(ProtocolHandler));
     
     handler->isTrilogy = -1;
     
@@ -29,9 +30,9 @@ Basic* protocol_handler_basic(R(ProtocolHandler*) handler)
 {
     R(Basic*) basic;
     
-    /*if (handler->isTrilogy == 0)
+    if (handler->isTrilogy == 0)
         basic = protocol_handler_standard_basic(&handler->standard);
-    else*/
+    else
         basic = protocol_handler_trilogy_basic(&handler->trilogy);
     
     return basic;
@@ -39,9 +40,9 @@ Basic* protocol_handler_basic(R(ProtocolHandler*) handler)
 
 void protocol_handler_update_index(R(ProtocolHandler*) handler, uint32_t index)
 {
-    /*if (handler->isTrilogy == 0)
+    if (handler->isTrilogy == 0)
         protocol_handler_standard_update_index(&handler->standard, index);
-    else*/
+    else
         protocol_handler_trilogy_update_index(&handler->trilogy, index);
 }
 
@@ -49,9 +50,9 @@ void* protocol_handler_client_object(R(ProtocolHandler*) handler)
 {
     R(void*) clientObject;
     
-    /*if (handler->isTrilogy == 0)
+    if (handler->isTrilogy == 0)
         clientObject = protocol_handler_standard_client_object(&handler->standard);
-    else*/
+    else
         clientObject = protocol_handler_trilogy_client_object(&handler->trilogy);
     
     return clientObject;

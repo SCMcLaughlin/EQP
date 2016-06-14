@@ -17,11 +17,10 @@ STRUCT_DECLARE(Basic);
 STRUCT_DEFINE(UdpSocket)
 {
     int     socketFd;
-    byte    recvBuffer[EQP_UDP_SOCKET_BUFFER_SIZE];
-    
     Basic*  basic;
     Array*  clients;
     
+    byte    recvBuffer[EQP_UDP_SOCKET_BUFFER_SIZE];
     byte    compressBuffer[EQP_UDP_SOCKET_BUFFER_SIZE];
 };
 
@@ -36,6 +35,7 @@ void        udp_socket_send(R(UdpSocket*) sock);
 
 #define     udp_socket_fd(sock) ((sock)->socketFd)
 #define     udp_socket_basic(sock) ((sock)->basic)
+#define     udp_socket_get_compress_buffer(sock) ((sock)->compressBuffer)
 
 void        udp_socket_flag_client_as_dead_by_index(R(UdpSocket*) sock, uint32_t index);
 

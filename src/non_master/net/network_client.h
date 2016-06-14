@@ -32,8 +32,13 @@ int     network_client_send(R(NetworkClient*) client, R(const void*) data, uint3
 
 #define network_client_basic(cli) ((cli)->basic)
 #define network_client_udp_socket(cli) ((cli)->udpSocket)
-
 #define network_client_udp_client_index(cli) ((cli)->udpClientIndex)
+#define network_client_packets_sent(cli) ((cli)->packetsSent)
+#define network_client_packets_received(cli) ((cli)->packetsReceived)
+#define network_client_account_id(cli) ((cli)->accountId)
+
+#define network_client_set_account_id(cli, id) ((cli)->accountId = (id))
+
 #define network_client_update_udp_client_index(cli, i) ((cli)->udpClientIndex = (i))
 void    network_client_flag_connection_as_dead(R(NetworkClient*) client);
 #define network_client_increment_packets_received(cli) ((cli)->packetsReceived++)

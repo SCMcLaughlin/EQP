@@ -14,6 +14,7 @@
 #include "tcp_server.h"
 #include "login_crypto.h"
 #include "server_list.h"
+#include "client_list.h"
 
 STRUCT_DEFINE(Login)
 {
@@ -21,6 +22,7 @@ STRUCT_DEFINE(Login)
     Core            core;
     
     ServerList      serverList;
+    ClientList      clientList;
     ShmViewer       shmViewerLogWriter;
     UdpSocket*      socket;
     TcpServer       tcpServer;
@@ -33,5 +35,7 @@ void    login_main_loop(R(Login*) login);
 
 #define login_get_crypto(login) ((login)->crypto)
 #define login_server_list(login) (&(login)->serverList)
+#define login_client_list(login) (&(login)->clientList)
+#define login_tcp_server(login) (&(login)->tcpServer)
 
 #endif//EQP_LOGIN_H

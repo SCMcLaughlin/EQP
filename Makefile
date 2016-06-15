@@ -167,15 +167,30 @@ DIRLOGIN= src/login/
 BLOGIN= build/$(BUILDTYPE)/login/
 _OLOGIN= login_main.o \
  eqp_login.o login_crypto.o server_list.o login_client.o login_client_trilogy.o \
- tcp_server.o tcp_client.o
+ tcp_server.o tcp_client.o client_list.o
 _HLOGIN= \
  eqp_login.h login_crypto.h server_list.h login_client.h login_client_trilogy.h \
- tcp_server.h tcp_client.h
+ tcp_server.h tcp_client.h client_list.h
 OLOGIN= $(patsubst %,$(BLOGIN)%,$(_OLOGIN))
 HLOGIN= $(patsubst %,$(DIRLOGIN)%,$(_HLOGIN))
 
 INCLUDELOGIN= -I$(DIRLOGIN)
 BINLOGIN= $(DIRBIN)eqp-login
+
+##############################################################################
+# Char Select
+##############################################################################
+DIRCHARSELECT= src/char_select/
+BCHARSELECT= build/$(BUILDTYPE)/char_select/
+_OCHARSELECT= char_select_main.o \
+ eqp_char_select.o char_select_client.o char_select_client_trilogy.o
+_HCHARSELECT= \
+ eqp_char_select.h char_select_client.h char_select_client_trilogy.h
+OCHARSELECT= $(patsubst %,$(BCHARSELECT)%,$(_OCHARSELECT))
+HCHARSELECT= $(patsubst %,$(DIRCHARSELECT)%,$(_HCHARSELECT))
+
+INCLUDECHARSELECT= -I$(DIRCHARSELECT)
+BINCHARSELECT= $(DIRBIN)eqp-char-select
 
 ##############################################################################
 # Log Writer
@@ -237,11 +252,13 @@ RM= rm -f
 ##############################################################################
 .PHONY: default all clean
 
-default all: master login log-writer console
+default all: master login char-select log-writer console
 
 master: $(BINMASTER)
 
 login: $(BINLOGIN)
+
+char-select: $(BINCHARSELECT)
 
 log-writer: $(BINLOGWRITER)
 
@@ -275,6 +292,10 @@ $(BINLOGIN): $(OLOGIN) $(OCOMMON_ALL) $(ONONMASTER_ALL)
 	$(E) "Linking $@"
 	$(Q)$(CC) -o $@ $^ $(LSTATIC) -lcrypto $(LDYNCORE) $(LFLAGS)
 
+$(BINCHARSELECT): $(OCHARSELECT) $(OCOMMON_ALL) $(ONONMASTER_ALL)
+	$(E) "Linking $@"
+	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS)
+
 $(BINLOGWRITER): $(OLOGWRITER)
 	$(E) "Linking $@"
 	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS)
@@ -303,6 +324,10 @@ $(BMASTER)%.o: $(DIRMASTER)%.c $(HMASTER)
 $(BLOGIN)%.o: $(DIRLOGIN)%.c $(HLOGIN)
 	$(E) "\033[0;32mCC      $@\033[0m"
 	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDELOGIN) $(INCLUDENONMASTER)
+
+$(BCHARSELECT)%.o: $(DIRCHARSELECT)%.c $(HCHARSELECT)
+	$(E) "\033[0;32mCC      $@\033[0m"
+	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDECHARSELECT) $(INCLUDENONMASTER)
 
 $(BLOGWRITER)%.o: $(DIRLOGWRITER)%.c $(HLOGWRITER)
 	$(E) "\033[0;32mCC      $@\033[0m"
@@ -339,6 +364,11 @@ clean-login:
 	$(Q)$(RM) $(BINLOGIN)
 	$(E) "Cleaned login"
 
+clean-char-select:
+	$(Q)$(RM) $(BCHARSELECT)*.o
+	$(Q)$(RM) $(BINCHARSELECT)
+	$(E) "Cleaned char-select"
+
 clean-log-writer:
 	$(Q)$(RM) $(BLOGWRITER)*.o
 	$(Q)$(RM) $(BINLOGWRITER)
@@ -349,5 +379,5 @@ clean-console:
 	$(Q)$(RM) $(BINCONSOLE)
 	$(E) "Cleaned console"
 
-clean: clean-common clean-non-master clean-master clean-login clean-log-writer clean-console
+clean: clean-common clean-non-master clean-master clean-login clean-char-select clean-log-writer clean-console
 

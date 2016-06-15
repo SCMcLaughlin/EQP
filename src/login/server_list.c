@@ -1,5 +1,6 @@
 
 #include "server_list.h"
+#include "eqp_login.h"
 
 void server_list_init(R(Basic*) basic, R(ServerList*) list)
 {
@@ -25,8 +26,11 @@ void server_list_deinit(R(ServerList*) list)
             if (server->shortName)
                 string_destroy(server->shortName);
             
-            if (server->ipAddress)
-                string_destroy(server->ipAddress);
+            if (server->remoteIpAddress)
+                string_destroy(server->remoteIpAddress);
+            
+            if (server->localIpAddress)
+                string_destroy(server->localIpAddress);
         }
         
         array_destroy(list->array);
@@ -41,8 +45,8 @@ uint32_t server_list_add(R(ServerList*) list, R(ServerListing*) server)
     if (server->longName)
         len += string_length(server->longName) + 1;
     
-    if (server->ipAddress)
-        len += string_length(server->ipAddress) + 1;
+    if (server->remoteIpAddress)
+        len += string_length(server->remoteIpAddress) + 1;
     
     server->nameAndIpLength = len;
     
@@ -64,8 +68,11 @@ void server_list_remove_by_index(R(ServerList*) list, uint32_t index)
     if (server->shortName)
         string_destroy(server->shortName);
     
-    if (server->ipAddress)
-        string_destroy(server->ipAddress);
+    if (server->remoteIpAddress)
+        string_destroy(server->remoteIpAddress);
+    
+    if (server->localIpAddress)
+        string_destroy(server->localIpAddress);
     
     array_swap_and_pop(list->array, index);
 }
@@ -79,4 +86,23 @@ void server_list_update_by_index(R(ServerList*) list, uint32_t index, int player
     
     server->status      = status;
     server->playerCount = playerCount;
+}
+
+void server_list_send_client_login_request_by_ip_address(R(Login*) login, R(const char*) ipAddress, uint32_t accountId)
+{
+    R(ServerList*) list     = login_server_list(login);
+    R(ServerListing*) array = array_data_type(list->array, ServerListing);
+    uint32_t n              = array_count(list->array);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        R(ServerListing*) server = &array[i];
+        
+        if (string_compare_cstr(server->remoteIpAddress, ipAddress) == 0)
+        {
+            tcp_server_send_client_login_request(login_tcp_server(login), (int)i, accountId);
+            return;
+        }
+    }
 }

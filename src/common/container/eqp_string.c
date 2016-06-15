@@ -205,4 +205,9 @@ void string_add_string(R(Basic*) basic, R(String**) str, R(String*) src)
     string_add_cstr(basic, str, src->data, src->length);
 }
 
+int string_compare_cstr(R(String*) str, R(const char*) cstr)
+{
+    return strcmp(str->data, cstr);
+}
+
 #undef MIN_CAPACITY

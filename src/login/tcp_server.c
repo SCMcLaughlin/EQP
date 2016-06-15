@@ -208,6 +208,24 @@ void tcp_server_recv(R(TcpServer*) server)
     }
 }
 
+void tcp_server_send_client_login_request(R(TcpServer*) server, int loginServerIndex, uint32_t accountId)
+{
+    R(TcpClient*) array = array_data_type(server->clients, TcpClient);
+    uint32_t n          = array_count(server->clients);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        R(TcpClient*) cli = &array[i];
+        
+        if (tcp_client_login_server_index(cli) == loginServerIndex)
+        {
+            tcp_client_send_client_login_request(server->login, cli, accountId);
+            return;
+        }
+    }
+}
+
 #undef ERR_SOCKET
 #undef ERR_REUSERADDR
 #undef ERR_NONBLOCK

@@ -27,4 +27,6 @@ void    tcp_server_close(R(TcpServer*) server);
 void    tcp_server_accept_new_connections(R(TcpServer*) server);
 void    tcp_server_recv(R(TcpServer*) server);
 
+void    tcp_server_send_client_login_request(R(TcpServer*) server, int loginServerIndex, uint32_t accountId);
+
 #endif//EQP_TCP_SERVER_H

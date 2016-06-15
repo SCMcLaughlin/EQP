@@ -30,4 +30,6 @@ void        string_add_char(R(Basic*) basic, R(String**) str, int c);
 void        string_add_cstr(R(Basic*) basic, R(String**) str, R(const char*) cstr, uint32_t len);
 void        string_add_string(R(Basic*) basic, R(String**) str, R(String*) src);
 
+int         string_compare_cstr(R(String*) str, R(const char*) cstr);
+
 #endif//EQP_STRING_H

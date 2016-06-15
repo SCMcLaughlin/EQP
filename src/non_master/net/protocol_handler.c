@@ -58,6 +58,18 @@ void* protocol_handler_client_object(R(ProtocolHandler*) handler)
     return clientObject;
 }
 
+IpAddress* protocol_handler_ip_address(R(ProtocolHandler*) handler)
+{
+    R(IpAddress*) ip;
+    
+    //if (handler->isTrilogy == 0)
+    //    ip = protocol_handler_standard_ip_address(&handler->standard);
+    //else
+        ip = protocol_handler_trilogy_ip_address(&handler->trilogy);
+    
+    return ip;
+}
+
 void protocol_handler_recv(R(ProtocolHandler*) handler, R(byte*) data, int len)
 {
     if (handler->isTrilogy == 0)

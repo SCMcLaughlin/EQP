@@ -54,6 +54,7 @@ uint16_t    network_client_trilogy_get_next_seq_to_send_and_increment(R(NetworkC
 #define     network_client_trilogy_set_next_ack_request_expected(cli, ack) ((cli)->nextAckRequestExpected = (ack))
 
 #define     network_client_trilogy_basic(cli) network_client_basic(&(cli)->base)
+#define     network_client_trilogy_ip_address(cli) network_client_ip_address(&(cli)->base)
 #define     network_client_trilogy_update_index(cli, i) network_client_update_udp_client_index(&(cli)->base, i)
 #define     network_client_trilogy_flag_connection_as_dead(cli) network_client_flag_connection_as_dead(&(cli)->base)
 #define     network_client_trilogy_increment_packets_received(cli) network_client_increment_packets_received(&(cli)->base)

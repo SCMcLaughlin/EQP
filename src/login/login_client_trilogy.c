@@ -9,7 +9,7 @@
 
 void* client_create_from_new_connection_trilogy(R(ProtocolHandler*) handler)
 {
-    return login_client_create(handler, 0, LoginClientTrilogy_BrandNew);
+    return login_client_create(handler, ExpansionId_Trilogy, LoginClientTrilogy_BrandNew);
 }
 
 static void login_trilogy_schedule_packet(R(ProtocolHandler*) handler, R(PacketTrilogy*) packet)
@@ -87,7 +87,9 @@ static void login_trilogy_credentials_callback(R(Query*) query)
             login_trilogy_schedule_packet(handler, packet);
             
             success = true;
+            login_client_set_account_id(client, (uint32_t)id);
             login_client_set_state(client, LoginClientTrilogy_AcceptedCredentials);
+            client_list_add(B(login), login_client_list(login), client);
         /*}
         
         login_crypto_clear(crypto);
@@ -130,6 +132,7 @@ static void login_trilogy_handle_op_credentials(R(LoginClient*) client, R(Protoc
     
     printf("username: %s, password: %s\n", cred->username, cred->password);
     
+    login_client_set_account_name(client, cred->username, nameLength);
     login_client_set_password_temp(client, cred->password, passLength);
     
     // Prep database query
@@ -165,7 +168,8 @@ static void login_trilogy_handle_op_banner(R(LoginClient*) client, R(ProtocolHan
     login_trilogy_schedule_packet(handler, packet);
 }
 
-#if 0
+#define TEST_SERVERS
+#ifdef TEST_SERVERS
 #define SERVER_NAME "EQP Test%u"
 #define SERVER_IP "127.0.0.1"
 #define NUM 50
@@ -182,7 +186,7 @@ static uint32_t temp_add_test_servers(R(Basic*) basic, R(ServerList*) list)
         
         server.longName = string_create(basic);
         string_set_from_format(basic, &server.longName, SERVER_NAME, i*i);
-        server.ipAddress = string_create_from_cstr(basic, SERVER_IP, sizeof(SERVER_IP) - 1);
+        server.remoteIpAddress = string_create_from_cstr(basic, SERVER_IP, sizeof(SERVER_IP) - 1);
         
         server_list_add(list, &server);
     }
@@ -211,7 +215,7 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     list    = login_server_list(login);
     count   = server_list_count(list);
     
-#if 0
+#ifdef TEST_SERVERS
     ////////
     if (count == 0)
         count = temp_add_test_servers(B(login), list);
@@ -303,6 +307,72 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     login_trilogy_schedule_packet(handler, packet);
 }
 
+static void login_trilogy_handle_op_server_status_request(R(LoginClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+{
+    R(const char*) ipAddress = (const char*)aligned_current(a);
+    
+    if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
+        return;
+    
+    server_list_send_client_login_request_by_ip_address((Login*)protocol_handler_basic(handler), ipAddress, login_client_account_id(client));
+}
+
+void login_client_trilogy_handle_login_response(R(LoginClient*) client, int response)
+{
+    R(ProtocolHandler*) handler;
+    
+    if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
+        return;
+    
+    handler = login_client_handler(client);
+    
+    switch (response)
+    {
+    case LOGIN_RESPONSE_ACCEPTED:
+        login_trilogy_schedule_packet(handler, packet_trilogy_create(protocol_handler_basic(handler), TrilogyOp_ServerStatusAccept, 0));
+        break;
+    
+    default:
+    case LOGIN_RESPONSE_DENIED:
+        login_trilogy_err_literal(handler, "Error: Your login request was denied");
+        break;
+    
+    case LOGIN_RESPONSE_SUSPENDED:
+        login_trilogy_err_literal(handler, "Error: Your account has been suspended from the selected server");
+        break;
+    
+    case LOGIN_RESPONSE_BANNED:
+        login_trilogy_err_literal(handler, "Error: Your account has been banned from the selected server");
+        break;
+    
+    case LOGIN_RESPONSE_WORLD_FULL:
+        login_trilogy_err_literal(handler, "Error: The selected server is currently full");
+        break;
+    }
+}
+
+static void login_trilogy_handle_op_session_key(R(LoginClient*) client, R(ProtocolHandler*) handler)
+{
+    R(Basic*) basic;
+    R(PacketTrilogy*) packet;
+    Aligned write;
+    R(Aligned*) w = &write;
+    
+    if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
+        return;
+
+    basic   = protocol_handler_basic(handler);
+    packet  = packet_trilogy_create(basic, TrilogyOp_SessionKey, sizeof_field(LoginClient, sessionKey) + 1);
+    
+    aligned_init(basic, w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+    
+    aligned_write_uint8(w, 0);
+    aligned_write_buffer(w, login_client_session_key(client), sizeof_field(LoginClient, sessionKey) - 1);
+    aligned_write_uint8(w, 0);
+    
+    login_trilogy_schedule_packet(handler, packet);
+}
+
 void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a)
 {
     R(LoginClient*) client      = (LoginClient*)vclient;
@@ -326,6 +396,14 @@ void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a
     
     case TrilogyOp_ServerList:
         login_trilogy_handle_op_server_list(client, handler);
+        break;
+    
+    case TrilogyOp_ServerStatusRequest:
+        login_trilogy_handle_op_server_status_request(client, handler, a);
+        break;
+    
+    case TrilogyOp_SessionKey:
+        login_trilogy_handle_op_session_key(client, handler);
         break;
     
     default:

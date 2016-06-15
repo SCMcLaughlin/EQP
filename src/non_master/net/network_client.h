@@ -30,6 +30,7 @@ void    network_client_deinit(R(NetworkClient*) client);
 int     network_client_send_no_increment(R(NetworkClient*) client, R(const void*) data, uint32_t len);
 int     network_client_send(R(NetworkClient*) client, R(const void*) data, uint32_t len);
 
+#define network_client_ip_address(cli) (&(cli)->address)
 #define network_client_basic(cli) ((cli)->basic)
 #define network_client_udp_socket(cli) ((cli)->udpSocket)
 #define network_client_udp_client_index(cli) ((cli)->udpClientIndex)

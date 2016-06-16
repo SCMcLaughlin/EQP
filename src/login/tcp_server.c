@@ -23,7 +23,7 @@ void tcp_server_deinit(R(TcpServer*) server)
 void tcp_server_open(R(TcpServer*) server, uint16_t port)
 {
     IpAddress addr;
-    int opt;
+    int opt = 1;
 #ifdef EQP_WINDOWS
     unsigned long nonblock = 1;
 #endif
@@ -34,7 +34,6 @@ void tcp_server_open(R(TcpServer*) server, uint16_t port)
         exception_throw_literal(B(server->login), ErrorNetwork, ERR_SOCKET);
     
     // Set reuseaddr
-    opt = 1;
     if (setsockopt(server->acceptFd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt)))
         exception_throw_literal(B(server->login), ErrorNetwork, ERR_REUSEADDR);
     

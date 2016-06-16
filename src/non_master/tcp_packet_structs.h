@@ -36,6 +36,12 @@ STRUCT_DEFINE(Tcp_NewLoginServer)
     uint8_t servertype;             // 0=world, 1=chat, 2=login, 3=MeshLogin
 };
 
+STRUCT_DEFINE(Tcp_NewLoginServerSend)
+{
+    TcpPacketHeader     header;
+    Tcp_NewLoginServer  data;
+};
+
 STRUCT_DEFINE(Tcp_LoginServerStatus)
 {
     int status;

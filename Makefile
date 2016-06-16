@@ -115,9 +115,9 @@ HCOMMON_ALL+= $(HCOMMON_TIME)
 DIRNONMASTER= src/non_master/
 BNONMASTER= build/$(BUILDTYPE)/non_master/
 _ONONMASTER= \
- aligned.o crc.o
+ aligned.o crc.o lua_sys.o
 _HNONMASTER = \
- aligned.h crc.h
+ aligned.h crc.h lua_sys.h
 ONONMASTER= $(patsubst %,$(BNONMASTER)%,$(_ONONMASTER))
 HNONMASTER= $(patsubst %,$(DIRNONMASTER)%,$(_HNONMASTER))
 
@@ -183,9 +183,9 @@ BINLOGIN= $(DIRBIN)eqp-login
 DIRCHARSELECT= src/char_select/
 BCHARSELECT= build/$(BUILDTYPE)/char_select/
 _OCHARSELECT= char_select_main.o \
- eqp_char_select.o char_select_client.o char_select_client_trilogy.o
+ eqp_char_select.o char_select_client.o char_select_client_trilogy.o tcp_client.o
 _HCHARSELECT= \
- eqp_char_select.h char_select_client.h char_select_client_trilogy.h
+ eqp_char_select.h char_select_client.h char_select_client_trilogy.h tcp_client.h
 OCHARSELECT= $(patsubst %,$(BCHARSELECT)%,$(_OCHARSELECT))
 HCHARSELECT= $(patsubst %,$(DIRCHARSELECT)%,$(_HCHARSELECT))
 

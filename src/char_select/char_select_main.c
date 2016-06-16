@@ -13,6 +13,7 @@ int char_select_main(R(CharSelect*) charSelect, R(const char**) argv)
     {
     case Try:
         char_select_init(charSelect, argv[1], argv[2], argv[3]);
+        char_select_start_login_server_connections(charSelect);
         char_select_main_loop(charSelect);
         break;
     

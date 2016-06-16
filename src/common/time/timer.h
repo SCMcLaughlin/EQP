@@ -26,8 +26,12 @@ STRUCT_DEFINE(Timer)
 void    timer_init(R(Timer*) timer, R(TimerPool*) pool, uint32_t periodMilliseconds, TimerCallback callback, void* userdata, int start);
 void    timer_deinit(R(Timer*) timer);
 
+#define timer_set_period_milliseconds(timer, ms) ((timer)->periodMilliseconds = (ms))
+#define timer_set_callback(timer, cb) ((timer)->callback = (cb))
+
 #define timer_period_milliseconds(timer) ((timer)->periodMilliseconds)
 #define timer_userdata(timer) ((timer)->userdata)
+#define timer_userdata_type(timer, type) ((type*)((timer)->userdata))
 
 void    timer_stop(R(Timer*) timer);
 #define timer_start(timer) timer_restart((timer))

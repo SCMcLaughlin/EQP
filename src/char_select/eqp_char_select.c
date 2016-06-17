@@ -101,7 +101,7 @@ void char_select_start_login_server_connections(R(CharSelect*) charSelect)
         client = array_push_back_type(B(charSelect), &charSelect->loginServerConnections, TcpClient);
         
         tcp_client_init(charSelect, client, server);
-        tcp_client_start_connect_cycle(client);
+        tcp_client_start_connect_cycle(client, true);
         
         lua_pop(L, 1);
     }
@@ -113,9 +113,9 @@ void char_select_tcp_recv(R(CharSelect*) charSelect)
 {
     R(TcpClient*) array = array_data_type(charSelect->loginServerConnections, TcpClient);
     uint32_t n          = array_count(charSelect->loginServerConnections);
-    uint32_t i          = 0;
+    uint32_t i;
     
-    while (i < n)
+    for (i = 0; i < n; i++)
     {
         R(TcpClient*) cli   = &array[i];
         int fd              = tcp_client_fd(cli);
@@ -125,7 +125,7 @@ void char_select_tcp_recv(R(CharSelect*) charSelect)
         int len;
         
         if (fd == INVALID_SOCKET)
-            goto increment;
+            continue;
         
         buffered    = tcp_client_buffered(cli);
         readLength  = tcp_client_read_length(cli);
@@ -140,16 +140,13 @@ void char_select_tcp_recv(R(CharSelect*) charSelect)
             if (err != EAGAIN && err != EWOULDBLOCK)
                 log_format(B(charSelect), LogNetwork, "[char_select_tcp_recv] recv() syscall failed, errno: %i", err);
             
-            goto increment;
+            continue;
         }
-        
-        printf("RECV %i\n", len);
         
         if (len == 0)
         {
             // Remote end has closed the connection
-            tcp_client_start_connect_cycle(cli);
-            n--;
+            tcp_client_restart_connection(cli);
             continue;
         }
         
@@ -180,8 +177,5 @@ void char_select_tcp_recv(R(CharSelect*) charSelect)
         }
         
         tcp_client_set_buffered(cli, buffered);
-        
-    increment:
-        i++;
     }
 }

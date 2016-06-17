@@ -64,11 +64,11 @@ void tcp_client_deinit(R(TcpClient*) client)
     timer_deinit(&client->timer);
 }
 
-static void tcp_client_restart_connection(R(TcpClient*) client)
+void tcp_client_restart_connection(R(TcpClient*) client)
 {
     closesocket(client->socketFd);
     client->socketFd = INVALID_SOCKET;
-    tcp_client_start_connect_cycle(client);
+    tcp_client_start_connect_cycle(client, false);
 }
 
 static void tcp_client_send(R(CharSelect*) charSelect, R(TcpClient*) client, R(const void*) data, int size)
@@ -189,14 +189,6 @@ static void tcp_client_do_connect(R(CharSelect*) charSelect, R(TcpClient*) clien
     if (setsockopt(client->socketFd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt)))
         exception_throw_format(B(charSelect), ErrorNetwork, "[tcp_client_do_connect] setsockopt() syscall failed, errno %i", errno);
     
-    // Set non-blocking
-#ifdef EQP_WINDOWS
-    if (ioctlsocket(client->socketFd, FIONBIO, &nonblock))
-#else
-    if (fcntl(client->socketFd, F_SETFL, O_NONBLOCK))
-#endif
-        exception_throw_format(B(charSelect), ErrorNetwork, "[tcp_client_do_connect] Setting non-blocking mode failed, errno %i", errno);
-    
     // Set no-delay
     if (setsockopt(client->socketFd, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(opt)))
         exception_throw_format(B(charSelect), ErrorNetwork, "[tcp_client_do_connect] Setting no-delay mode failed, errno %i", errno);
@@ -204,9 +196,19 @@ static void tcp_client_do_connect(R(CharSelect*) charSelect, R(TcpClient*) clien
     if (connect(client->socketFd, result->ai_addr, result->ai_addrlen))
     {
         int err = errno;
-        if (err != EINPROGRESS)
-            exception_throw_format(B(charSelect), ErrorNetwork, "[tcp_client_do_connect] connect() syscall failed, errno %i", errno);
+        if (err == ECONNREFUSED)
+            exception_throw(B(charSelect), ErrorNetwork);
+        else
+            exception_throw_format(B(charSelect), ErrorNetwork, "[tcp_client_do_connect] connect() syscall failed, errno %i", err);
     }
+    
+    // Set non-blocking
+#ifdef EQP_WINDOWS
+    if (ioctlsocket(client->socketFd, FIONBIO, &nonblock))
+#else
+    if (fcntl(client->socketFd, F_SETFL, O_NONBLOCK))
+#endif
+        exception_throw_format(B(charSelect), ErrorNetwork, "[tcp_client_do_connect] Setting non-blocking mode failed, errno %i", errno);
     
     // We are connected; send server info packet to the login server
     memset(&send, 0, sizeof(Tcp_NewLoginServerSend));
@@ -269,17 +271,25 @@ static void tcp_client_reconnect_callback(R(Timer*) timer)
         break;
     
     case ErrorNetwork:
+    {
+        String* errmsg;
+        
         if (client->socketFd != INVALID_SOCKET)
         {
             closesocket(client->socketFd);
             client->socketFd = INVALID_SOCKET;
         }
         
-        log_format(B(charSelect), LogNetwork, "%s", string_data(exception_get_message(B(charSelect))));
-        printf("Error: %s\n", string_data(exception_get_message(B(charSelect))));
+        errmsg = exception_get_message(B(charSelect));
+        if (string_length(errmsg) > 0)
+        {
+            log_format(B(charSelect), LogNetwork, "%s", string_data(errmsg));
+            printf("Error: %s\n", string_data(errmsg)); //fixme: remove this line later
+        }
         
         exception_handled(B(charSelect));
         break;
+    }
     
     default:
         break;
@@ -288,14 +298,16 @@ static void tcp_client_reconnect_callback(R(Timer*) timer)
     exception_end_try_with_finally(B(charSelect));
 }
 
-void tcp_client_start_connect_cycle(R(TcpClient*) client)
+void tcp_client_start_connect_cycle(R(TcpClient*) client, int immediate)
 {
     R(Timer*) timer = &client->timer;
     
     timer_set_period_milliseconds(timer, RECONNECT_MILLISECONDS);
     timer_set_callback(timer, tcp_client_reconnect_callback);
     timer_restart(timer);
-    timer_execute_callback(timer);
+    
+    if (immediate)
+        timer_execute_callback(timer);
 }
 
 static void tcp_client_handle_op_client_login_request(R(CharSelect*) charSelect, R(TcpClient*) client, R(Aligned*) a)

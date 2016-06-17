@@ -43,7 +43,8 @@ STRUCT_DEFINE(TcpClient)
 void    tcp_client_init(R(CharSelect*) charSelect, R(TcpClient*) client, R(LoginServerConfig*) config);
 void    tcp_client_deinit(R(TcpClient*) client);
 
-void    tcp_client_start_connect_cycle(R(TcpClient*) client);
+void    tcp_client_start_connect_cycle(R(TcpClient*) client, int immediate);
+void    tcp_client_restart_connection(R(TcpClient*) client);
 void    tcp_client_handle_packet(R(TcpClient*) client);
 
 #define tcp_client_fd(cli) ((cli)->socketFd)

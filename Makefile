@@ -17,7 +17,6 @@ BUILDTYPE= debug
 #endif
 
 DIRBIN= bin/
-CINCLUDE+= -I/usr/local/include/luajit-2.1
 
 ##############################################################################
 # Common

@@ -46,27 +46,32 @@ static uint16_t ack_mgr_trilogy_complete_input_packet(R(Basic*) basic, R(void*) 
     Aligned w;
     aligned_init(basic, &w, packet->data, packet->length);
     client_recv_packet_trilogy(clientObject, packet->opcode, &w);
-    free(packet->data);
+    if (packet->data)
+        free(packet->data);
     return packet->ackRequest + 1;
 }
 
 static uint16_t ack_mgr_trilogy_complete_input_fragments(R(Basic*) basic, R(void*) clientObject, R(InputPacketTrilogy*) array, uint32_t length, uint32_t i, uint32_t n)
 {
-    Aligned w;
+    Aligned write;
+    R(Aligned*) w = &write;
     R(InputPacketTrilogy*) packet;
     R(byte*) data   = eqp_alloc_type_bytes(basic, length, byte);
     uint16_t opcode = array[i].opcode;
     
-    aligned_init(basic, &w, data, length);
+    aligned_init(basic, w, data, length);
     
     for (; i <= n; i++)
     {
         packet = &array[i];
         
-        aligned_write_buffer(&w, packet->data, packet->length);
+        aligned_write_buffer(w, packet->data, packet->length);
+        
+        free(packet->data);
     }
     
-    client_recv_packet_trilogy(clientObject, opcode, &w);
+    aligned_reset(w);
+    client_recv_packet_trilogy(clientObject, opcode, w);
     free(data);
                 
     return packet->ackRequest + 1;
@@ -87,6 +92,13 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
     R(InputPacketTrilogy*) ptr;
     
     printf("ack_mgr_trilogy_recv_packet ackReq 0x%04x, nextAck 0x%04x\n", ackRequest, nextAck);
+    
+    if (ackRequest == nextAck && fragCount == 0)
+    {
+        network_client_trilogy_set_next_ack_request_expected(&ackMgr->client, nextAck + 1);
+        client_recv_packet_trilogy(clientObject, opcode, a);
+        return;
+    }
     
     if (ack_compare(ackRequest, nextAck) == AckPast)
         return;
@@ -109,8 +121,16 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
     ptr->fragCount  = fragCount;
     ptr->opcode     = opcode;
     ptr->length     = aligned_remaining(a);
-    ptr->data       = eqp_alloc_type_bytes(basic, ptr->length, byte);
-    memcpy(ptr->data, aligned_current(a), ptr->length);
+    
+    if (ptr->length > 0)
+    {
+        ptr->data = eqp_alloc_type_bytes(basic, ptr->length, byte);
+        memcpy(ptr->data, aligned_current(a), ptr->length);
+    }
+    else
+    {
+        ptr->data = NULL;
+    }
     
     // Check if we have completed any fragmented packets and such
     ptr     = array_data_type(ackMgr->inputPackets, InputPacketTrilogy);
@@ -123,24 +143,28 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
     {
         R(InputPacketTrilogy*) packet = &ptr[i];
         
-        if (packet->data == NULL)
+        printf("[%u] ackRequest: 0x%04x\n", i, packet->ackRequest);
+        if (packet->ackRequest == 0)
             break;
         
         fragCount = packet->fragCount;
+        printf("[%u] fragCount: %u\n", i, fragCount);
         
         if (fragCount == 0)
         {
-            ack_mgr_trilogy_complete_input_packet(basic, clientObject, packet);
+            nextAck = ack_mgr_trilogy_complete_input_packet(basic, clientObject, packet);
             diff++;
         }
         else
         {
-            if (fragCount >= (n - i))
+            printf("[%u] %u >= %u?\n", i, fragCount, n);
+            if (fragCount > n)
                 break;
             
             length += packet->length;
             frags++;
             
+            printf("[%u] frags vs fragCount: %u vs %u\n", i, frags, fragCount);
             if (frags == fragCount)
             {
                 diff += frags;
@@ -173,7 +197,6 @@ void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*)
     
     wrapper.fragCount   = fragCount;
     wrapper.packet      = packet;
-    wrapper.seq         = network_client_trilogy_get_next_seq_to_send_and_increment(&ackMgr->client, fragCount);
     
     if (!noAckRequest)
     {

@@ -14,7 +14,6 @@
 STRUCT_DEFINE(OutputPacketTrilogy)
 {
     uint16_t        header;
-    uint16_t        seq;
     uint16_t        ackRequest;
     uint16_t        fragGroup;
     uint16_t        fragCount;
@@ -30,7 +29,8 @@ STRUCT_DEFINE(NetworkClientTrilogy)
     Array*          outputPackets;
     
     uint16_t        nextAckResponse;
-    uint16_t        nextAckRequestExpected;
+    uint16_t        nextAckRequestExpected; //fixme: rename these to better reflect what they do
+    uint16_t        nextAckRequestCheck;
     uint16_t        nextSeqToSend;
     uint16_t        lastAckReceived;
     
@@ -46,8 +46,6 @@ void        network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) cli
 void        network_client_trilogy_schedule_packet(R(NetworkClientTrilogy*) client, R(OutputPacketTrilogy*) packet);
 void        network_client_trilogy_send_pure_ack(R(NetworkClientTrilogy*) client, uint16_t ackResponse);
 void        network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client);
-
-uint16_t    network_client_trilogy_get_next_seq_to_send_and_increment(R(NetworkClientTrilogy*) client, uint16_t by);
 
 #define     network_client_trilogy_next_ack_response(cli) ((cli)->nextAckResponse)
 #define     network_client_trilogy_set_next_ack_response(cli, ack) ((cli)->nextAckResponse = (ack))

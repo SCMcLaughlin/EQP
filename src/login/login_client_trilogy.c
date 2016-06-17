@@ -186,6 +186,7 @@ static uint32_t temp_add_test_servers(R(Basic*) basic, R(ServerList*) list)
         
         server.longName = string_create(basic);
         string_set_from_format(basic, &server.longName, SERVER_NAME, i*i);
+        server.localIpAddress = string_create_from_cstr(basic, SERVER_IP, sizeof(SERVER_IP) - 1);
         server.remoteIpAddress = string_create_from_cstr(basic, SERVER_IP, sizeof(SERVER_IP) - 1);
         
         server_list_add(list, &server);

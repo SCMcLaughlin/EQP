@@ -9,6 +9,7 @@ void network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(
     client->outputPackets           = array_create_type(udp_socket_basic(sock), OutputPacketTrilogy);
     client->nextAckResponse         = 0;
     client->nextAckRequestExpected  = 0;
+    client->nextAckRequestCheck     = 0;
     client->nextSeqToSend           = 0;
     client->lastAckReceived         = 0;
     client->sendFromIndex           = 0;
@@ -70,10 +71,18 @@ void network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) client, u
 
 void network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) client, uint16_t ack, int isFirstPacket)
 {
-    if (isFirstPacket || (ack == (client->nextAckRequestExpected + 1)))
+    if (isFirstPacket)
     {
         client->nextAckResponse         = ack;
         client->nextAckRequestExpected  = ack;
+        client->nextAckRequestCheck     = ack;
+        return;
+    }
+    
+    if (ack == (client->nextAckRequestCheck + 1))
+    {
+        client->nextAckResponse     = ack;
+        client->nextAckRequestCheck = ack;
     }
 }
 
@@ -100,7 +109,7 @@ void network_client_trilogy_send_pure_ack(R(NetworkClientTrilogy*) client, uint1
     network_client_send(&client->base, buf, sizeof(buf));
 }
 
-static void network_client_trilogy_send_fragment(R(NetworkClient*) client, R(OutputPacketTrilogy*) wrapper, R(Aligned*) a,
+static void network_client_trilogy_send_fragment(R(NetworkClientTrilogy*) client, R(OutputPacketTrilogy*) wrapper, R(Aligned*) a,
     uint32_t dataLength, uint16_t opcode, uint16_t ackResponse, uint32_t fragIndex)
 {
     uint32_t orig   = aligned_position(a);
@@ -138,7 +147,7 @@ static void network_client_trilogy_send_fragment(R(NetworkClient*) client, R(Out
     }
     
     // sequence
-    aligned_write_reverse_uint16(a, toNetworkUint16(wrapper->seq + fragIndex));
+    aligned_write_reverse_uint16(a, toNetworkUint16(client->nextSeqToSend++));
     
     // header
     aligned_write_reverse_uint16(a, header);
@@ -150,7 +159,7 @@ static void network_client_trilogy_send_fragment(R(NetworkClient*) client, R(Out
     aligned_advance(a, dataLength);
     aligned_write_uint32(a, crc_calc32_network(data, dataLength));
     
-    network_client_send(client, data, dataLength + sizeof(uint32_t));
+    network_client_send(&client->base, data, dataLength + sizeof(uint32_t));
 }
 
 void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
@@ -208,7 +217,7 @@ void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
             
             aligned_advance(a, EQP_PACKET_TRILOGY_DATA_OFFSET);
             
-            network_client_trilogy_send_fragment(&client->base, wrapper, a,
+            network_client_trilogy_send_fragment(client, wrapper, a,
                 (dataLength > space) ? space : dataLength, opcode, ackResponse, fragIndex);
             
             wrapper->ackTimestamp = clock_milliseconds();
@@ -223,11 +232,4 @@ void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
     
     client->nextAckResponse = 0;
     client->sendFromIndex   = i;
-}
-
-uint16_t network_client_trilogy_get_next_seq_to_send_and_increment(R(NetworkClientTrilogy*) client, uint16_t by)
-{
-    uint16_t seq = client->nextSeqToSend;
-    client->nextSeqToSend += by;
-    return seq;
 }

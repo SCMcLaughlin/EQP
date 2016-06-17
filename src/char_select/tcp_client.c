@@ -187,7 +187,7 @@ static void tcp_client_do_connect(R(CharSelect*) charSelect, R(TcpClient*) clien
     
     // Set reuseaddr
     if (setsockopt(client->socketFd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt)))
-        exception_throw_format(B(charSelect), ErrorNetwork, "[tcp_client_do_connect] setsockopt() syscall failed, errno %i", errno);
+        exception_throw_format(B(charSelect), ErrorNetwork, "[tcp_client_do_connect] Setting reuse-addr mode failed, errno %i", errno);
     
     // Set no-delay
     if (setsockopt(client->socketFd, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(opt)))
@@ -203,6 +203,8 @@ static void tcp_client_do_connect(R(CharSelect*) charSelect, R(TcpClient*) clien
     }
     
     // Set non-blocking
+    // We allow the connect call to block until finished to avoid having to deal with EINPROGRESS annoyance:
+    // not immediately being able to tell if the connection is succeeding or was refused.
 #ifdef EQP_WINDOWS
     if (ioctlsocket(client->socketFd, FIONBIO, &nonblock))
 #else
@@ -366,18 +368,7 @@ void tcp_client_handle_packet(R(TcpClient*) client)
     case TcpOp_ClientLoginRequest:
         tcp_client_handle_op_client_login_request(charSelect, client, a);
         break;
-    /*case TcpOp_NewLoginServer:
-        tcp_client_handle_op_new_login_server(login, client, a);
-        break;
-    
-    case TcpOp_LoginServerStatus:
-        tcp_client_handle_op_login_server_status(login, client, a);
-        break;
-    
-    case TcpOp_ClientLoginResponse:
-        tcp_client_handle_op_client_login_response(login, client, a);
-        break;*/
-    
+
     default:
         break;
     }

@@ -56,14 +56,6 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     header  = aligned_read_uint16(a);
     seq     = aligned_read_uint16(a);
     
-    if (header & (PacketTrilogyIsClosing | PacketTrilogyIsClosing2))
-    {
-        protocol_handler_trilogy_send_pure_ack(handler, aligned_read_uint16(a));
-        protocol_handler_trilogy_flag_connection_as_dead(handler);
-        client_on_disconnect(clientObject, false);
-        return;
-    }
-    
     if (header & PacketTrilogyHasAckResponse)
     {
         uint16_t ackResponse = aligned_read_uint16(a);
@@ -126,11 +118,19 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     else
         opcode = 0;
     
+    if (header & (PacketTrilogyIsClosing | PacketTrilogyIsClosing2))
+    {
+        protocol_handler_trilogy_send_pure_ack(handler, toNetworkUint16(ackRequest));
+        protocol_handler_trilogy_flag_connection_as_dead(handler);
+        client_on_disconnect(clientObject, false);
+        return;
+    }
+    
     // If it's unsequenced (no ack request), or if it's the one we expect next and not a fragment, handle right away;
     // otherwise, add it to the Ack Manager's future packet/fragment completion queue
-    if (opcode || fragCount)
+    //if (opcode || fragCount || ackRequest)
     {
-        if (ackRequest == 0 || (fragCount == 0 && ackRequest == ack_mgr_trilogy_next_ack_response(ackMgr)))
+        if (ackRequest == 0 /*|| (fragCount == 0 && ackRequest == ack_mgr_trilogy_next_ack_response(ackMgr))*/)
             client_recv_packet_trilogy(clientObject, opcode, a);
         else
             ack_mgr_trilogy_recv_packet(ackMgr, a, clientObject, opcode, ackRequest, fragCount);

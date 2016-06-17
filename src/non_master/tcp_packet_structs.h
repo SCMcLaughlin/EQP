@@ -49,12 +49,23 @@ STRUCT_DEFINE(Tcp_LoginServerStatus)
     int zoneCount;
 };
 
+STRUCT_DEFINE(Tcp_LoginServerStatusSend)
+{
+    TcpPacketHeader         header;
+    Tcp_LoginServerStatus   data;
+};
+
 STRUCT_DEFINE(Tcp_ClientLoginRequest)
 {
-    TcpPacketHeader header;
-    uint32_t        accountId;
-    uint32_t        serverId;
-    uint32_t        unused[2];
+    uint32_t    accountId;
+    uint32_t    serverId;
+    uint32_t    unused[2];
+};
+
+STRUCT_DEFINE(Tcp_ClientLoginRequestSend)
+{
+    TcpPacketHeader         header;
+    Tcp_ClientLoginRequest  data;
 };
 
 STRUCT_DEFINE(Tcp_ClientLoginResponse)
@@ -63,6 +74,12 @@ STRUCT_DEFINE(Tcp_ClientLoginResponse)
     uint32_t    serverId;
     int8_t      response;   // -3 = World Full, -2 = Banned, -1 = Suspended, 0 = Denied, 1 = Allowed
     uint32_t    unused[2];
+};
+
+STRUCT_DEFINE(Tcp_ClientLoginResponseSend)
+{
+    TcpPacketHeader         header;
+    Tcp_ClientLoginResponse data;
 };
 
 STRUCT_DEFINE(Tcp_ClientLoginAuth)

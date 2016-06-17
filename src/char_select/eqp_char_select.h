@@ -16,19 +16,23 @@
 #include "tcp_client.h"
 #include "lua_sys.h"
 
-#define EQP_CHAR_SELECT_PORT 9000
+#define EQP_CHAR_SELECT_PORT            9000
+#define EQP_CHAR_SELECT_SERVER_UP       0
+#define EQP_CHAR_SELECT_SERVER_DOWN     -1
+#define EQP_CHAR_SELECT_SERVER_LOCKED   -2
 
 STRUCT_DEFINE(CharSelect)
 {
     // Core MUST be the first member of this struct
     Core        core;
     
+    int         serverStatus;
+    int         serverPlayerCount;
     TimerPool   timerPool;
     ShmViewer   shmViewerLogWriter;
     lua_State*  L;
     UdpSocket*  socket;
     Array*      loginServerConnections;
-    TcpClient   tcpClient;  //fixme: arrayize to allow arbitrary numbers of login servers
 };
 
 void    char_select_init(R(CharSelect*) charSelect, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath);
@@ -36,8 +40,10 @@ void    char_select_deinit(R(CharSelect*) charSelect);
 void    char_select_main_loop(R(CharSelect*) charSelect);
 
 void    char_select_start_login_server_connections(R(CharSelect*) charSelect);
+void    char_select_tcp_recv(R(CharSelect*) charSelect);
 
+#define char_select_server_status(cs) ((cs)->serverStatus)
+#define char_select_player_count(cs) ((cs)->serverPlayerCount)
 #define char_select_timer_pool(cs) (&(cs)->timerPool)
-#define char_select_tcp_client(cs) (&(cs)->tcpClient)
 
 #endif//EQP_CHAR_SELECT_H

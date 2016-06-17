@@ -12,6 +12,7 @@
 #include "eqp_string.h"
 
 #define EQP_TCP_CLIENT_BUFFER_SIZE 1024
+#define EQP_TCP_CLIENT_REMOTE_TIMEOUT_MILLISECONDS 60000
 
 STRUCT_DECLARE(CharSelect);
 
@@ -23,6 +24,8 @@ STRUCT_DEFINE(LoginServerConfig)
     String* port;
     String* username;
     String* password;
+    String* remoteIp;
+    String* localIp;
 };
 
 STRUCT_DEFINE(TcpClient)
@@ -32,6 +35,7 @@ STRUCT_DEFINE(TcpClient)
     int16_t             readLength;
     byte*               recvBuf;
     LoginServerConfig*  config;
+    CharSelect*         charSelect;
     uint64_t            lastRemoteTime;
     Timer               timer;  // For reconnection when not connected, or status updates when connected
 };
@@ -40,7 +44,7 @@ void    tcp_client_init(R(CharSelect*) charSelect, R(TcpClient*) client, R(Login
 void    tcp_client_deinit(R(TcpClient*) client);
 
 void    tcp_client_start_connect_cycle(R(TcpClient*) client);
-void    tcp_client_recv(R(TcpClient*) client);
+void    tcp_client_handle_packet(R(TcpClient*) client);
 
 #define tcp_client_fd(cli) ((cli)->socketFd)
 #define tcp_client_buffered(cli) ((cli)->buffered)

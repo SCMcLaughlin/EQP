@@ -28,7 +28,8 @@ STRUCT_DEFINE(ServerListing)
     uint32_t        rank : 2;
     uint32_t        unused : 28;
     int             playerCount;
-    uint32_t        nameAndIpLength;    // Saves us some dereferences when calculating packet lengths
+    uint32_t        nameLength;             // Saves us some dereferences when calculating packet lengths
+    uint32_t        remoteAddressLength;    // Ditto
     String*         longName;
     String*         shortName;
     String*         remoteIpAddress;
@@ -57,7 +58,9 @@ void        server_list_send_client_login_request_by_ip_address(R(Login*) login,
 #define     server_listing_rank(server) ((server)->rank)
 #define     server_listing_player_count(server) ((server)->playerCount)
 #define     server_listing_name(server) ((server)->longName)
-#define     server_listing_ip_address(server) ((server)->remoteIpAddress)
-#define     server_listing_strings_length(server) ((server)->nameAndIpLength)
+#define     server_listing_remote_address(server) ((server)->remoteIpAddress)
+#define     server_listing_local_address(server) ((server)->localIpAddress)
+#define     server_listing_name_length(server) ((server)->nameLength)
+#define     server_listing_remote_length(server) ((server)->remoteAddressLength)
 
 #endif//EQP_SERVER_LIST_H

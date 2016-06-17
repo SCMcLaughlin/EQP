@@ -58,8 +58,10 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     
     if (header & (PacketTrilogyIsClosing | PacketTrilogyIsClosing2))
     {
+        protocol_handler_trilogy_send_pure_ack(handler, aligned_read_uint16(a));
         protocol_handler_trilogy_flag_connection_as_dead(handler);
         client_on_disconnect(clientObject, false);
+        return;
     }
     
     if (header & PacketTrilogyHasAckResponse)

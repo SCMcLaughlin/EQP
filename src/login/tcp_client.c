@@ -45,8 +45,16 @@ static void tcp_client_send(R(Login*) login, R(TcpClient*) client, R(const void*
         {
             int err = errno;
             if (err != EAGAIN && err != EWOULDBLOCK)
-                log_format(B(login), LogNetwork, "[tcp_client_keep_alive] send() syscall failed, errno %i", err);
-            break;
+            {
+                if (err == ECONNREFUSED)
+                {
+                    tcp_server_close_client(login_tcp_server(login), client);
+                    return;
+                }
+                
+                log_format(B(login), LogNetwork, "[tcp_client_send] send() syscall failed, errno %i", err);
+                break;
+            }
         }
         
         sent += len;
@@ -87,24 +95,40 @@ static String* tcp_client_string_from_fixed_field(R(Basic*) basic, R(Aligned*) a
 static void tcp_client_handle_op_new_login_server(R(Login*) login, R(TcpClient*) client, R(Aligned*) a)
 {
     ServerListing server;
-    char remoteIp[INET_ADDRSTRLEN];
-    
+
     if (tcp_client_has_login_server(client) || aligned_remaining(a) < sizeof(Tcp_NewLoginServer))
         return;
     
-    if (!inet_ntop(AF_INET, &tcp_client_address(client), remoteIp, sizeof(IpAddress)))
+    server.longName     = tcp_client_string_from_fixed_field(B(login), a, sizeof_field(Tcp_NewLoginServer, longName));
+    server.shortName    = tcp_client_string_from_fixed_field(B(login), a, sizeof_field(Tcp_NewLoginServer, shortName));
+    
+    /*
+        Did the server specify a particular remote address?
+        
+        Specifying the remote address is necessary if the login server is running on the same machine (or the same internal subnet)
+        as the char select server, because the socket will only be able to see the local address, and not the real remote
+        address from the router.
+        
+        Clients that aren't local won't be able to connect to a server if it advertises itself using a local address. To remedy
+        this, google "what's my IP" on the machine that will run the server, and put the result in the "remoteAddress" field
+        of the first LoginServer entry in login_config.lua.
+    */
+    if (aligned_peek_byte(a) != 0)
     {
-        int err = errno;
-        log_format(B(login), LogNetwork, "[tcp_client_handle_op_new_login_server] inet_ntop() syscall failed, errno %i\n", err);
-        remoteIp[0] = 0;
+        server.remoteIpAddress = tcp_client_string_from_fixed_field(B(login), a, sizeof_field(Tcp_NewLoginServer, remoteAddress));
+    }
+    else
+    {
+        // If not, use the apparent remote address from the socket
+        uint32_t ip = client->address.sin_addr.s_addr;
+        String* str = string_create_with_capacity(B(login), INET_ADDRSTRLEN);
+        string_set_from_format(B(login), &str, "%u.%u.%u.%u", (ip >> 0) & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
+        
+        server.remoteIpAddress = str;
+        aligned_advance(a, sizeof_field(Tcp_NewLoginServer, remoteAddress));
     }
     
-    server.longName         = tcp_client_string_from_fixed_field(B(login), a, sizeof_field(Tcp_NewLoginServer, longName));
-    server.shortName        = tcp_client_string_from_fixed_field(B(login), a, sizeof_field(Tcp_NewLoginServer, shortName));
-    aligned_advance(a, sizeof_field(Tcp_NewLoginServer, remoteAddress));
     server.localIpAddress   = tcp_client_string_from_fixed_field(B(login), a, sizeof_field(Tcp_NewLoginServer, localAddress));
-    
-    server.remoteIpAddress  = string_create_from_cstr(B(login), remoteIp, strlen(remoteIp));
     
     server.status           = ServerStatus_Locked;
     server.rank             = ServerRank_Standard;
@@ -126,6 +150,8 @@ static void tcp_client_handle_op_login_server_status(R(Login*) login, R(TcpClien
     playerCount = aligned_read_int32(a);
     zones       = aligned_read_int32(a);
     
+    printf("status: %i, playerCount: %i, zones: %i\n", status, playerCount, zones);
+    
     switch (status)
     {
     case SERVER_UP:
@@ -142,9 +168,7 @@ static void tcp_client_handle_op_login_server_status(R(Login*) login, R(TcpClien
     }
     
     server_list_update_by_index(login_server_list(login), tcp_client_login_server_index(client), playerCount, status);
-    
-    printf("status: %i, playerCount: %i, zones: %i\n", status, playerCount, zones);
-    
+
     tcp_client_keep_alive(login, client);
 }
 
@@ -244,17 +268,17 @@ void tcp_client_handle_packet(R(Login*) login, R(TcpClient*) client)
 void tcp_client_send_client_login_request(R(Login*) login, R(TcpClient*) client, uint32_t accountId)
 {
     // This struct is fully aligned
-    Tcp_ClientLoginRequest req;
+    Tcp_ClientLoginRequestSend req;
     
     if (!tcp_client_has_login_server(client))
         return;
     
     req.header.opcode   = TcpOp_ClientLoginRequest;
-    req.header.length   = sizeof(Tcp_ClientLoginRequest);
-    req.accountId       = accountId;
-    req.serverId        = 0;
-    req.unused[0]       = 0;
-    req.unused[1]       = 0;
+    req.header.length   = sizeof(Tcp_ClientLoginRequestSend);
+    req.data.accountId  = accountId;
+    req.data.serverId   = 0;
+    req.data.unused[0]  = 0;
+    req.data.unused[1]  = 0;
     
     tcp_client_send(login, client, &req, sizeof(Tcp_ClientLoginRequest));
 }

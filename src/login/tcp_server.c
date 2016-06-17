@@ -89,6 +89,7 @@ void tcp_server_accept_new_connections(R(TcpServer*) server)
     IpAddress addr;
     socklen_t addrLen   = sizeof(IpAddress);
     int acceptFd        = server->acceptFd;
+    int opt             = 1;
 #ifdef EQP_WINDOWS
     unsigned long nonblock = 1;
 #endif
@@ -119,6 +120,14 @@ void tcp_server_accept_new_connections(R(TcpServer*) server)
             continue;
         }
         
+        // Set no-delay
+        if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(opt)))
+        {
+            log_format(B(server->login), LogNetwork, "[tcp_server_accept_new_connections] Setting no-delay mode failed");
+            closesocket(fd);
+            continue;
+        }
+        
         ip = addr.sin_addr.s_addr;
         
         log_format(B(server->login), LogNetwork, "[tcp_server_accept_new_connections] New server connection from %u.%u.%u.%u:%u",
@@ -132,13 +141,39 @@ void tcp_server_accept_new_connections(R(TcpServer*) server)
 static void tcp_server_handle_closed_client(R(TcpServer*) server, R(TcpClient*) cli, uint32_t index)
 {
     printf("Remote end disconnected\n");
+    
     if (tcp_client_has_login_server(cli))
-        server_list_remove_by_index(login_server_list(server->login), tcp_client_login_server_index(cli));
+    {
+        int prevBack;
+        uint32_t serverIndex = tcp_client_login_server_index(cli);
+        
+        // Swap and pop the server from the server list
+        server_list_remove_by_index(login_server_list(server->login), serverIndex);
+        
+        // If we have multiple servers, the server that was at prevBack is now
+        // at serverIndex -- need to update the TcpClient still pointing at prevBack
+        prevBack = server_list_count(login_server_list(server->login));
+        if (prevBack > 0)
+        {
+            R(TcpClient*) array = array_data_type(server->clients, TcpClient);
+            uint32_t n          = array_count(server->clients);
+            uint32_t i;
+            
+            for (i = 0; i < n; i++)
+            {
+                R(TcpClient*) client = &array[i];
+                
+                if (tcp_client_login_server_index(client) == prevBack)
+                {
+                    tcp_client_set_login_server_index(client, serverIndex);
+                    break;
+                }
+            }
+        }
+    }
     
     tcp_client_deinit(cli);
-    
-    if (array_swap_and_pop(server->clients, index))
-        tcp_client_set_login_server_index(array_back_type(server->clients, TcpClient), index);
+    array_swap_and_pop(server->clients, index);
 }
 
 void tcp_server_recv(R(TcpServer*) server)
@@ -205,6 +240,14 @@ void tcp_server_recv(R(TcpServer*) server)
     increment:
         i++;
     }
+}
+
+void tcp_server_close_client(R(TcpServer*) server, R(TcpClient*) client)
+{
+    R(TcpClient*) array = array_data_type(server->clients, TcpClient);
+    uint32_t index      = (((byte*)client) - ((byte*)array)) / sizeof(TcpClient);
+    
+    tcp_server_handle_closed_client(server, client, index);
 }
 
 void tcp_server_send_client_login_request(R(TcpServer*) server, int loginServerIndex, uint32_t accountId)

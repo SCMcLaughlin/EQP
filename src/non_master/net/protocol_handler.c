@@ -86,7 +86,7 @@ void protocol_handler_check_first_packet(R(UdpSocket*) sock, R(UdpClient*) clien
     aligned_init(udp_socket_basic(sock), &a, data, len);
     header = aligned_read_uint16(&a);
     
-    if (header == (PacketTrilogyHasAckRequest | PacketTrilogyHasAckCounter | PacketTrilogyIsFirstPacket))
+    //if (header == (PacketTrilogyHasAckRequest | PacketTrilogyHasAckCounter | PacketTrilogyIsFirstPacket))
     {
         len -= sizeof(uint32_t);
         aligned_advance(&a, len - sizeof(uint16_t));

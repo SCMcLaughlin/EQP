@@ -168,7 +168,7 @@ static void login_trilogy_handle_op_banner(R(LoginClient*) client, R(ProtocolHan
     login_trilogy_schedule_packet(handler, packet);
 }
 
-#define TEST_SERVERS
+//#define TEST_SERVERS
 #ifdef TEST_SERVERS
 #define SERVER_NAME "EQP Test%u"
 #define SERVER_IP "127.0.0.1"
@@ -207,6 +207,8 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     uint32_t length;
     uint32_t n;
     uint32_t i;
+    uint32_t ip;
+    char localAddress[INET_ADDRSTRLEN];
     
     if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
         return;
@@ -214,6 +216,9 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     login   = (Login*)protocol_handler_basic(handler);
     list    = login_server_list(login);
     count   = server_list_count(list);
+    ip      = protocol_handler_ip_address(handler)->sin_addr.s_addr;
+    
+    snprintf(localAddress, sizeof(localAddress), "%u.%u.%u.%u", (ip >> 0) & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
     
 #ifdef TEST_SERVERS
     ////////
@@ -231,10 +236,15 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     {
         R(ServerListing*) server = &data[i];
         
-        if (!server_listing_name(server) || !server_listing_ip_address(server))
+        if (!server_listing_name(server))
             continue;
         
-        length += server_listing_strings_length(server);
+        if (string_compare_cstr(server_listing_local_address(server), localAddress) == 0)
+            length += string_length(server_listing_local_address(server)) + 1;
+        else
+            length += server_listing_remote_length(server);
+        
+        length += server_listing_name_length(server);
         length += sizeof(LoginTrilogy_ServerFooter);
         
         if (++n == SERVER_LIST_COUNT_MAX)
@@ -261,7 +271,7 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
         int playerCount;
         R(ServerListing*) server = &data[i];
         
-        if (!server_listing_name(server) || !server_listing_ip_address(server))
+        if (!server_listing_name(server))
             continue;
         
         switch (server_listing_status(server))
@@ -282,7 +292,10 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
         // server name
         aligned_write_string_null_terminated(w, server_listing_name(server));
         // ip address
-        aligned_write_string_null_terminated(w, server_listing_ip_address(server));
+        if (string_compare_cstr(server_listing_local_address(server), localAddress) == 0)
+            aligned_write_string_null_terminated(w, server_listing_local_address(server));
+        else
+            aligned_write_string_null_terminated(w, server_listing_remote_address(server));
         // isGreenName
         aligned_write_bool(w, (server_listing_rank(server) != ServerRank_Standard));
         // playerCount

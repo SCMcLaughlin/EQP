@@ -40,15 +40,8 @@ void server_list_deinit(R(ServerList*) list)
 
 uint32_t server_list_add(R(ServerList*) list, R(ServerListing*) server)
 {
-    uint32_t len = 0;
-    
-    if (server->longName)
-        len += string_length(server->longName) + 1;
-    
-    if (server->remoteIpAddress)
-        len += string_length(server->remoteIpAddress) + 1;
-    
-    server->nameAndIpLength = len;
+    server->nameLength          = (server->longName) ? string_length(server->longName) + 1 : 0;
+    server->remoteAddressLength = (server->remoteIpAddress) ? string_length(server->remoteIpAddress) + 1 : 0;
     
     array_push_back(list->basic, &list->array, server);
     

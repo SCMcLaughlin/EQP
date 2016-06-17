@@ -44,6 +44,7 @@ void        network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) cl
 void        network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) client, uint16_t ack, int isFirstPacket);
 
 void        network_client_trilogy_schedule_packet(R(NetworkClientTrilogy*) client, R(OutputPacketTrilogy*) packet);
+void        network_client_trilogy_send_pure_ack(R(NetworkClientTrilogy*) client, uint16_t ackResponse);
 void        network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client);
 
 uint16_t    network_client_trilogy_get_next_seq_to_send_and_increment(R(NetworkClientTrilogy*) client, uint16_t by);

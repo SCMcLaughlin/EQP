@@ -6,6 +6,11 @@ void char_select_init(R(CharSelect*) charSelect, R(const char*) ipcPath, R(const
     (void)ipcPath;
     (void)masterIpcPath;
     
+    charSelect->serverStatus        = EQP_CHAR_SELECT_SERVER_LOCKED;
+    charSelect->serverPlayerCount   = 0;
+    
+    timer_pool_init(B(charSelect), &charSelect->timerPool);
+    
     shm_viewer_init(&charSelect->shmViewerLogWriter);
     shm_viewer_open(B(charSelect), &charSelect->shmViewerLogWriter, logWriterIpcPath, sizeof(IpcBuffer));
     // Tell the log writer to open our log file
@@ -59,6 +64,8 @@ void char_select_main_loop(R(CharSelect*) charSelect)
         udp_socket_send(socket);
         udp_socket_check_timeouts(socket);
         
+        char_select_tcp_recv(charSelect);
+        
         clock_sleep_milliseconds(50);
     }
 }
@@ -87,6 +94,8 @@ void char_select_start_login_server_connections(R(CharSelect*) charSelect)
         server->port        = lua_sys_field_to_string(B(charSelect), L, -1, "port");
         server->username    = lua_sys_field_to_string(B(charSelect), L, -1, "username");
         server->password    = lua_sys_field_to_string(B(charSelect), L, -1, "password");
+        server->remoteIp    = lua_sys_field_to_string(B(charSelect), L, -1, "remoteaddress");
+        server->localIp     = lua_sys_field_to_string(B(charSelect), L, -1, "localaddress");
         
         // Push new TcpClient object
         client = array_push_back_type(B(charSelect), &charSelect->loginServerConnections, TcpClient);
@@ -98,4 +107,81 @@ void char_select_start_login_server_connections(R(CharSelect*) charSelect)
     }
     
     lua_clear(L);
+}
+
+void char_select_tcp_recv(R(CharSelect*) charSelect)
+{
+    R(TcpClient*) array = array_data_type(charSelect->loginServerConnections, TcpClient);
+    uint32_t n          = array_count(charSelect->loginServerConnections);
+    uint32_t i          = 0;
+    
+    while (i < n)
+    {
+        R(TcpClient*) cli   = &array[i];
+        int fd              = tcp_client_fd(cli);
+        int buffered;
+        int readLength;
+        R(byte*) recvBuf;
+        int len;
+        
+        if (fd == INVALID_SOCKET)
+            goto increment;
+        
+        buffered    = tcp_client_buffered(cli);
+        readLength  = tcp_client_read_length(cli);
+        recvBuf     = tcp_client_recv_buffer(cli);
+        
+    redo:
+        len = recv(fd, recvBuf + buffered, readLength - buffered, 0);
+        
+        if (len == -1)
+        {
+            int err = errno;
+            if (err != EAGAIN && err != EWOULDBLOCK)
+                log_format(B(charSelect), LogNetwork, "[char_select_tcp_recv] recv() syscall failed, errno: %i", err);
+            
+            goto increment;
+        }
+        
+        printf("RECV %i\n", len);
+        
+        if (len == 0)
+        {
+            // Remote end has closed the connection
+            tcp_client_start_connect_cycle(cli);
+            n--;
+            continue;
+        }
+        
+        buffered += len;
+        
+        if (buffered == readLength)
+        {
+            if (buffered == sizeof(TcpPacketHeader))
+            {
+                readLength = *(uint16_t*)(&recvBuf[2]); // Aligned read
+                if (readLength == sizeof(TcpPacketHeader))
+                    goto packet;
+                tcp_client_set_read_length(cli, readLength);
+            }
+            else
+            {
+            packet:
+                // We have a complete packet to handle
+                tcp_client_handle_packet(cli);
+                
+                buffered    = 0;
+                readLength  = sizeof(TcpPacketHeader);
+                tcp_client_set_buffered(cli, 0);
+                tcp_client_set_read_length(cli, sizeof(TcpPacketHeader));
+            }
+            
+            goto redo;
+        }
+        
+        tcp_client_set_buffered(cli, buffered);
+        
+    increment:
+        i++;
+    }
 }

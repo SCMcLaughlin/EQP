@@ -83,7 +83,7 @@ void network_client_trilogy_schedule_packet(R(NetworkClientTrilogy*) client, R(O
     array_push_back(network_client_trilogy_basic(client), &client->outputPackets, packet);
 }
 
-static void network_client_trilogy_send_pure_ack(R(NetworkClientTrilogy*) client, uint16_t ackResponse)
+void network_client_trilogy_send_pure_ack(R(NetworkClientTrilogy*) client, uint16_t ackResponse)
 {
     byte buf[10];
     Aligned write;

@@ -36,5 +36,6 @@ void    protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte
 #define protocol_handler_trilogy_schedule_packet_no_ack(handler, packet) protocol_handler_trilogy_schedule_packet_opt(handler, packet, 1)
 #define protocol_handler_trilogy_schedule_packet_opt(handler, packet, noAck) ack_mgr_trilogy_schedule_packet((&(handler)->ackMgr), (packet), (noAck))
 #define protocol_handler_trilogy_send_queued(handler) ack_mgr_trilogy_send_queued((&(handler)->ackMgr))
+#define protocol_handler_trilogy_send_pure_ack(handler, ack) ack_mgr_trilogy_send_pure_ack(&(handler)->ackMgr, (ack))
 
 #endif//EQP_PROTOCOL_HANDLER_TRILOGY_H

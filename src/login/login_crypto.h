@@ -11,7 +11,7 @@
 
 #define EQP_LOGIN_CRYPTO_BUFFER_SIZE        2048
 #define EQP_LOGIN_CRYPTO_HASH_SIZE          20      /* Recommended maximum for PBKDF2 using SHA1 */
-#define EQP_LOGIN_CRYPTO_HASH_ITERATIONS    50000   /* Takes ~80 milliseconds on a 1.90GHz laptop CPU core */
+#define EQP_LOGIN_CRYPTO_HASH_ITERATIONS    100000  /* Takes ~160 milliseconds on a 1.90GHz laptop CPU core */
 
 STRUCT_DECLARE(Basic);
 STRUCT_DECLARE(LoginCrypto);

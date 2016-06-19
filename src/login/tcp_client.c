@@ -150,8 +150,6 @@ static void tcp_client_handle_op_login_server_status(R(Login*) login, R(TcpClien
     playerCount = aligned_read_int32(a);
     zones       = aligned_read_int32(a);
     
-    printf("status: %i, playerCount: %i, zones: %i\n", status, playerCount, zones);
-    
     switch (status)
     {
     case SERVER_UP:

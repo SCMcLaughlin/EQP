@@ -23,11 +23,11 @@ void*       array_get(R(Array*) array, uint32_t index);
 #define     array_get_type(array, index, type) (type*)array_get((array), (index))
 void*       array_back(R(Array*));
 #define     array_back_type(array, type) (type*)array_back((array))
-void        array_get_copy(R(Array*) array, uint32_t index, void* copyTo);
-void        array_back_copy(R(Array*) array, void* copyTo);
-void        array_set(R(Array*) array, uint32_t index, void* value);
+void        array_get_copy(R(Array*) array, uint32_t index, R(void*) copyTo);
+void        array_back_copy(R(Array*) array, R(void*) copyTo);
+void        array_set(R(Array*) array, uint32_t index, R(const void*) value);
 #define     array_push_back_type(basic, array, type) (type*)array_push_back((basic), (array), NULL)
-void*       array_push_back(R(Basic*) basic, R(Array**) array, void* value);
+void*       array_push_back(R(Basic*) basic, R(Array**) array, R(const void*) value);
 void        array_pop_back(R(Array*) array);
 int         array_swap_and_pop(R(Array*) array, uint32_t index);
 void        array_shift_left(R(Array*) array, uint32_t numIndices);

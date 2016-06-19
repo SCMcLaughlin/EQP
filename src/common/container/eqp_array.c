@@ -60,7 +60,7 @@ void* array_back(R(Array*) array)
     return (c > 0) ? &array->data[(c - 1) * array->elementSize] : NULL;
 }
 
-void array_get_copy(R(Array*) array, uint32_t index, void* copyTo)
+void array_get_copy(R(Array*) array, uint32_t index, R(void*) copyTo)
 {
     if (array->count > index)
     {
@@ -69,7 +69,7 @@ void array_get_copy(R(Array*) array, uint32_t index, void* copyTo)
     }
 }
 
-void array_back_copy(R(Array*) array, void* copyTo)
+void array_back_copy(R(Array*) array, R(void*) copyTo)
 {
     uint32_t count  = array->count;
     uint32_t size   = array->elementSize;
@@ -78,13 +78,13 @@ void array_back_copy(R(Array*) array, void* copyTo)
         memcpy(copyTo, &array->data[(count - 1) * size], size);
 }
 
-void array_set(R(Array*) array, uint32_t index, void* value)
+void array_set(R(Array*) array, uint32_t index, R(const void*) value)
 {
     uint32_t size = array->elementSize;
     memcpy(&array->data[index * size], value, size);
 }
 
-void* array_push_back(R(Basic*) basic, R(Array**) array, void* value)
+void* array_push_back(R(Basic*) basic, R(Array**) array, R(const void*) value)
 {
     R(Array*) ar    = *array;
     uint32_t index  = ar->count++;

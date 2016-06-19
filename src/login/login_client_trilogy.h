@@ -38,6 +38,7 @@ ENUM_DEFINE(LoginClientTrilogyState)
     LoginClientTrilogy_AcceptedCredentials
 };
 
+void    login_client_trilogy_handle_credentials_result(R(LoginClient*) client, uint32_t accountId);
 void    login_client_trilogy_handle_login_response(R(LoginClient*) client, int response);
 
 #endif//EQP_LOGIN_CLIENT_TRILOGY_H

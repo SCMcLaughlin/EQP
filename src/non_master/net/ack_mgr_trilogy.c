@@ -81,9 +81,9 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
 {
     // Working from the assumption that the client doesn't do anything weird like 
     // interleaving different fragmented packets within sequential ackRequest sequences...
-    R(Basic*) basic     = ack_mgr_trilogy_basic(ackMgr);
-    uint16_t nextAck    = ack_mgr_trilogy_next_ack_request_expected(ackMgr);
-    uint32_t n          = array_count(ackMgr->inputPackets);
+    R(Basic*) basic;
+    uint16_t nextAck = ack_mgr_trilogy_next_ack_request_expected(ackMgr);
+    uint32_t n;
     uint32_t diff;
     uint32_t i;
     uint32_t length;
@@ -103,6 +103,9 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
     if (ack_compare(ackRequest, nextAck) == AckPast)
         return;
     
+    basic   = ack_mgr_trilogy_basic(ackMgr);
+    n       = array_count(ackMgr->inputPackets);
+    
     memset(&input, 0, sizeof(InputPacketTrilogy));
     
     // Protocol doesn't allow acks to roll over to 0, so shouldn't need to check for ackRequest being lower (fixme: confirm this)
@@ -116,6 +119,11 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
     }
     
     ptr = array_get_type(ackMgr->inputPackets, diff, InputPacketTrilogy);
+    
+    // If we already had a packet at this position, abort
+    // (The client likes to spam the same packet over and over in some situations, especially during login)
+    if (ptr->ackRequest != 0)
+        return;
     
     ptr->ackRequest = ackRequest;
     ptr->fragCount  = fragCount;
@@ -203,7 +211,7 @@ void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*)
         if (ackMgr->nextAckToRequest == 0)
         {
             header |= PacketTrilogyIsFirstPacket;
-            ackMgr->nextAckToRequest = random_uint16() | 1; // Make sure the final value can't be zero
+            ackMgr->nextAckToRequest = 0x0001;//random_uint16() | 1; // Make sure the final value can't be zero
         }
         
         wrapper.ackRequest = ackMgr->nextAckToRequest;

@@ -71,5 +71,5 @@ uint32_t login_crypto_process(R(LoginCrypto*) crypto, R(const void*) input, uint
 
 void login_crypto_hash(R(LoginCrypto*) crypto, R(const char*) password, uint32_t passlen, R(const byte*) salt, uint32_t saltlen)
 {
-    PKCS5_PBKDF2_HMAC_SHA1(password, passlen, salt, saltlen, EQP_LOGIN_CRYPTO_HASH_ITERATIONS, EQP_LOGIN_CRYPTO_HASH_SIZE, crypto->buffer); 
+    PKCS5_PBKDF2_HMAC_SHA1(password, passlen, salt, saltlen, EQP_LOGIN_CRYPTO_HASH_ITERATIONS, EQP_LOGIN_CRYPTO_HASH_SIZE, crypto->buffer);
 }

@@ -13,6 +13,12 @@ static void cs_trilogy_schedule_packet(R(ProtocolHandler*) handler, R(PacketTril
     protocol_handler_trilogy_schedule_packet(&handler->trilogy, packet);
 }
 
+static void cs_trilogy_echo_zero_length(R(ProtocolHandler*) handler, uint16_t opcode)
+{
+    R(PacketTrilogy*) packet = packet_trilogy_create(protocol_handler_basic(handler), opcode, 0);
+    cs_trilogy_schedule_packet(handler, packet);
+}
+
 static void cs_trilogy_handle_op_login_info(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
     R(Basic*) basic;
@@ -24,23 +30,26 @@ static void cs_trilogy_handle_op_login_info(R(CharSelectClient*) client, R(Proto
     R(CSTrilogy_CharSelectInfo*) cs;
     uint32_t i;
     
-    (void)client;
-    
     if (aligned_remaining(a) == 0)
         return;
     
-    account = (const char*)aligned_current(a);
-    
+    account = (const char*)aligned_current(a); // "LS#" + digits
     aligned_advance_null_terminator(a);
     
-    if (aligned_remaining(a) == 0)
+    if (aligned_remaining(a) == 0 || strlen(account) < 4)
         return;
     
     sessionKey  = (const char*)aligned_current(a);
     basic       = protocol_handler_basic(handler);
     
+    client->auth.accountId = strtol(account + 3, NULL, 10); // Skip "LS#"
+    snprintf(client->auth.sessionKey, sizeof_field(CharSelectAuth, sessionKey), "%s", sessionKey);
+    
     printf("account: %s, sessionKey: %s\n", account, sessionKey);
     
+    char_select_handle_unauthed_client((CharSelect*)protocol_handler_basic(handler), client);
+    
+    // Do the following parts on client_set_auth()
     aligned_set_basic(w, basic);
     
     packet = packet_trilogy_create(basic, TrilogyOp_LoginApproved, 1);
@@ -76,16 +85,18 @@ static void cs_trilogy_handle_op_login_info(R(CharSelectClient*) client, R(Proto
     cs_trilogy_schedule_packet(handler, packet);
 }
 
-static void cs_trilogy_handle_op_guild_list(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+void cs_client_trilogy_on_auth(R(CharSelectClient*) client)
+{
+    printf("CLIENT AUTHED\n");
+}
+
+static void cs_trilogy_handle_op_guild_list(R(ProtocolHandler*) handler)
 {
     R(PacketTrilogy*) packet;
     R(CSTrilogy_GuildList*) list;
     uint32_t i;
-    (void)client;
     
-    printf("Guild list: %u\n", aligned_read_uint32(a));
-    
-    // The entire guild list struct is properly aligned for its 4-byte fields
+    // The entire guild list struct is properly aligned on a 4-byte boundary
     packet  = packet_trilogy_create(protocol_handler_basic(handler), TrilogyOp_GuildList, sizeof(CSTrilogy_GuildList));
     list    = (CSTrilogy_GuildList*)packet_trilogy_data(packet);
     
@@ -103,6 +114,41 @@ static void cs_trilogy_handle_op_guild_list(R(CharSelectClient*) client, R(Proto
     cs_trilogy_schedule_packet(handler, packet);
 }
 
+static void cs_trilogy_handle_op_name_approval(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+{
+    (void)client;
+    (void)handler;
+    (void)a;
+}
+
+static void cs_trilogy_handle_op_create_character(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+{
+    (void)client;
+    (void)handler;
+    (void)a;
+}
+
+static void cs_trilogy_handle_op_delete_character(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+{
+    (void)client;
+    (void)handler;
+    (void)a;
+}
+
+static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+{
+    (void)client;
+    (void)handler;
+    (void)a;
+}
+
+static void cs_trilogy_handle_op_enter(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+{
+    (void)client;
+    (void)handler;
+    (void)a;
+}
+
 void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a)
 {
     R(CharSelectClient*) client = (CharSelectClient*)vclient;
@@ -117,7 +163,36 @@ void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a
         break;
     
     case TrilogyOp_GuildList:
-        cs_trilogy_handle_op_guild_list(client, handler, a);
+        cs_trilogy_handle_op_guild_list(handler);
+        break;
+    
+    case TrilogyOp_NameApproval:
+        cs_trilogy_handle_op_name_approval(client, handler, a);
+        break;
+    
+    case TrilogyOp_CreateCharacter:
+        cs_trilogy_handle_op_create_character(client, handler, a);
+        break;
+    
+    case TrilogyOp_DeleteCharacter:
+        cs_trilogy_handle_op_delete_character(client, handler, a);
+        break;
+    
+    case TrilogyOp_WearChange:
+        cs_trilogy_handle_op_wear_change(client, handler, a);
+        break;
+    
+    case TrilogyOp_Enter:
+        cs_trilogy_handle_op_enter(client, handler, a);
+        break;
+    
+    // Special, zero-length packets that need to be echoed for whatever reason
+    case 0x2023:
+    case 0x80a9:
+    case 0xab00:
+    case 0xac00:
+    case 0xad00:
+        cs_trilogy_echo_zero_length(handler, opcode);
         break;
     
     default:

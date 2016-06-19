@@ -24,6 +24,12 @@ void char_select_init(R(CharSelect*) charSelect, R(const char*) ipcPath, R(const
     udp_socket_open(charSelect->socket, EQP_CHAR_SELECT_PORT);
     
     charSelect->loginServerConnections = array_create_type(B(charSelect), TcpClient);
+    
+    timer_init(&charSelect->timerUnclaimedAuths, &charSelect->timerPool, EQP_CHAR_SELECT_UNCLAIMED_AUTHS_TIMEOUT,
+        char_select_unclaimed_auths_timer_callback, charSelect, true);
+    
+    charSelect->unclaimedAuths  = array_create_type(B(charSelect), CharSelectAuth);
+    charSelect->unauthedClients = array_create_type(B(charSelect), CharSelectClient*);
 }
 
 void char_select_deinit(R(CharSelect*) charSelect)
@@ -177,5 +183,93 @@ void char_select_tcp_recv(R(CharSelect*) charSelect)
         }
         
         tcp_client_set_buffered(cli, buffered);
+    }
+}
+
+void char_select_unclaimed_auths_timer_callback(R(Timer*) timer)
+{
+    CharSelect* charSelect  = timer_userdata_type(timer, CharSelect);
+    CharSelectAuth* array   = array_data_type(charSelect->unclaimedAuths, CharSelectAuth);
+    uint32_t n              = array_count(charSelect->unclaimedAuths);
+    uint32_t i              = 0;
+    uint64_t time           = clock_milliseconds();
+    
+    while (i < n)
+    {
+        CharSelectAuth* auth = &array[i];
+        
+        if ((time - auth->timestamp) >= EQP_CHAR_SELECT_UNCLAIMED_AUTHS_TIMEOUT)
+        {
+            array_swap_and_pop(charSelect->unclaimedAuths, i);
+            n--;
+            continue;
+        }
+        
+        i++;
+    }
+}
+
+void char_select_handle_client_auth(R(CharSelect*) charSelect, R(CharSelectAuth*) auth)
+{
+    uint32_t accountId          = auth->accountId;
+    R(CharSelectClient**) array = array_data_type(charSelect->unauthedClients, CharSelectClient*);
+    uint32_t n                  = array_count(charSelect->unauthedClients);
+    uint32_t i;
+    
+    // Check if there's an unauthed client waiting for this
+    for (i = 0; i < n; i++)
+    {
+        R(CharSelectClient*) client = array[i];
+        
+        if (char_select_client_account_id(client) == accountId)
+        {
+            char_select_client_set_auth(client, auth);
+            array_swap_and_pop(charSelect->unauthedClients, i);
+            return;
+        }
+    }
+    
+    // None found, append to our queue
+    auth->timestamp = clock_milliseconds();
+    array_push_back(B(charSelect), &charSelect->unclaimedAuths, auth);
+}
+
+void char_select_handle_unauthed_client(R(CharSelect*) charSelect, R(CharSelectClient*) client)
+{
+    uint32_t accountId          = char_select_client_account_id(client);
+    R(CharSelectAuth*) array    = array_data_type(charSelect->unclaimedAuths, CharSelectAuth);
+    uint32_t n                  = array_count(charSelect->unclaimedAuths);
+    uint32_t i;
+    
+    // Check if we've already received an auth for this client
+    for (i = 0; i < n; i++)
+    {
+        R(CharSelectAuth*) auth = &array[i];
+        
+        if (auth->accountId == accountId)
+        {
+            char_select_client_set_auth(client, auth);
+            array_swap_and_pop(charSelect->unclaimedAuths, i);
+            return;
+        }
+    }
+    
+    // None found, append to our queue
+    array_push_back(B(charSelect), &charSelect->unauthedClients, (void*)&client);
+}
+
+void char_select_remove_client_from_unauthed_list(R(CharSelect*) charSelect, R(CharSelectClient*) client)
+{
+    R(CharSelectClient**) array = array_data_type(charSelect->unauthedClients, CharSelectClient*);
+    uint32_t n                  = array_count(charSelect->unauthedClients);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        if (array[i] == client)
+        {
+            array_swap_and_pop(charSelect->unauthedClients, i);
+            return;
+        }
     }
 }

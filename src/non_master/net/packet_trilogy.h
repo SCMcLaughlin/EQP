@@ -36,22 +36,22 @@ STRUCT_DECLARE(Basic);
 
 ENUM_DEFINE(PacketTrilogyHeaderBits)
 {
-    PacketTrilogyUnknownBit0            = 0x0001,
-    PacketTrilogyHasAckRequest          = 0x0002,
-    PacketTrilogyIsClosing              = 0x0004,
-    PacketTrilogyIsFragment             = 0x0008,
-    PacketTrilogyHasAckCounter          = 0x0010,
-    PacketTrilogyIsFirstPacket          = 0x0020,
-    PacketTrilogyIsClosing2             = 0x0040,
-    PacketTrilogyIsSequenceEnd          = 0x0080,
-    PacketTrilogyIsSpecialAckRequest    = 0x0100,
-    PacketTrilogyUnknownBit9            = 0x0200,
-    PacketTrilogyHasAckResponse         = 0x0400,
-    PacketTrilogyUnknownBit11           = 0x0800,
-    PacketTrilogyUnknownBit12           = 0x1000,
-    PacketTrilogyUnknownBit13           = 0x2000,
-    PacketTrilogyUnknownBit14           = 0x4000,
-    PacketTrilogyUnknownBit15           = 0x8000
+    PacketTrilogyUnknownBit0    = 0x0001,
+    PacketTrilogyHasAckRequest  = 0x0002,
+    PacketTrilogyIsClosing      = 0x0004,
+    PacketTrilogyIsFragment     = 0x0008,
+    PacketTrilogyHasAckCounter  = 0x0010,
+    PacketTrilogyIsFirstPacket  = 0x0020,
+    PacketTrilogyIsClosing2     = 0x0040,
+    PacketTrilogyIsSequenceEnd  = 0x0080,
+    PacketTrilogyIsKeepAliveAck = 0x0100,
+    PacketTrilogyUnknownBit9    = 0x0200,
+    PacketTrilogyHasAckResponse = 0x0400,
+    PacketTrilogyUnknownBit11   = 0x0800,
+    PacketTrilogyUnknownBit12   = 0x1000,
+    PacketTrilogyUnknownBit13   = 0x2000,
+    PacketTrilogyUnknownBit14   = 0x4000,
+    PacketTrilogyUnknownBit15   = 0x8000
 };
 
 STRUCT_DEFINE(PacketTrilogy)

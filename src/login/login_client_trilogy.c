@@ -46,61 +46,6 @@ static void login_trilogy_handle_op_version(R(LoginClient*) client, R(ProtocolHa
     login_client_set_state(client, LoginClientTrilogy_VersionSent);
 }
 
-static void login_trilogy_credentials_callback(R(Query*) query)
-{
-    R(LoginClient*) client      = query_userdata_type(query, LoginClient);
-    R(ProtocolHandler*) handler = login_client_handler(client);
-    R(const char*) password     = login_client_password_temp(client);
-    int passLength              = login_client_password_length(client);
-    R(Login*) login             = (Login*)protocol_handler_basic(handler);
-    R(LoginCrypto*) crypto      = login_get_crypto(login);
-    int success                 = false;
-    
-    int64_t id = 1;
-    while (query_select(query)) { }
-    /*while (query_select(query))
-    {
-        uint32_t hashLength;
-        uint32_t saltLength;
-        int64_t id          = query_get_int64(query, 1);
-        R(const byte*) hash = query_get_blob(query, 2, &hashLength);
-        R(const byte*) salt = query_get_blob(query, 3, &saltLength);
-        
-        login_crypto_hash(crypto, password, passLength, salt, saltLength);
-        
-        if (memcmp(login_crypto_data(crypto), hash, hashLength) == 0)
-        {*/
-            // Successful login
-            R(PacketTrilogy*) packet = packet_trilogy_create_type(B(login), TrilogyOp_Session, LoginTrilogy_Session);
-            Aligned write;
-            R(Aligned*) w = &write;
-            
-            aligned_init(B(login), w, packet_trilogy_data(packet), packet_trilogy_length(packet));
-            
-            // sessionId
-            aligned_write_snprintf_full_advance(w, sizeof_field(LoginTrilogy_Session, sessionId), "LS#%u", (uint32_t)id);
-            // "unused"
-            aligned_write_literal_null_terminated(w, "unused");
-            // unknown
-            aligned_write_uint32(w, 4);
-            
-            login_trilogy_schedule_packet(handler, packet);
-            
-            success = true;
-            login_client_set_account_id(client, (uint32_t)id);
-            login_client_set_state(client, LoginClientTrilogy_AcceptedCredentials);
-            client_list_add(B(login), login_client_list(login), client);
-        /*}
-        
-        login_crypto_clear(crypto);
-    }*/
-    
-    login_client_clear_password_temp(client);
-    
-    if (!success)
-        login_trilogy_err_literal(handler, ERR_CREDENTIALS);
-}
-
 static void login_trilogy_handle_op_credentials(R(LoginClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
     R(Login*) login;
@@ -108,7 +53,6 @@ static void login_trilogy_handle_op_credentials(R(LoginClient*) client, R(Protoc
     R(LoginTrilogy_Credentials*) cred;
     int nameLength;
     int passLength;
-    Query query;
     
     if (login_client_get_state(client) != LoginClientTrilogy_VersionSent || aligned_remaining(a) < sizeof(LoginTrilogy_Credentials))
         return;
@@ -130,20 +74,37 @@ static void login_trilogy_handle_op_credentials(R(LoginClient*) client, R(Protoc
         return;
     }
     
-    printf("username: %s, password: %s\n", cred->username, cred->password);
-    
-    login_client_set_account_name(client, cred->username, nameLength);
-    login_client_set_password_temp(client, cred->password, passLength);
-    
-    // Prep database query
-    query_init(&query);
-    query_set_userdata(&query, client);
-    db_prepare_literal(core_db(C(login)), &query, "SELECT rowid, password, salt FROM local_login WHERE username = ?", login_trilogy_credentials_callback);
-    
-    query_bind_string(&query, 1, cred->username, nameLength);
-    
-    db_schedule(core_db(C(login)), &query);
+    login_client_check_credentials(client, login, cred->username, nameLength, cred->password, passLength);
     login_crypto_clear(crypto);
+}
+
+void login_client_trilogy_handle_credentials_result(R(LoginClient*) client, uint32_t accountId)
+{
+    R(ProtocolHandler*) handler = login_client_handler(client);
+    
+    if (accountId == 0)
+    {
+        login_trilogy_err_literal(handler, ERR_CREDENTIALS);
+    }
+    else
+    {
+        R(Basic*) basic             = protocol_handler_basic(handler);
+        R(PacketTrilogy*) packet    = packet_trilogy_create_type(basic, TrilogyOp_Session, LoginTrilogy_Session);
+        Aligned write;
+        R(Aligned*) w = &write;
+        
+        aligned_init(basic, w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+        
+        // sessionId
+        aligned_write_snprintf_full_advance(w, sizeof_field(LoginTrilogy_Session, sessionId), "LS#%u", accountId);
+        // "unused"
+        aligned_write_literal_null_terminated(w, "unused");
+        // unknown
+        aligned_write_uint32(w, 4);
+        
+        login_trilogy_schedule_packet(handler, packet);
+        login_client_set_state(client, LoginClientTrilogy_AcceptedCredentials);
+    }
 }
 
 static void login_trilogy_handle_op_banner(R(LoginClient*) client, R(ProtocolHandler*) handler)

@@ -8,11 +8,15 @@
 #include "protocol_handler.h"
 #include "eqp_string.h"
 
+#define EQP_LOGIN_SALT_LENGTH       16
+
 #define LOGIN_RESPONSE_ACCEPTED     1
 #define LOGIN_RESPONSE_DENIED       0
 #define LOGIN_RESPONSE_SUSPENDED    -1
 #define LOGIN_RESPONSE_BANNED       -2
 #define LOGIN_RESPONSE_WORLD_FULL   -3
+
+STRUCT_DECLARE(Login);
 
 STRUCT_DEFINE(LoginClient)
 {
@@ -42,8 +46,9 @@ void            login_client_set_account_name(R(LoginClient*) client, R(const ch
 void            login_client_set_password_temp(R(LoginClient*) client, R(const char*) password, int length);
 #define         login_client_clear_password_temp(client) memset((client)->passwordTemp, 0, sizeof((client)->passwordTemp))
 
-void            login_client_handle_login_response(R(LoginClient*) client, int response);
+void            login_client_check_credentials(R(LoginClient*) client, R(Login*) login, R(const char*) username, int nameLength, R(const char*) password, int passLength);
 
+void            login_client_handle_login_response(R(LoginClient*) client, int response);
 void            login_client_generate_session_key(R(LoginClient*) client);
 
 #endif//EQP_LOGIN_CLIENT_H

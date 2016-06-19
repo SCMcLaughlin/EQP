@@ -126,15 +126,10 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
         return;
     }
     
-    // If it's unsequenced (no ack request), or if it's the one we expect next and not a fragment, handle right away;
-    // otherwise, add it to the Ack Manager's future packet/fragment completion queue
-    //if (opcode || fragCount || ackRequest)
-    {
-        if (ackRequest == 0 /*|| (fragCount == 0 && ackRequest == ack_mgr_trilogy_next_ack_response(ackMgr))*/)
-            client_recv_packet_trilogy(clientObject, opcode, a);
-        else
-            ack_mgr_trilogy_recv_packet(ackMgr, a, clientObject, opcode, ackRequest, fragCount);
-    }
+    if (ackRequest)
+        ack_mgr_trilogy_recv_packet(ackMgr, a, clientObject, opcode, ackRequest, fragCount);
+    else if (opcode)
+        client_recv_packet_trilogy(clientObject, opcode, a);
 }
 
 #undef MIN_PACKET_LENGTH

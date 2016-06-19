@@ -347,6 +347,24 @@ static void tcp_client_handle_op_client_login_request(R(CharSelect*) charSelect,
     tcp_client_send(charSelect, client, &send, sizeof(Tcp_ClientLoginResponseSend));
 }
 
+static void tcp_client_handle_op_client_login_auth(R(CharSelect*) charSelect, R(Aligned*) a)
+{
+    CharSelectAuth auth;
+    
+    // accountId
+    auth.accountId = aligned_read_uint32(a);
+    // accountName
+    aligned_read_buffer(a, auth.accountName, sizeof_field(Tcp_ClientLoginAuth, accountName));
+    // sessionKey
+    aligned_read_buffer(a, auth.sessionKey, sizeof_field(Tcp_ClientLoginAuth, sessionKey));
+    // loginAdmin, serverAdmin, ip...
+    aligned_advance(a, sizeof(uint8_t) + sizeof(int16_t) + sizeof(uint32_t));
+    // isLocal
+    auth.isLocal = aligned_read_uint8(a);
+    
+    char_select_handle_client_auth(charSelect, &auth);
+}
+
 void tcp_client_handle_packet(R(TcpClient*) client)
 {
     R(CharSelect*) charSelect = client->charSelect;
@@ -367,6 +385,10 @@ void tcp_client_handle_packet(R(TcpClient*) client)
     {
     case TcpOp_ClientLoginRequest:
         tcp_client_handle_op_client_login_request(charSelect, client, a);
+        break;
+    
+    case TcpOp_ClientLoginAuth:
+        tcp_client_handle_op_client_login_auth(charSelect, a);
         break;
 
     default:

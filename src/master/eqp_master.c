@@ -1,30 +1,25 @@
 
 #include "eqp_master.h"
-#include "eqp_clock.h"
 
-static void child_proc_init(R(ChildProcess*) proc)
-{
-    proc->ipc                   = NULL;
-    proc->lastActivityTimestamp = 0;
-    proc->pid                   = 0;
-    shm_viewer_init(&proc->shmViewer);
-}
+#define BIN_LOG_WRITER  "./eqp-log-writer"
+#define BIN_LOGIN       "./eqp-login"
+#define BIN_CHAR_SELECT "./eqp-char-select"
 
 void master_init(R(Master*) M)
 {
-    atomic_mutex_init(&M->mutexProc);
+    atomic_mutex_init(&M->mutexProcList);
     
     master_ipc_thread_init(M, &M->ipcThread);
     
-    child_proc_init(&M->procCharSelect);
-    child_proc_init(&M->procLogWriter);
-    child_proc_init(&M->procLogin);
+    proc_init(&M->procCharSelect);
+    proc_init(&M->procLogWriter);
+    proc_init(&M->procLogin);
     
     // Create IPC shared memory buffer for master, need to know its path before launching child processes
     ipc_buffer_shm_create_init(B(M), &master_ipc_thread_ipc_buffer(&M->ipcThread), &M->shmCreatorMaster, &M->shmViewerMaster, EQP_MASTER_SHM_PATH);
     
     // Create the IPC shared memory buffer for the log writer process early
-    ipc_buffer_shm_create_init(B(M), &M->procLogWriter.ipc, &M->procLogWriter.shmCreator, &M->procLogWriter.shmViewer, EQP_LOG_SHM_PATH);
+    proc_create_ipc_buffer(M, &M->procLogWriter, EQP_LOG_WRITER_SHM_PATH);
     
     core_init(C(M), EQP_SOURCE_ID_MASTER, M->procLogWriter.ipc);
 }
@@ -36,22 +31,20 @@ void master_deinit(R(Master*) M)
     core_deinit(C(M));
     
     share_mem_destroy(&M->shmCreatorMaster, &M->shmViewerMaster);
-    share_mem_destroy(&M->procLogWriter.shmCreator, &M->procLogWriter.shmViewer);
-}
-
-static void master_shut_down_child_process(R(Master*) M, R(ChildProcess*) proc)
-{
-    if (!proc->ipc)
-        return;
-    
-    ipc_buffer_write(B(M), proc->ipc, ServerOpShutdown, EQP_SOURCE_ID_MASTER, 0, NULL);
-    proc->ipc = NULL;
 }
 
 void master_shut_down_all_child_processes(R(Master*) M)
 {
-    // Shut down the log writer last
-    master_shut_down_child_process(M, &M->procLogWriter);
+    atomic_mutex_lock(&M->mutexProcList);
+    
+    proc_shutdown(M, &M->procLogin);
+    proc_shutdown(M, &M->procCharSelect);
+    
+    // Shut down the log writer last, and give other processes some time to do any last logging
+    clock_sleep_milliseconds(250);
+    proc_shutdown(M, &M->procLogWriter);
+    
+    atomic_mutex_unlock(&M->mutexProcList);
 }
 
 static pid_t master_spawn_process(R(Master*) M, R(const char*) path, R(const char*) arg1, R(const char*) arg2, R(const char*) arg3)
@@ -74,7 +67,7 @@ static pid_t master_spawn_process(R(Master*) M, R(const char*) path, R(const cha
     
     if (pid == 0)
     {
-        const char* argv[] = {path, arg1, arg2, NULL};
+        const char* argv[] = {path, arg1, arg2, arg3, NULL};
         
         if (execv(path, (char**)argv))
         {
@@ -96,13 +89,11 @@ static pid_t master_spawn_process(R(Master*) M, R(const char*) path, R(const cha
 
 void master_start_log_writer(R(Master*) M)
 {
+    // Tell the log writer to open the log file for Master once it's started
+    ipc_buffer_write(B(M), proc_ipc(&M->procLogWriter), ServerOpLogOpen, EQP_SOURCE_ID_MASTER, 0, NULL);
+    
     // The log writer does not need to know about the master process or the log writer (obviously), its communication is all input only
-    M->procLogWriter.pid = master_spawn_process(M, "./eqp-log-writer", share_mem_path(&M->procLogWriter.shmCreator), NULL, NULL);
-    
-    // Tell the log writer to open the log file for Master
-    ipc_buffer_write(B(M), M->procLogWriter.ipc, ServerOpLogOpen, EQP_SOURCE_ID_MASTER, 0, NULL);
-    
-    M->procLogWriter.lastActivityTimestamp = clock_milliseconds();
+    proc_start(&M->procLogWriter, master_spawn_process(M, BIN_LOG_WRITER, proc_shm_path(&M->procLogWriter), NULL, NULL));
 }
 
 static void master_start_process(R(Master*) M, R(const char*) binPath, R(ChildProcess*) proc, R(const char*) ipcPath)
@@ -112,17 +103,13 @@ static void master_start_process(R(Master*) M, R(const char*) binPath, R(ChildPr
     switch (exception_try(B(M), &exScope))
     {
     case Try:
-        atomic_mutex_lock(&M->mutexProc);
-        ipc_buffer_shm_create_init(B(M), &proc->ipc, &proc->shmCreator, &proc->shmViewer, ipcPath);
-    
-        proc->pid = master_spawn_process(M, binPath, share_mem_path(&proc->shmCreator),
-            share_mem_path(&M->shmCreatorMaster), share_mem_path(&M->procLogWriter.shmCreator));
-    
-        proc->lastActivityTimestamp = clock_milliseconds();
+        atomic_mutex_lock(&M->mutexProcList);
+        proc_create_ipc_buffer(M, proc, ipcPath);
+        proc_start(proc, master_spawn_process(M, binPath, proc_shm_path(proc), share_mem_path(&M->shmCreatorMaster), proc_shm_path(&M->procLogWriter)));
         break;
     
     case Finally:
-        atomic_mutex_unlock(&M->mutexProc);
+        atomic_mutex_unlock(&M->mutexProcList);
         break;
     }
     
@@ -132,20 +119,19 @@ static void master_start_process(R(Master*) M, R(const char*) binPath, R(ChildPr
 void master_start_char_select(R(Master*) M)
 {
     (void)M;
-    //master_start_process(M, "./eqp-char-select", &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH);
+    //master_start_process(M, BIN_CHAR_SELECT, &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH);
 }
 
 void master_start_login(R(Master*) M)
 {
-    (void)M;
-    //master_start_process(M, "./eqp-login", &M->procLogin, EQP_LOGIN_SHM_PATH);
+    master_start_process(M, BIN_LOGIN, &M->procLogin, EQP_LOGIN_SHM_PATH);
 }
 
 ChildProcess* master_get_child_process(R(Master*) M, int sourceId)
 {
     ChildProcess* proc = NULL;
     
-    atomic_mutex_lock(&M->mutexProc);
+    atomic_mutex_lock(&M->mutexProcList);
     
     switch (sourceId)
     {
@@ -165,7 +151,7 @@ ChildProcess* master_get_child_process(R(Master*) M, int sourceId)
         break;
     }
     
-    atomic_mutex_unlock(&M->mutexProc);
+    atomic_mutex_unlock(&M->mutexProcList);
     
     return proc;
 }
@@ -176,9 +162,25 @@ static void master_check_threads_status(R(Master*) M)
         exception_throw_message(B(M), ErrorThread, "[master_check_threads_status] IPC thread lifetime ended unexpectedly", 0);
 }
 
+static void master_restart_proc(R(Master*) M, R(ChildProcess*) proc, int sourceId, R(const char*) binPath, R(const char*) ipcPath)
+{
+    log_from_format(B(M), sourceId, LogInfo, "eqp-master has detected that this process may be non-responsive; restarting...");
+    log_format(B(M), LogInfo, "Detected that process %i for binary '%s' is non-responsive; restarting it", proc_pid(proc), binPath);
+    
+    // Tell log-writer to close the log for this process
+    ipc_buffer_write(B(M), proc_ipc(&M->procLogWriter), ServerOpLogClose, sourceId, 0, NULL);
+    
+    proc_kill(proc);
+    
+    master_start_process(M, binPath, proc, ipcPath);
+}
+
 static void master_check_child_procs_status(R(Master*) M)
 {
-    (void)M;
+    uint64_t time = clock_milliseconds();
+    
+    if ((time - proc_last_activity_time(&M->procLogin)) >= EQP_CHILD_PROC_TIMEOUT_MILLISECONDS)
+        master_restart_proc(M, &M->procLogin, EQP_SOURCE_ID_LOGIN, BIN_LOGIN, EQP_LOGIN_SHM_PATH);
 }
 
 void master_main_loop(R(Master*) M)

@@ -150,9 +150,9 @@ HNONMASTER_ALL+= $(HNONMASTER_NET)
 DIRMASTER= src/master/
 BMASTER= build/$(BUILDTYPE)/master/
 _OMASTER= master_main.o \
- eqp_master.o master_ipc.o
+ eqp_master.o master_ipc.o child_process.o
 _HMASTER= \
- eqp_master.h master_ipc.h
+ eqp_master.h master_ipc.h child_process.h
 OMASTER= $(patsubst %,$(BMASTER)%,$(_OMASTER))
 HMASTER= $(patsubst %,$(DIRMASTER)%,$(_HMASTER))
 

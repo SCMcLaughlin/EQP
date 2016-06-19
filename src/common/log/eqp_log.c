@@ -25,11 +25,19 @@ static uint32_t log_construct_message(R(Basic*) basic, R(char*) message, LogType
         break;
     
     case LogInfo:
-        wrote = snprintf(message + pos, EQP_LOG_MESSAGE_SIZE - pos, "[INFO] ");
+        wrote = snprintf(message + pos, EQP_LOG_MESSAGE_SIZE - pos, "[Info] ");
         break;
     
     case LogSql:
         wrote = snprintf(message + pos, EQP_LOG_MESSAGE_SIZE - pos, "[SQL] ");
+        break;
+    
+    case LogNetwork:
+        wrote = snprintf(message + pos, EQP_LOG_MESSAGE_SIZE - pos, "[Net] ");
+        break;
+    
+    case LogLua:
+        wrote = snprintf(message + pos, EQP_LOG_MESSAGE_SIZE - pos, "[Lua] ");
         break;
     
     case LogNone:

@@ -8,6 +8,7 @@ ENUM_DEFINE(ServerOp)
 {
     ServerOpNone,
     ServerOpShutdown,
+    ServerOpKeepAlive,
     // Logging
     ServerOpLogOpen,
     ServerOpLogClose,

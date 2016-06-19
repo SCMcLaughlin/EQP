@@ -16,7 +16,8 @@ int master_main(R(Master*) M)
         master_start_ipc_thread(M);
         // Start core child processes
         master_start_log_writer(M);
-        //master_start_login(M);
+        master_start_login(M);
+        master_start_char_select(M);
         master_main_loop(M);
         break;
     

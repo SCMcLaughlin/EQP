@@ -167,7 +167,7 @@ static int master_ipc_thread_handle_packet(R(MasterIpcThread*) ipcThread, R(Mast
 {
     ServerOp opcode     = ipc_packet_opcode(packet);
     int sourceId        = ipc_packet_source_id(packet);
-    ChildProcess* proc  = NULL;
+    ChildProcess* proc;
     
     if (sourceId == EQP_SOURCE_ID_CONSOLE)
         return master_ipc_thread_wrap_console_message(ipcThread, M, L, packet);
@@ -186,8 +186,13 @@ static int master_ipc_thread_handle_packet(R(MasterIpcThread*) ipcThread, R(Mast
         return false;
     }
     
+    proc_update_last_activity_time(proc);
+    
     switch (opcode)
     {
+    case ServerOpKeepAlive:
+        break;
+    
     case ServerOpConsoleMessage:
         if (master_ipc_thread_handle_console_message(ipcThread, M, L, packet, proc, 0))
             return true;

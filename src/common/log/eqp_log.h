@@ -11,7 +11,6 @@
 #include <time.h>
 
 #define EQP_LOG_MESSAGE_SIZE 2048
-#define EQP_LOG_SHM_PATH "shm/eqp-log-writer-"
 
 STRUCT_DECLARE(Basic);
 

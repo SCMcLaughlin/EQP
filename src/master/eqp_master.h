@@ -10,8 +10,14 @@
 #include "share_mem.h"
 #include "atomic_mutex.h"
 #include "master_ipc.h"
+#include "eqp_clock.h"
+#include "child_process.h"
 
-#define EQP_MASTER_SHM_PATH "shm/eqp-master-"
+#define EQP_MASTER_SHM_PATH                 "shm/eqp-master-"
+#define EQP_LOG_WRITER_SHM_PATH             "shm/eqp-log-writer-"
+#define EQP_LOGIN_SHM_PATH                  "shm/eqp-login-"
+#define EQP_CHAR_SELECT_SHM_PATH            "shm/eqp-char-select-"
+#define EQP_CHILD_PROC_TIMEOUT_MILLISECONDS 15000
 
 /*
     Master is the first server process to run and the last to shut down.
@@ -35,21 +41,12 @@
     Notably, both of these threads will spend most of their time blocking on semaphores. 
 */
 
-STRUCT_DEFINE(ChildProcess)
-{
-    IpcBuffer*  ipc;
-    uint64_t    lastActivityTimestamp;
-    pid_t       pid;
-    ShmViewer   shmViewer;
-    ShmCreator  shmCreator;
-};
-
 STRUCT_DEFINE(Master)
 {
     // Core MUST be the first member of this struct
     Core core;
     
-    AtomicMutex     mutexProc; // Locked when a new process is having its ipc pointer set, otherwise free
+    AtomicMutex     mutexProcList; // Locked when any child processes are being created or destroyed
     
     // Master IPC
     MasterIpcThread ipcThread;

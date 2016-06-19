@@ -16,14 +16,23 @@
 #include "server_list.h"
 #include "client_list.h"
 
+#define EQP_LOGIN_PORT 5998
+#define EQP_LOGIN_KEEP_ALIVE_DELAY_MILLISECONDS 5000
+
 STRUCT_DEFINE(Login)
 {
     // Core MUST be the first member of this struct
     Core            core;
     
+    IpcBuffer*      ipc;
+    IpcBuffer*      ipcMaster;
+    ShmViewer       shmViewerSelf;
+    ShmViewer       shmViewerMaster;
+    ShmViewer       shmViewerLogWriter;
+    
     ServerList      serverList;
     ClientList      clientList;
-    ShmViewer       shmViewerLogWriter;
+    
     UdpSocket*      socket;
     TcpServer       tcpServer;
     LoginCrypto*    crypto;

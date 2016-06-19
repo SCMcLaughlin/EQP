@@ -70,6 +70,7 @@ static int console_command_has_force_option(int argc, R(const char**) argv)
 #define CONSOLE_ERR_ARG_LENGTH      "too many arguments provided."
 #define CONSOLE_ERR_MASTER_ALREADY  "eqp-master process already appears to be running.\nIf it previously crashed, this may be a false positive.\nUse the -f or -force option if you believe this is the case."
 #define CONSOLE_MASTER_SHM          "eqp-master-"
+#define CONSOLE_ANY_SHM             "eqp-"
 
 static void console_launch_master_process(R(Basic*) basic)
 {
@@ -150,7 +151,7 @@ static void console_force_start_master(R(Console*) console)
         if (result == NULL)
             break;
         
-        if (strncmp(entry.d_name, CONSOLE_MASTER_SHM, sizeof(CONSOLE_MASTER_SHM) - 1) == 0)
+        if (strncmp(entry.d_name, CONSOLE_ANY_SHM, sizeof(CONSOLE_ANY_SHM) - 1) == 0)
         {
             char path[512];
             snprintf(path, sizeof(path), "shm/%s", entry.d_name);
@@ -231,7 +232,12 @@ int console_send(R(Console*) console, int argc, R(const char**) argv)
         
         printf("Attempting to start eqp-master...\n");
         console_launch_master_process(B(console));
-        return false;
+        clock_sleep_milliseconds(1000);
+        if (!console_find_master_ipc(console))
+        {
+            printf("eqp-master startup seems to have failed...\n");
+            return false;
+        }
     }
     else if (isStart)
     {

@@ -81,32 +81,7 @@ void log_from_vformat(R(Basic*) basic, int sourceId, LogType type, R(const char*
     uint32_t length = log_construct_message(basic, message, type, fmt, args);
     
     if (length)
-    {
         ipc_buffer_write(basic, basic_log_ipc(basic)->ipc, ServerOpLogMessage, sourceId, length, message);
-        
-        if (sourceId != EQP_SOURCE_ID_MASTER || type == LogFatal || type == LogNone)
-            return;
-        
-        switch (type)
-        {
-        case LogError:
-            printf(TERM_RED);
-            break;
-        
-        case LogInfo:
-            printf(TERM_YELLOW);
-            break;
-        
-        case LogSql:
-            printf(TERM_DARK_GREEN);
-            break;
-        
-        default:
-            break;
-        }
-        
-        printf("[%s\n" TERM_DEFAULT, message + 14); // 14 to skip the year-month-day part
-    }
 }
 
 #undef ERR_STRFTIME

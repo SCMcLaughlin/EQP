@@ -12,6 +12,10 @@ local function replyAndFinish(thread, ipc, src, msg)
 end
 
 local handlers = {
+    start = function(thread, M, ipc, src, args, opts)
+        replyAndFinish(thread, ipc, src, "eqp-master started successfully")
+    end,
+    
     shutdown = function(thread, M, ipc, src, args, opts)
         replyAndFinish(thread, ipc, src, "Shutting down eqp-master")
         return true

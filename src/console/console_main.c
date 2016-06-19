@@ -41,12 +41,22 @@ int console_main(R(Console*) console, int argc, R(const char**) argv)
 int main(int argc, const char** argv)
 {
     Console console;
+    const char* binPath;
     
     if (argc < 2)
     {
         printf("No command entered! Please provide a command to be executed, or use the -h option to list available commands\n");
         return 0;
     }
+    
+    binPath = getenv(EQP_CONSOLE_PATH_ENV_VARIABLE);
+    
+    if (binPath)
+#ifdef EQP_WINDOWS
+        SetCurrentDirectoryA(binPath);
+#else
+        chdir(binPath);
+#endif
     
     memset(&console, 0, sizeof(Console));
     

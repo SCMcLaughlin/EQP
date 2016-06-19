@@ -278,7 +278,7 @@ void tcp_client_send_client_login_request(R(Login*) login, R(TcpClient*) client,
     req.data.unused[0]  = 0;
     req.data.unused[1]  = 0;
     
-    tcp_client_send(login, client, &req, sizeof(Tcp_ClientLoginRequest));
+    tcp_client_send(login, client, &req, sizeof(Tcp_ClientLoginRequestSend));
 }
 
 #undef SERVER_UP

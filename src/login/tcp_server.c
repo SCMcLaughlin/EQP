@@ -4,6 +4,7 @@
 
 #define ERR_SOCKET "[tcp_server_open] socket() syscall failed"
 #define ERR_REUSEADDR "[tcp_server_open] Setting reuse-addr mode failed"
+#define ERR_NODELAY "[tcp_server_open] Setting no-delay mode failed"
 #define ERR_NONBLOCK "[tcp_server_open] Setting non-blocking mode failed"
 #define ERR_BIND "[tcp_server_open] bind() syscall failed"
 #define ERR_LISTEN "[tcp_server_open] listen() syscall failed"
@@ -34,8 +35,12 @@ void tcp_server_open(R(TcpServer*) server, uint16_t port)
         exception_throw_literal(B(server->login), ErrorNetwork, ERR_SOCKET);
     
     // Set reuseaddr
-    if (setsockopt(server->acceptFd, SOL_SOCKET, SO_REUSEADDR, (char*)&opt, sizeof(opt)))
+    if (setsockopt(server->acceptFd, SOL_SOCKET, SO_REUSEADDR, (const char*)&opt, sizeof(opt)))
         exception_throw_literal(B(server->login), ErrorNetwork, ERR_REUSEADDR);
+    
+    // Set no-delay
+    if (setsockopt(server->acceptFd, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(opt)))
+        exception_throw_literal(B(server->login), ErrorNetwork, ERR_NODELAY);
     
     // Set non-blocking
 #ifdef EQP_WINDOWS
@@ -108,6 +113,14 @@ void tcp_server_accept_new_connections(R(TcpServer*) server)
             return;
         }
         
+        // Set no-delay
+        if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(opt)))
+        {
+            log_format(B(server->login), LogNetwork, "[tcp_server_accept_new_connections] Setting no-delay mode failed");
+            closesocket(fd);
+            continue;
+        }
+        
         // Set non-blocking
 #ifdef EQP_WINDOWS
         if (ioctlsocket(fd, FIONBIO, &nonblock))
@@ -116,14 +129,6 @@ void tcp_server_accept_new_connections(R(TcpServer*) server)
 #endif
         {
             log_format(B(server->login), LogNetwork, "[tcp_server_accept_new_connections] Setting non-blocking mode failed");
-            closesocket(fd);
-            continue;
-        }
-        
-        // Set no-delay
-        if (setsockopt(fd, IPPROTO_TCP, TCP_NODELAY, (const char*)&opt, sizeof(opt)))
-        {
-            log_format(B(server->login), LogNetwork, "[tcp_server_accept_new_connections] Setting no-delay mode failed");
             closesocket(fd);
             continue;
         }
@@ -270,6 +275,7 @@ void tcp_server_send_client_login_request(R(TcpServer*) server, int loginServerI
 
 #undef ERR_SOCKET
 #undef ERR_REUSERADDR
+#undef ERR_NODELAY
 #undef ERR_NONBLOCK
 #undef ERR_BIND
 #undef ERR_LISTEN

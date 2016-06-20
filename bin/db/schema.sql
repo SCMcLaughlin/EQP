@@ -34,7 +34,7 @@ CREATE TABLE account (
 
 CREATE TRIGGER trigger_account_creation_time AFTER INSERT ON account
 BEGIN
-    UPDATE account SET creation_time = datetime('now') WHERE name_id_pair = new.name_id_pair;
+    UPDATE account SET creation_time = datetime('now') WHERE fk_name_id_pair = new.fk_name_id_pair;
 END;
 
 -- character_id aliases the rowid, implicitly auto-increments.

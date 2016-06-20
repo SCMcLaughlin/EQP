@@ -135,7 +135,7 @@ void tcp_server_accept_new_connections(R(TcpServer*) server)
         
         ip = addr.sin_addr.s_addr;
         
-        log_format(B(server->login), LogNetwork, "[tcp_server_accept_new_connections] New server connection from %u.%u.%u.%u:%u",
+        log_format(B(server->login), LogNetwork, "New server connection from %u.%u.%u.%u:%u",
             (ip >> 0) & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff, addr.sin_port);
         
         client = array_push_back(B(server->login), &server->clients, NULL);
@@ -148,7 +148,7 @@ static void tcp_server_handle_closed_client(R(TcpServer*) server, R(TcpClient*) 
     R(IpAddress*) addr  = &tcp_client_address(cli);
     uint32_t ip         = addr->sin_addr.s_addr;
     
-    log_format(B(server->login), LogNetwork, "[tcp_server_handle_client_closed] Server from %u.%u.%u.%u:%u disconnected",
+    log_format(B(server->login), LogNetwork, "Server from %u.%u.%u.%u:%u disconnected",
         (ip >> 0) & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff, addr->sin_port);
     
     if (tcp_client_has_login_server(cli))

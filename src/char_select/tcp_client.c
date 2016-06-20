@@ -326,9 +326,6 @@ static void tcp_client_handle_op_client_login_request(R(CharSelect*) charSelect,
     accountId   = aligned_read_uint32(a);
     serverId    = aligned_read_uint32(a);
     
-    //do db checking here...
-    //put the reply packet in the db callback, too
-    
     aligned_init(B(charSelect), w, &send, sizeof(Tcp_ClientLoginResponseSend));
     
     // opcode
@@ -361,6 +358,11 @@ static void tcp_client_handle_op_client_login_auth(R(CharSelect*) charSelect, R(
     aligned_advance(a, sizeof(uint8_t) + sizeof(int16_t) + sizeof(uint32_t));
     // isLocal
     auth.isLocal = aligned_read_uint8(a);
+    
+    //fixme:
+    // Now that we have both the account id and name, we should check for bans etc here
+    // (Not ideal, since the login server protocol and client expect rejections to happen
+    // in the step before this, i.e. tcp_client_handle_op_client_login_request() above).
     
     char_select_handle_client_auth(charSelect, &auth);
 }

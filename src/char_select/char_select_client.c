@@ -127,3 +127,72 @@ void char_select_client_query_account_id(R(CharSelectClient*) client, R(CharSele
     
     db_schedule(core_db(C(charSelect)), &query);
 }
+
+static void char_select_client_query_character_name_callback(R(Query*) query)
+{
+    R(CharSelectClient*) client = query_userdata_type(query, CharSelectClient);
+    int taken = false;
+    
+    while (query_select(query))
+    {
+        taken = true;
+    }
+    
+    if (client->expansion == ExpansionId_Trilogy)
+        cs_client_trilogy_on_character_name_checked(client, taken);
+    //else
+    //    cs_client_standard_on_character_name_checked(client, taken);
+    
+    char_select_client_drop(client);
+}
+
+void char_select_client_query_character_name_taken(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) name)
+{
+    Query query;
+    
+    char_select_client_grab(client);
+    
+    query_init(&query);
+    query_set_userdata(&query, client);
+    db_prepare_literal(core_db(C(charSelect)), &query, "SELECT 1 FROM character WHERE name = ?", char_select_client_query_character_name_callback);
+    
+    query_bind_string(&query, 1, name, -1);
+    
+    db_schedule(core_db(C(charSelect)), &query);
+}
+
+static void char_select_client_delete_character_callback(R(Query*) query)
+{
+    R(CharSelectClient*) client = query_userdata_type(query, CharSelectClient);
+    
+    if (query_affected_rows(query) != 0)
+    {
+        uint32_t accountId = char_select_client_account_id(client);
+        
+        // on_account_id() is the trigger for retrieving and sending the up-to-date char select info
+        if (client->expansion == ExpansionId_Trilogy)
+            cs_client_trilogy_on_account_id(client, accountId);
+        //else
+        //    cs_client_standard_on_account_id(client, accountId);
+    }
+    
+    char_select_client_drop(client);
+}
+
+void char_select_client_delete_character_by_name(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) name)
+{
+    Query query;
+    
+    char_select_client_grab(client);
+    
+    query_init(&query);
+    query_set_userdata(&query, client);
+    db_prepare_literal(core_db(C(charSelect)), &query, "DELETE FROM character WHERE fk_account_id = ? AND name = ?", char_select_client_delete_character_callback);
+    
+    //fixme: also need to delete anything related to this character...
+    
+    query_bind_int64(&query, 1, (int64_t)char_select_client_account_id(client));
+    query_bind_string(&query, 2, name, -1);
+    
+    db_schedule(core_db(C(charSelect)), &query);
+}

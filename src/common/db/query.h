@@ -35,6 +35,7 @@ STRUCT_DEFINE(Query)
     
     QueryCallback   callback;
     uint32_t        queryId;
+    int             affectedRows;
     uint64_t        timestamp;
 };
 
@@ -76,6 +77,7 @@ const byte* query_get_blob(R(Query*) query, int col, R(uint32_t*) len);
 #define     query_userdata_type(q, type) ((type*)(q)->userdata)
 #define     query_get_user_int(q) ((q)->userInt)
 #define     query_get_id(q) ((q)->queryId)
+#define     query_affected_rows(q) ((q)->affectedRows)
 
 #define     query_set_userdata(q, ud) ((q)->userdata = (ud))
 

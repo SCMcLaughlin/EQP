@@ -19,6 +19,25 @@ void protocol_handler_trilogy_deinit(R(ProtocolHandlerTrilogy*) handler)
     ack_mgr_trilogy_deinit(&handler->ackMgr);
 }
 
+static void protocol_handler_trilogy_sequence_end(R(ProtocolHandlerTrilogy*) handler, uint16_t header, R(byte*) data, int len)
+{
+    R(Basic*) basic = protocol_handler_trilogy_basic(handler);
+    R(NetworkClientTrilogy*) net = &handler->ackMgr.client;
+    char buf[4096];
+    int i;
+    
+    log_format(basic, LogNetwork, "RECEIVED SEQUENCE END header 0x%02x, length %i\nCurrent nextAckResp 0x%02x, nextAckReqExpected 0x%02x, nextAckReqCheck 0x%02x\nData:",
+        header, len, net->nextAckResponse, net->nextAckRequestExpected, net->nextAckRequestCheck);
+    
+    for (i = 0; i < len; i++)
+    {
+        int adj = i * 3;
+        snprintf(buf + adj, sizeof(buf) - adj, "%02x ", data[i]);
+    }
+    
+    log_format(basic, LogNetwork, "%s", buf);
+}
+
 void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) data, int len)
 {
     Aligned aligned;
@@ -55,6 +74,10 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     
     header  = aligned_read_uint16(a);
     seq     = aligned_read_uint16(a);
+    
+    // debug-ish...
+    if (header & PacketTrilogyIsSequenceEnd)
+        protocol_handler_trilogy_sequence_end(handler, header, data, len);
     
     if (header & PacketTrilogyHasAckResponse)
     {

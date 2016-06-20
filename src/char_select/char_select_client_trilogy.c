@@ -193,12 +193,15 @@ void cs_client_trilogy_on_account_id(R(CharSelectClient*) client, uint32_t accou
     db_schedule(db, &query);
 }
 
-static void cs_trilogy_handle_op_guild_list(R(ProtocolHandler*) handler)
+static void cs_trilogy_handle_op_guild_list(R(CharSelectClient*) client, R(ProtocolHandler*) handler)
 {
     Aligned write;
     R(Aligned*) w = &write;
     R(PacketTrilogy*) packet;
     uint32_t i;
+    
+    if (!char_select_client_is_authed(client))
+        return;
     
     // The entire guild list struct is properly aligned on a 4-byte boundary
     packet = packet_trilogy_create(protocol_handler_basic(handler), TrilogyOp_GuildList, sizeof(CSTrilogy_GuildList));
@@ -231,37 +234,102 @@ static void cs_trilogy_handle_op_guild_list(R(ProtocolHandler*) handler)
 
 static void cs_trilogy_handle_op_name_approval(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
-    (void)client;
-    (void)handler;
-    (void)a;
+    R(const char*) name;
+    uint32_t race;
+    uint32_t class;
+    
+    printf("NameApproval: %u\n", aligned_remaining(a));
+    if (!char_select_client_is_authed(client) || aligned_remaining(a) < sizeof(CSTrilogy_NameApproval))
+        return;
+    
+    name    = (const char*)aligned_current(a);
+    aligned_advance(a, sizeof_field(CSTrilogy_NameApproval, name));
+    race    = aligned_read_uint32(a);
+    class   = aligned_read_uint32(a);
+    
+    printf("Name approval: %s, race %u, class %u\n", name, race, class);
+    
+    char_select_client_query_character_name_taken(client, (CharSelect*)protocol_handler_basic(handler), name);
+}
+
+void cs_client_trilogy_on_character_name_checked(R(CharSelectClient*) client, int taken)
+{
+    R(ProtocolHandler*) handler = char_select_client_handler(client);
+    R(PacketTrilogy*) packet    = packet_trilogy_create(protocol_handler_basic(handler), TrilogyOp_NameApproval, 1);
+    int available               = !taken;
+    
+    if (available)
+        char_select_client_set_name_approved(client);
+    
+    packet_trilogy_data(packet)[0] = (uint8_t)available;
+    cs_trilogy_schedule_packet(handler, packet);
 }
 
 static void cs_trilogy_handle_op_create_character(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
-    (void)client;
+    R(CSTrilogy_CreateCharacter*) cc;
     (void)handler;
-    (void)a;
+    
+    printf("CreateCharacter %u\n", aligned_remaining(a));
+    if (!char_select_client_is_authed(client) || aligned_remaining(a) < sizeof(CSTrilogy_CreateCharacter))
+        return;
+    
+    cc = (CSTrilogy_CreateCharacter*)aligned_current(a);
+    
+    printf("Name: %s\nSurname: %s\nGender: %u\nDeity: %u\nRace: %u\nClass: %u\nSTR %u STA %u CHA %u DEX %u INT %u AGI %u WIS %u\n",
+        cc->name, cc->surname, cc->gender, cc->deity, cc->race, cc->class, cc->STR, cc->STA, cc->CHA, cc->DEX, cc->INT, cc->AGI, cc->WIS);
+    
+    // If character creation fails, send a name approval packet set to false...
+    
+    // Otherwise, resend the char select info
+    cs_client_trilogy_on_account_id(client, char_select_client_account_id(client));
 }
 
 static void cs_trilogy_handle_op_delete_character(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
-    (void)client;
-    (void)handler;
-    (void)a;
+    R(const char*) name;
+    
+    printf("DeleteCharacter %u\n", aligned_remaining(a));
+    if (!char_select_client_is_authed(client) || aligned_remaining(a) < 2)
+        return;
+    
+    name = (const char*)aligned_current(a);
+    printf("Delete: %s\n", name);
+    
+    char_select_client_delete_character_by_name(client, (CharSelect*)protocol_handler_basic(handler), name);
 }
 
 static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
-    (void)client;
-    (void)handler;
-    (void)a;
+    char buf[2048];
+    int p;
+    
+    printf("WearChange:\n");
+    if (!char_select_client_is_authed(client))
+        return;
+    
+    p = snprintf(buf, sizeof(buf), "WearChange, len %u, data:\n", aligned_remaining(a));
+    
+    while (aligned_remaining(a))
+    {
+        p += snprintf(buf + p, sizeof(buf) - p, "%02x ", aligned_read_byte(a));
+    }
+    
+    log_format(protocol_handler_basic(handler), LogNetwork, "%s", buf);
 }
 
 static void cs_trilogy_handle_op_enter(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
-    (void)client;
+    R(const char*) name;
+
     (void)handler;
-    (void)a;
+    
+    printf("Enter %u\n", aligned_remaining(a));
+    if (!char_select_client_is_authed(client) || aligned_remaining(a) < 2)
+        return;
+    
+    name = (const char*)aligned_current(a);
+    printf("Enter: %s\n", name);
 }
 
 void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a)
@@ -278,7 +346,7 @@ void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a
         break;
     
     case TrilogyOp_GuildList:
-        cs_trilogy_handle_op_guild_list(handler);
+        cs_trilogy_handle_op_guild_list(client, handler);
         break;
     
     case TrilogyOp_NameApproval:

@@ -26,7 +26,9 @@ void query_set_db_and_stmt(R(Query*) query, R(Database*) db, R(sqlite3_stmt*) st
 
 void query_update_last_insert_id(R(Query*) query)
 {
-    query->lastInsertId = sqlite3_last_insert_rowid(db_get_sqlite(query->database));
+    R(sqlite3*) sqlite  = db_get_sqlite(query->database);
+    query->lastInsertId = sqlite3_last_insert_rowid(sqlite);
+    query->affectedRows = sqlite3_changes(sqlite);
 }
 
 int query_execute_background(R(Query*) query)

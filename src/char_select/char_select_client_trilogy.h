@@ -28,5 +28,6 @@
 
 void    cs_client_trilogy_on_auth(R(CharSelectClient*) client);
 void    cs_client_trilogy_on_account_id(R(CharSelectClient*) client, uint32_t accountId);
+void    cs_client_trilogy_on_character_name_checked(R(CharSelectClient*) client, int taken);
 
 #endif//EQP_CHAR_SELECT_CLIENT_TRILOGY_H

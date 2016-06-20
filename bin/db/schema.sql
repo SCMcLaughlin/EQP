@@ -74,6 +74,7 @@ CREATE TABLE character (
 );
 
 CREATE INDEX index_character_account_id ON character (fk_account_id);
+CREATE INDEX index_character_name ON character (name);
 
 CREATE TABLE inventory (
     character_id    INT,

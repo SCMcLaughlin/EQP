@@ -145,7 +145,11 @@ void tcp_server_accept_new_connections(R(TcpServer*) server)
 
 static void tcp_server_handle_closed_client(R(TcpServer*) server, R(TcpClient*) cli, uint32_t index)
 {
-    printf("Remote end disconnected\n");
+    R(IpAddress*) addr  = &tcp_client_address(cli);
+    uint32_t ip         = addr->sin_addr.s_addr;
+    
+    log_format(B(server->login), LogNetwork, "[tcp_server_handle_client_closed] Server from %u.%u.%u.%u:%u disconnected",
+        (ip >> 0) & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff, addr->sin_port);
     
     if (tcp_client_has_login_server(cli))
     {

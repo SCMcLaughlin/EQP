@@ -15,7 +15,7 @@ void udp_client_deinit(R(UdpClient*) client)
 {
     if (client->handler)
     {
-        protocol_handler_destroy(client->handler);
+        protocol_handler_drop(client->handler);
         client->handler = NULL;
     }
 }

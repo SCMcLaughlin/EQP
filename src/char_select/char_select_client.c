@@ -11,8 +11,20 @@ CharSelectClient* char_select_client_create(R(ProtocolHandler*) handler, int exp
     
     client->expansion   = expansion;
     client->handler     = handler;
+    atomic_init(&client->refCount, 1);
     
     return client;
+}
+
+void char_select_client_drop(R(CharSelectClient*) client)
+{
+    if (atomic_fetch_sub(&client->refCount, 1) > 1)
+        return;
+    
+    printf("Client object destroyed\n");
+    char_select_remove_client_from_unauthed_list((CharSelect*)protocol_handler_basic(client->handler), client);
+    protocol_handler_drop(client->handler);
+    free(client);
 }
 
 void client_on_disconnect(R(void*) vclient, int isLinkdead)
@@ -20,12 +32,7 @@ void client_on_disconnect(R(void*) vclient, int isLinkdead)
     R(CharSelectClient*) client = (CharSelectClient*)vclient;
     
     if (client)
-    {
-        char_select_remove_client_from_unauthed_list((CharSelect*)protocol_handler_basic(client->handler), client);
-        
-        //fixme: add ref count to client in case it is held by a DB query callback
-        free(client);
-    }
+        char_select_client_drop(client);
     
     printf("DISCONNECTED (%s)\n", isLinkdead ? "timeout" : "explicit");
 }
@@ -58,6 +65,9 @@ static void char_select_client_insert_account_id_callback(R(Query*) query)
     //else
     //    cs_client_standard_on_account_id(client, (uint32_t)accountId);
     
+    // Drop this query's reference to the client
+    char_select_client_drop(client);
+    
     query_init(&q);
     db_prepare_literal(db, &q, "INSERT INTO account (fk_name_id_pair) VALUES (?)", NULL);
     
@@ -82,8 +92,12 @@ static void char_select_client_query_account_id_callback(R(Query*) query)
         //else
         //    cs_client_standard_on_account_id(client, accountId);
         
+        // Drop this query's reference to the client
+        char_select_client_drop(client);
         return;
     }
+    
+    // If we reach here, carry the client's current ref count forward
     
     db = core_db(C(protocol_handler_basic(client->handler)));
     
@@ -101,6 +115,8 @@ static void char_select_client_query_account_id_callback(R(Query*) query)
 void char_select_client_query_account_id(R(CharSelectClient*) client, R(CharSelect*) charSelect)
 {
     Query query;
+    
+    char_select_client_grab(client);
     
     query_init(&query);
     query_set_userdata(&query, client);

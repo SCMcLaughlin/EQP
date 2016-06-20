@@ -4,8 +4,6 @@
 
 #include "define.h"
 #include "netcode.h"
-#include "eqp_array.h"
-//#include "packet_input.h"
 
 STRUCT_DECLARE(Basic);
 STRUCT_DECLARE(UdpSocket);
@@ -21,7 +19,6 @@ STRUCT_DEFINE(NetworkClient)
     uint64_t    packetsSent;
     uint64_t    packetsReceived;
     uint32_t    accountId;
-    //Array*      inputPackets;
 };
 
 void    network_client_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkClient*) client, uint32_t index);

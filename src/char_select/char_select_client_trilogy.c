@@ -166,12 +166,15 @@ static void cs_client_trilogy_characters_callback(R(Query*) query)
     }
     
     cs_trilogy_schedule_packet(handler, packet);
+    char_select_client_drop(client);
 }
 
 void cs_client_trilogy_on_account_id(R(CharSelectClient*) client, uint32_t accountId)
 {
     R(Database*) db = core_db(C(protocol_handler_basic(char_select_client_handler(client))));
     Query query;
+    
+    char_select_client_grab(client);
     
     query_init(&query);
     query_set_userdata(&query, client);

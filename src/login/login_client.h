@@ -23,6 +23,7 @@ STRUCT_DEFINE(LoginClient)
     int                 state;
     int                 expansion;
     ProtocolHandler*    handler;
+    atomic_int          refCount;
     String*             accountName;
     uint32_t            accountId;
     char                passwordTemp[32];
@@ -31,6 +32,8 @@ STRUCT_DEFINE(LoginClient)
 };
 
 LoginClient*    login_client_create(R(ProtocolHandler*) handler, int expansion, int state);
+#define         login_client_grab(cli) atomic_fetch_add(&(cli)->refCount, 1)
+void            login_client_drop(R(LoginClient*) client);
 
 #define         login_client_get_state(client) ((client)->state)
 #define         login_client_set_state(client, st) ((client)->state = (st))

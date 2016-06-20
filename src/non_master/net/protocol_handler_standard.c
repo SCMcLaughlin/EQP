@@ -108,6 +108,8 @@ ret_true:
 
 static int protocol_handler_standard_decompress_packet(R(ProtocolHandlerStandard*) handler, R(Aligned*) a)
 {
+    (void)handler;
+    (void)a;
     return true;
 }
 

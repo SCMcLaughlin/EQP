@@ -10,13 +10,19 @@ ProtocolHandler* protocol_handler_create(R(Basic*) basic)
     memset(handler, 0, sizeof(ProtocolHandler));
     
     handler->isTrilogy = -1;
+    atomic_init(&handler->refCount, 1);
     
     return handler;
 }
 
-void protocol_handler_destroy(R(ProtocolHandler*) handler)
+void protocol_handler_drop(R(ProtocolHandler*) handler)
 {
-    int isTrilogy = handler->isTrilogy;
+    int isTrilogy;
+    
+    if (atomic_fetch_sub(&handler->refCount, 1) > 1)
+        return;
+    
+    isTrilogy = handler->isTrilogy;
     
     if (isTrilogy == 0)
         protocol_handler_standard_deinit(&handler->standard);

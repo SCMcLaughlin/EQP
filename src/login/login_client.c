@@ -13,28 +13,37 @@ LoginClient* login_client_create(R(ProtocolHandler*) handler, int expansion, int
     client->state       = state;
     client->expansion   = expansion;
     client->handler     = handler;
+    atomic_init(&client->refCount, 1);
     client->accountName = NULL;
     client->accountId   = 0;
     
     return client;
 }
 
+void login_client_drop(R(LoginClient*) client)
+{
+    R(ClientList*) clientList;
+    
+    if (atomic_fetch_sub(&client->refCount, 1) > 1)
+        return;
+    
+    clientList = login_client_list((Login*)protocol_handler_basic(client->handler));
+    client_list_remove(clientList, client);
+    
+    if (client->accountName)
+        string_destroy(client->accountName);
+    
+    protocol_handler_drop(client->handler);
+    free(client);
+}
+
 void client_on_disconnect(R(void*) vclient, int isLinkdead)
 {
     R(LoginClient*) client = (LoginClient*)vclient;
+    (void)isLinkdead;
     
     if (client)
-    {
-        R(ClientList*) clientList = login_client_list((Login*)protocol_handler_basic(client->handler));
-        
-        client_list_remove(clientList, client);
-        
-        if (client->accountName)
-            string_destroy(client->accountName);
-        
-        //fixme: add ref count to client in case it is held by a DB query callback
-        free(client);
-    }
+        login_client_drop(client);
 }
 
 void login_client_set_account_name(R(LoginClient*) client, R(const char*) name, int length)
@@ -68,6 +77,8 @@ static void login_client_auto_create_account_callback(R(Query*) query)
         login_client_trilogy_handle_credentials_result(client, accountId);
     /*else
         login_client_standard_handle_credentials_result(client, accountId);*/
+    
+    login_client_drop(client);
 }
 
 static void login_client_auto_create_account(R(LoginClient*) client)
@@ -145,6 +156,7 @@ static void login_client_credentials_callback(R(Query*) query)
 #ifndef EQP_LOGIN_DISABLE_ACCOUNT_AUTO_CREATION
     if (success == 0)
     {
+        // Carry forward the current ref count for the auto-create query
         login_client_auto_create_account(client);
         return;
     }
@@ -159,12 +171,17 @@ static void login_client_credentials_callback(R(Query*) query)
         /*else
             login_client_standard_handle_credentials_result(client, 0);*/
     }
+    
+    // Drop this query's reference to the client
+    login_client_drop(client);
 }
 
 void login_client_check_credentials(R(LoginClient*) client, R(Login*) login, R(const char*) username, int nameLength,
     R(const char*) password, int passLength)
 {
     Query query;
+    
+    login_client_grab(client);
     
     login_client_set_account_name(client, username, nameLength);
     login_client_set_password_temp(client, password, passLength);

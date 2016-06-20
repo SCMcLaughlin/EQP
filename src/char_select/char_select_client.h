@@ -6,6 +6,7 @@
 #include "expansion.h"
 #include "protocol_handler.h"
 #include "auth.h"
+#include <stdatomic.h>
 
 STRUCT_DECLARE(CharSelect);
 
@@ -13,11 +14,14 @@ STRUCT_DEFINE(CharSelectClient)
 {
     int                 expansion;
     ProtocolHandler*    handler;
+    atomic_int          refCount;
     CharSelectAuth      auth;
     uint32_t            weaponMaterialsTrilogy[10][2];
 };
 
 CharSelectClient*   char_select_client_create(R(ProtocolHandler*) handler, int expansion);
+#define             char_select_client_grab(cli) atomic_fetch_add(&(cli)->refCount, 1)
+void                char_select_client_drop(R(CharSelectClient*) client);
 
 void                char_select_client_set_auth(R(CharSelectClient*) client, R(CharSelectAuth*) auth);
 void                char_select_client_query_account_id(R(CharSelectClient*) client, R(CharSelect*) charSelect);

@@ -16,17 +16,11 @@ void network_client_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkC
     client->packetsSent             = 0;
     client->packetsReceived         = 0;
     client->accountId               = 0;
-    //client->inputPackets            = array_create_type(basic, PacketInput*);
 }
 
 void network_client_deinit(R(NetworkClient*) client)
 {
     (void)client;
-    /*if (client->inputPackets)
-    {
-        array_destroy(client->inputPackets);
-        client->inputPackets = NULL;
-    }*/
 }
 
 int network_client_send_no_increment(R(NetworkClient*) client, R(const void*) data, uint32_t len)

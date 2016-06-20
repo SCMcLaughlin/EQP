@@ -9,6 +9,7 @@
 #include "packet_trilogy.h"
 #include "protocol_handler_standard.h"
 #include "protocol_handler_trilogy.h"
+#include <stdatomic.h>
 
 STRUCT_DECLARE(Basic);
 STRUCT_DECLARE(UdpSocket);
@@ -16,7 +17,8 @@ STRUCT_DECLARE(UdpClient);
 
 STRUCT_DEFINE(ProtocolHandler)
 {
-    int isTrilogy;
+    int         isTrilogy;
+    atomic_int  refCount;
     union
     {
         ProtocolHandlerStandard standard;
@@ -25,7 +27,8 @@ STRUCT_DEFINE(ProtocolHandler)
 };
 
 ProtocolHandler*    protocol_handler_create(R(Basic*) basic);
-void                protocol_handler_destroy(R(ProtocolHandler*) handler);
+#define             protocol_handler_grab(handler) atomic_fetch_add(&(handler)->refCount, 1)
+void                protocol_handler_drop(R(ProtocolHandler*) handler);
 
 Basic*              protocol_handler_basic(R(ProtocolHandler*) handler);
 void                protocol_handler_update_index(R(ProtocolHandler*) handler, uint32_t index);

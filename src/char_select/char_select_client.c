@@ -13,6 +13,8 @@ CharSelectClient* char_select_client_create(R(ProtocolHandler*) handler, int exp
     client->handler     = handler;
     atomic_init(&client->refCount, 1);
     
+    protocol_handler_grab(handler);
+    
     return client;
 }
 

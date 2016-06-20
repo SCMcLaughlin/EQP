@@ -17,6 +17,8 @@ LoginClient* login_client_create(R(ProtocolHandler*) handler, int expansion, int
     client->accountName = NULL;
     client->accountId   = 0;
     
+    protocol_handler_grab(handler);
+    
     return client;
 }
 

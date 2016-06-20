@@ -353,8 +353,6 @@ void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a
     R(LoginClient*) client      = (LoginClient*)vclient;
     R(ProtocolHandler*) handler = login_client_handler(client);
 
-    printf("Received packet opcode 0x%04x, length %u:\n", opcode, aligned_remaining(a));
-    
     switch (opcode)
     {
     case TrilogyOp_Version:

@@ -10,6 +10,7 @@
 #include "packet_trilogy.h"
 #include "char_select_client.h"
 #include "char_select_structs_trilogy.h"
+#include "zone_id.h"
 
 /* Login handshake, in order of appearance */
 #define TrilogyOp_LoginInfo         0x1858
@@ -26,5 +27,6 @@
 #define TrilogyOp_WearChange        0x2092
 
 void    cs_client_trilogy_on_auth(R(CharSelectClient*) client);
+void    cs_client_trilogy_on_account_id(R(CharSelectClient*) client, uint32_t accountId);
 
 #endif//EQP_CHAR_SELECT_CLIENT_TRILOGY_H

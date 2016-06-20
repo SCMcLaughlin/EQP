@@ -17,7 +17,7 @@ local handlers = {
     end,
     
     shutdown = function(thread, M, ipc, src, args, opts)
-        replyAndFinish(thread, ipc, src, "Shutting down eqp-master")
+        replyAndFinish(thread, ipc, src, "eqp-master is shutting down")
         return true
     end,
 }

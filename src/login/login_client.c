@@ -32,10 +32,9 @@ void client_on_disconnect(R(void*) vclient, int isLinkdead)
         if (client->accountName)
             string_destroy(client->accountName);
         
+        //fixme: add ref count to client in case it is held by a DB query callback
         free(client);
     }
-    
-    printf("DISCONNECTED (%s)\n", isLinkdead ? "timeout" : "explicit");
 }
 
 void login_client_set_account_name(R(LoginClient*) client, R(const char*) name, int length)

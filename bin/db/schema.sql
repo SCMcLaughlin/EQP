@@ -19,8 +19,9 @@ CREATE TABLE account_name_id_pair (
     PRIMARY KEY (id, name)
 );
 
+-- fk_name_id_pair is the rowid from a account_name_id_pair entry
 CREATE TABLE account (
-    name_id_pair                INT     PRIMARY KEY,
+    fk_name_id_pair             INT     PRIMARY KEY,
     most_recent_character_name  TEXT,
     most_recent_ip_address      TEXT,
     status                      INT     DEFAULT 0,
@@ -36,10 +37,43 @@ BEGIN
     UPDATE account SET creation_time = datetime('now') WHERE name_id_pair = new.name_id_pair;
 END;
 
--- Use rowid as implicit autoincrement character id and PRIMARY KEY
+-- character_id aliases the rowid, implicitly auto-increments.
+--
+-- The material fields look like 'how not to design a database 101',
+-- but we really have no reason to split them into their own table... 
+-- only used for char select, anyway.
 CREATE TABLE character (
-    name    TEXT
+    character_id    INTEGER PRIMARY KEY,
+    fk_account_id   INT,
+    name            TEXT,
+    level           INT     DEFAULT 1,
+    class           INT     DEFAULT 1,
+    race            INT     DEFAULT 1,
+    zone_id         INT     DEFAULT 1,
+    gender          INT     DEFAULT 0,
+    face            INT     DEFAULT 0,
+    x               REAL    DEFAULT 0,
+    y               REAL    DEFAULT 0,
+    z               REAL    DEFAULT 0,
+    material0       INT     DEFAULT 0,
+    material1       INT     DEFAULT 0,
+    material2       INT     DEFAULT 0,
+    material3       INT     DEFAULT 0,
+    material4       INT     DEFAULT 0,
+    material5       INT     DEFAULT 0,
+    material6       INT     DEFAULT 0,
+    material7       INT     DEFAULT 0,
+    material8       INT     DEFAULT 0,
+    tint0           INT     DEFAULT 0,
+    tint1           INT     DEFAULT 0,
+    tint2           INT     DEFAULT 0,
+    tint3           INT     DEFAULT 0,
+    tint4           INT     DEFAULT 0,
+    tint5           INT     DEFAULT 0,
+    tint6           INT     DEFAULT 0
 );
+
+CREATE INDEX index_character_account_id ON character (fk_account_id);
 
 CREATE TABLE inventory (
     character_id    INT,

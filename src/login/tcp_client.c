@@ -87,8 +87,6 @@ static String* tcp_client_string_from_fixed_field(R(Basic*) basic, R(Aligned*) a
     
     aligned_advance(a, fieldLength);
     
-    printf("field: %s\n", str);
-    
     return out;
 }
 
@@ -241,8 +239,6 @@ void tcp_client_handle_packet(R(Login*) login, R(TcpClient*) client)
     
     opcode = aligned_read_uint16(a);
     aligned_advance(a, sizeof(uint16_t)); // We already know the packet's data length
-    
-    printf("TCP packet, opcode: 0x%04x, length: %u\n", opcode, aligned_remaining(a));
     
     switch (opcode)
     {

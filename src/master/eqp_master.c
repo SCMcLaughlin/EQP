@@ -203,3 +203,7 @@ void master_main_loop(R(Master*) M)
         clock_sleep_milliseconds(1000);
     }
 }
+
+#undef BIN_LOG_WRITER
+#undef BIN_LOGIN
+#undef BIN_CHAR_SELECT

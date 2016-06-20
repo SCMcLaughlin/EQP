@@ -2,8 +2,7 @@
 #include "lua_sys.h"
 #include "eqp_basic.h"
 
-#define SCRIPT_INCLUDE              "scripts/include.lua"
-
+#define SCRIPT_INCLUDE  "scripts/include.lua"
 #define TRACEBACK_INDEX 1
 
 lua_State* lua_sys_open(R(Basic*) basic)

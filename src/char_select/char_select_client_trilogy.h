@@ -26,6 +26,29 @@
 #define TrilogyOp_DeleteCharacter   0x205a
 #define TrilogyOp_WearChange        0x2092
 
+STRUCT_DEFINE(CSTrilogy_CharCreateParams)
+{
+    uint32_t    accountId;
+    char        name[32];
+    uint8_t     gender;
+    uint8_t     race;
+    uint8_t     class;
+    uint8_t     face;
+    uint8_t     currentHp;
+    uint8_t     STR;
+    uint8_t     STA;
+    uint8_t     CHA;
+    uint8_t     DEX;
+    uint8_t     INT;
+    uint8_t     AGI;
+    uint8_t     WIS;
+    uint8_t     deity;
+    int         zoneId;
+    float       x;
+    float       y;
+    float       z;
+};
+
 void    cs_client_trilogy_on_auth(R(CharSelectClient*) client);
 void    cs_client_trilogy_on_account_id(R(CharSelectClient*) client, uint32_t accountId);
 void    cs_client_trilogy_on_character_name_checked(R(CharSelectClient*) client, int taken);

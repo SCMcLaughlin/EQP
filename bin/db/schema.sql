@@ -39,22 +39,35 @@ END;
 
 -- character_id aliases the rowid, implicitly auto-increments.
 --
+-- This is gonna be a big one...
+--
 -- The material fields look like 'how not to design a database 101',
 -- but we really have no reason to split them into their own table... 
 -- only used for char select, anyway.
 CREATE TABLE character (
     character_id    INTEGER PRIMARY KEY,
     fk_account_id   INT,
-    name            TEXT,
+    name            TEXT    UNIQUE,
     level           INT     DEFAULT 1,
     class           INT     DEFAULT 1,
     race            INT     DEFAULT 1,
     zone_id         INT     DEFAULT 1,
     gender          INT     DEFAULT 0,
     face            INT     DEFAULT 0,
+    deity           INT     DEFAULT 140,
     x               REAL    DEFAULT 0,
     y               REAL    DEFAULT 0,
     z               REAL    DEFAULT 0,
+    current_hp      INT     DEFAULT 10,
+    current_mana    INT     DEFAULT 0,
+    experience      INT     DEFAULT 0,
+    base_str        INT     DEFAULT 0,
+    base_sta        INT     DEFAULT 0,
+    base_dex        INT     DEFAULT 0,
+    base_agi        INT     DEFAULT 0,
+    base_int        INT     DEFAULT 0,
+    base_wis        INT     DEFAULT 0,
+    base_cha        INT     DEFAULT 0,
     material0       INT     DEFAULT 0,
     material1       INT     DEFAULT 0,
     material2       INT     DEFAULT 0,

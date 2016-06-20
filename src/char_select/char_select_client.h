@@ -33,6 +33,6 @@ void                char_select_client_delete_character_by_name(R(CharSelectClie
 #define             char_select_client_is_authed(client) ((client)->auth.timestamp != 0)
 #define             char_select_client_account_id(client) ((client)->auth.accountId)
 #define             char_select_client_is_name_approved(client) ((client)->isNameApproved)
-#define             char_select_client_set_name_approved(client) ((client)->isNameApproved = true)
+#define             char_select_client_set_name_approved(client, val) ((client)->isNameApproved = (val))
 
 #endif//EQP_CHAR_SELECT_CLIENT_H

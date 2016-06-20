@@ -259,30 +259,203 @@ void cs_client_trilogy_on_character_name_checked(R(CharSelectClient*) client, in
     int available               = !taken;
     
     if (available)
-        char_select_client_set_name_approved(client);
+        char_select_client_set_name_approved(client, true);
     
     packet_trilogy_data(packet)[0] = (uint8_t)available;
     cs_trilogy_schedule_packet(handler, packet);
 }
 
+static int cs_client_trilogy_char_creation_params_are_valid(R(CSTrilogy_CharCreateParams*) params)
+{
+    int class   = params->class - 1;
+    int race    = params->race - 1;
+    
+    /*
+        classesByRace encodes the following matrix, using 1 bit per entry:
+        
+                       Human  Barbarian Erudite Woodelf Highelf Darkelf Halfelf Dwarf  Troll  Ogre   Halfling Gnome  Iksar
+        Warrior      { true,  true,     false,  true,   false,  true,   true,   true,  true,  true,  true,    true,	 true  },
+        Cleric       { true,  false,    true,   false,  true,   true,   false,  true,  false, false, true,    true,	 false },
+        Paladin      { true,  false,    true,   false,  true,   false,  true,   true,  false, false, true,    true,	 false },
+        Ranger       { true,  false,    false,  true,   false,  false,  true,   false, false, false, true,    false, false },
+        ShadowKnight { true,  false,    true,   false,  false,  true,   false,  false, true,  true,  false,   true,  true  },
+        Druid        { true,  false,    false,  true,   false,  false,  true,   false, false, false, true,    false, false },
+        Monk         { true,  false,    false,  false,  false,  false,  false,  false, false, false, false,   false, true  },
+        Bard         { true,  false,    false,  true,   false,  false,  true,   false, false, false, false,   false, false },
+        Rogue        { true,  true,     false,  true,   false,  true,   true,   true,  false, false, true,    true,  false },
+        Shaman       { false, true,     false,  false,  false,  false,  false,  false, true,  true,  false,   false, true  },
+        Necromancer  { true,  false,    true,   false,  false,  true,   false,  false, false, false, false,   true,  true  },
+        Wizard       { true,  false,    true,   false,  true,   true,   false,  false, false, false, false,   true,  false },
+        Magician     { true,  false,    true,   false,  true,   true,   false,  false, false, false, false,   true,  false },
+        Enchanter    { true,  false,    true,   false,  true,   true,   false,  false, false, false, false,   true,  false }
+    */
+    static uint16_t classesByRace[13] = {
+        0x3dff, // Human
+        0x0301, // Barbarian
+        0x3c16, // Erudite
+        0x01a9, // Wood Elf
+        0x3806, // High Elf
+        0x3d13, // Dark Elf
+        0x01ad, // Half Elf
+        0x0107, // Drawf
+        0x0211, // Troll
+        0x0211, // Ogre
+        0x012f, // Halfling
+        0x3d17, // Gnome
+        0x0651  // Iksar
+    };
+    
+    //fixme: add stat value checks
+    
+    // Iksar index correction
+    if (race > 12)
+        race = 12;
+    
+    if (class < 0 || class >= 14 || (classesByRace[race] & (1 << class)) == 0)
+        return false;
+    
+    return true;
+}
+
+static void cs_client_trilogy_send_char_create_failure(R(CharSelectClient*) client)
+{
+    R(ProtocolHandler*) handler = char_select_client_handler(client);
+    R(PacketTrilogy*) packet    = packet_trilogy_create(protocol_handler_basic(handler), TrilogyOp_NameApproval, 1);
+    
+    char_select_client_set_name_approved(client, false);
+    
+    packet_trilogy_data(packet)[0] = 0;
+    cs_trilogy_schedule_packet(handler, packet);
+}
+
+static void cs_client_trilogy_create_character_callback(R(Query*) query)
+{
+    R(CharSelectClient*) client = query_userdata_type(query, CharSelectClient);
+    
+    if (query_affected_rows(query) == 0)
+        cs_client_trilogy_send_char_create_failure(client);
+    else
+        cs_client_trilogy_on_account_id(client, char_select_client_account_id(client));
+    
+    char_select_client_drop(client);
+}
+
 static void cs_trilogy_handle_op_create_character(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
-    R(CSTrilogy_CreateCharacter*) cc;
-    (void)handler;
+    CSTrilogy_CharCreateParams params;
+    R(Database*) db;
+    Query query;
     
-    printf("CreateCharacter %u\n", aligned_remaining(a));
-    if (!char_select_client_is_authed(client) || aligned_remaining(a) < sizeof(CSTrilogy_CreateCharacter))
+    printf("CreateCharacter %u vs %lu\n", aligned_remaining(a), sizeof(CSTrilogy_CreateCharacter));
+    
+    if (!char_select_client_is_authed(client) || !char_select_client_is_name_approved(client) || aligned_remaining(a) < sizeof(CSTrilogy_CreateCharacter))
         return;
     
-    cc = (CSTrilogy_CreateCharacter*)aligned_current(a);
+    params.accountId = char_select_client_account_id(client);
     
-    printf("Name: %s\nSurname: %s\nGender: %u\nDeity: %u\nRace: %u\nClass: %u\nSTR %u STA %u CHA %u DEX %u INT %u AGI %u WIS %u\n",
-        cc->name, cc->surname, cc->gender, cc->deity, cc->race, cc->class, cc->STR, cc->STA, cc->CHA, cc->DEX, cc->INT, cc->AGI, cc->WIS);
+    // name
+    snprintf(params.name, sizeof(params.name), "%s", (const char*)aligned_current(a));
+    aligned_advance(a, sizeof_field(CSTrilogy_CreateCharacter, name) + sizeof_field(CSTrilogy_CreateCharacter, surname));
+    // gender
+    params.gender       = aligned_read_uint16(a);
+    // race
+    params.race         = aligned_read_uint16(a);
+    // class
+    params.class        = aligned_read_uint16(a);
+    // level, experience, trainingPoints, currentMana
+    aligned_advance(a, sizeof(uint32_t) * 2 + sizeof(uint16_t) * 2);
+    // face
+    params.face         = aligned_read_uint8(a);
+    // unknownA[47]
+    aligned_advance(a, sizeof(uint8_t) * 47);
+    // currentHp
+    params.currentHp    = aligned_read_int16(a);
+    // unknownB
+    aligned_advance(a, sizeof(uint8_t));
+    // STR
+    params.STR          = aligned_read_uint8(a);
+    // STA
+    params.STA          = aligned_read_uint8(a);
+    // CHA
+    params.CHA          = aligned_read_uint8(a);
+    // DEX
+    params.DEX          = aligned_read_uint8(a);
+    // INT
+    params.INT          = aligned_read_uint8(a);
+    // AGI
+    params.AGI          = aligned_read_uint8(a);
+    // WIS
+    params.WIS          = aligned_read_uint8(a);
+    // stuff we don't care about
+    aligned_advance(a, sizeof_field(CSTrilogy_CreateCharacter, stuffCharSelectDoesntCareAboutA));
+    // deity
+    params.deity        = aligned_read_uint16(a);
     
-    // If character creation fails, send a name approval packet set to false...
+    params.zoneId       = 54; //fixme: determine this from somewhere (lua script?)
+    params.x            = 0.0f;
+    params.y            = 0.0f;
+    params.z            = 0.0f;
     
-    // Otherwise, resend the char select info
-    cs_client_trilogy_on_account_id(client, char_select_client_account_id(client));
+    // Verify that the given character creation parameters are valid
+    if (!cs_client_trilogy_char_creation_params_are_valid(&params))
+    {
+        cs_client_trilogy_send_char_create_failure(client);
+        return;
+    }
+    
+    char_select_client_grab(client);
+    
+    db = core_db(C(protocol_handler_basic(handler)));
+    
+    query_init(&query);
+    query_set_userdata(&query, client);
+    db_prepare_literal(db, &query,
+        "INSERT OR IGNORE INTO character " // Why OR IGNORE? Just in case two people try to make a character with the same name at the same time...
+            "(fk_account_id, name, gender, race, class, face, current_hp, base_str, base_sta, base_cha, base_dex, base_int, base_agi, base_wis, deity, zone_id, x, y, z) "
+        "VALUES "
+            "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+        cs_client_trilogy_create_character_callback);
+    
+    // accountId
+    query_bind_int64(&query, 1, (int64_t)params.accountId);
+    // name
+    query_bind_string(&query, 2, params.name, -1);
+    // gender
+    query_bind_int(&query, 3, params.gender);
+    // race
+    query_bind_int(&query, 4, params.race);
+    // class
+    query_bind_int(&query, 5, params.class);
+    // face
+    query_bind_int(&query, 6, params.face);
+    // currentHp
+    query_bind_int(&query, 7, params.currentHp);
+    // STR
+    query_bind_int(&query, 8, params.STR);
+    // STA
+    query_bind_int(&query, 9, params.STA);
+    // CHA
+    query_bind_int(&query, 10, params.CHA);
+    // DEX
+    query_bind_int(&query, 11, params.DEX);
+    // INT
+    query_bind_int(&query, 12, params.INT);
+    // AGI
+    query_bind_int(&query, 13, params.AGI);
+    // WIS
+    query_bind_int(&query, 14, params.WIS);
+    // deity
+    query_bind_int(&query, 15, params.deity);
+    // zoneId
+    query_bind_int(&query, 16, params.zoneId);
+    // x
+    query_bind_double(&query, 17, params.x);
+    // y
+    query_bind_double(&query, 18, params.y);
+    // z
+    query_bind_double(&query, 19, params.z);
+    
+    db_schedule(db, &query);
 }
 
 static void cs_trilogy_handle_op_delete_character(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)

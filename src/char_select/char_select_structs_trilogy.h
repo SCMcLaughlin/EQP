@@ -57,8 +57,7 @@ STRUCT_DEFINE(CSTrilogy_CreateCharacter)
 {
     char        name[EQP_CHAR_SELECT_MAX_NAME_LENGTH];
     char        surname[EQP_CHAR_SELECT_MAX_SURNAME_LENGTH];
-    uint8_t     gender;
-    uint8_t     deity;
+    uint16_t    gender;
     uint16_t    race;
     uint16_t    class;
     uint32_t    level;
@@ -84,8 +83,9 @@ STRUCT_DEFINE(CSTrilogy_CreateCharacter)
         
         uint8_t stats[7];
     };
-    uint8_t     languages[24];
-    uint8_t     unknownC[14];
+    uint8_t     stuffCharSelectDoesntCareAboutA[4026];
+    uint16_t    deity;
+    uint8_t     stuffCharSelectDoesntCareAboutB[3946];
 };
 
 #pragma pack()

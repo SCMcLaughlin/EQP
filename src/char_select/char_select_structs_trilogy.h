@@ -88,6 +88,18 @@ STRUCT_DEFINE(CSTrilogy_CreateCharacter)
     uint8_t     stuffCharSelectDoesntCareAboutB[3946];
 };
 
+STRUCT_DEFINE(CSTrilogy_WearChange)
+{
+    uint32_t    unusedSpawnId;
+    uint8_t     slot;
+    uint8_t     material;   // Also used for IT# - Velious only goes up to 250
+    uint16_t    operation;
+    uint32_t    color;
+    uint8_t     unknownA;
+    uint8_t     flag;
+    uint16_t    unknownB;
+};
+
 #pragma pack()
 
 #endif//EQP_CHAR_SELECT_STRUCTS_TRILOGY_H

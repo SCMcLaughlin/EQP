@@ -2,6 +2,8 @@
 #include "char_select_client_trilogy.h"
 #include "eqp_char_select.h"
 
+#define WEARCHANGE_OP_SWITCH_CHAR   0x7fff
+
 void* client_create_from_new_connection_trilogy(R(ProtocolHandler*) handler)
 {
     return char_select_client_create(handler, ExpansionId_Trilogy);
@@ -158,6 +160,8 @@ static void cs_client_trilogy_characters_callback(R(Query*) query)
         i++;
     }
     
+    char_select_client_set_character_count(client, i);
+    
     // Handle empty spaces
     for (; i < 10; i++)
     {
@@ -311,6 +315,7 @@ static int cs_client_trilogy_char_creation_params_are_valid(R(CSTrilogy_CharCrea
     if (race > 12)
         race = 12;
     
+    printf("Race/Class check: 0x%04x & 0x%04x == 0x%04x\n", classesByRace[race], (1 << class), (classesByRace[race] & (1 << class)));
     if (class < 0 || class >= 14 || (classesByRace[race] & (1 << class)) == 0)
         return false;
     
@@ -462,33 +467,65 @@ static void cs_trilogy_handle_op_delete_character(R(CharSelectClient*) client, R
 {
     R(const char*) name;
     
-    printf("DeleteCharacter %u\n", aligned_remaining(a));
     if (!char_select_client_is_authed(client) || aligned_remaining(a) < 2)
         return;
     
     name = (const char*)aligned_current(a);
-    printf("Delete: %s\n", name);
     
     char_select_client_delete_character_by_name(client, (CharSelect*)protocol_handler_basic(handler), name);
 }
 
 static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
-    char buf[2048];
-    int p;
+    uint8_t slot;
+    uint16_t op;
+    uint8_t flag;
     
-    printf("WearChange:\n");
-    if (!char_select_client_is_authed(client))
+    if (!char_select_client_is_authed(client) || aligned_remaining(a) < sizeof(CSTrilogy_WearChange))
         return;
     
-    p = snprintf(buf, sizeof(buf), "WearChange, len %u, data:\n", aligned_remaining(a));
+    // unusedSpawnId
+    aligned_advance(a, sizeof(uint32_t));
+    // slot
+    slot = aligned_read_uint8(a);
+    // material
+    aligned_advance(a, sizeof(uint8_t));
+    // operation
+    op = aligned_read_uint16(a);
+    // color, unknownA
+    aligned_advance(a, sizeof(uint32_t) + sizeof(uint8_t));
+    // flag
+    flag = aligned_read_uint8(a);
     
-    while (aligned_remaining(a))
+    printf("WearChange slot: %u, op: 0x%04x, flag: 0x%02x\n", slot, op, flag);
+    
+    if (op == WEARCHANGE_OP_SWITCH_CHAR)
     {
-        p += snprintf(buf + p, sizeof(buf) - p, "%02x ", aligned_read_byte(a));
+        printf("WearChange is switch char (to?)\n");
     }
-    
-    log_format(protocol_handler_basic(handler), LogNetwork, "%s", buf);
+    else if (flag == 0x9d)
+    {
+        printf("WearChange flag is 0x9d (so don't proceed?)\n");
+    }
+    else
+    {
+        R(Basic*) basic             = protocol_handler_basic(handler);
+        R(PacketTrilogy*) packet    = packet_trilogy_create(basic, TrilogyOp_WearChange, sizeof(CSTrilogy_WearChange));
+        Aligned w;
+        
+        aligned_init(protocol_handler_basic(handler), &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+        
+        // unusedSpawnId
+        aligned_write_uint32(&w, 0);
+        // slot
+        aligned_write_uint8(&w, slot);
+        // material
+        aligned_write_uint8(&w, 175); //fixme: get the actual thing we want here
+        // operation, color, unknownA, flag, unknownB
+        aligned_write_zeroes(&w, sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint8_t) * 2 + sizeof(uint16_t));
+        
+        cs_trilogy_schedule_packet(handler, packet);
+    }
 }
 
 static void cs_trilogy_handle_op_enter(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
@@ -555,3 +592,5 @@ void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a
         break;
     }
 }
+
+#undef WEARCHANGE_OP_SWITCH_CHAR

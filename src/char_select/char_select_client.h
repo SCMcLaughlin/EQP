@@ -18,6 +18,8 @@ STRUCT_DEFINE(CharSelectClient)
     CharSelectAuth      auth;
     uint32_t            weaponMaterialsTrilogy[10][2];
     bool                isNameApproved;
+    uint8_t             characterCount;
+    uint8_t             characterCursor; // Which character are we looking at on the char select screen?
 };
 
 CharSelectClient*   char_select_client_create(R(ProtocolHandler*) handler, int expansion);
@@ -34,5 +36,7 @@ void                char_select_client_delete_character_by_name(R(CharSelectClie
 #define             char_select_client_account_id(client) ((client)->auth.accountId)
 #define             char_select_client_is_name_approved(client) ((client)->isNameApproved)
 #define             char_select_client_set_name_approved(client, val) ((client)->isNameApproved = (val))
+#define             char_select_client_character_count(client) ((client)->characterCount)
+#define             char_select_client_set_character_count(client, count) ((client)->characterCount = (count))
 
 #endif//EQP_CHAR_SELECT_CLIENT_H

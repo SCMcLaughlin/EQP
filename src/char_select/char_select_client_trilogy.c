@@ -472,7 +472,7 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
     uint8_t slot;
     uint16_t op;
     uint8_t flag;
-	uint8_t index;
+    uint8_t index;
     
     if (!char_select_client_is_authed(client) || aligned_remaining(a) < sizeof(CSTrilogy_WearChange))
         return;
@@ -482,7 +482,7 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
     // slot
     slot    = aligned_read_uint8(a);
     // material
-	index   = aligned_read_uint8(a);
+    index   = aligned_read_uint8(a);
     // operation
     op      = aligned_read_uint16(a);
     // color, unknownA

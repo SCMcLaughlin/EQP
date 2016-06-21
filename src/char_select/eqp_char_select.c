@@ -19,6 +19,7 @@ void char_select_init(R(CharSelect*) charSelect, R(const char*) ipcPath, R(const
     core_init(C(charSelect), EQP_SOURCE_ID_CHAR_SELECT, shm_viewer_memory_type(&charSelect->shmViewerLogWriter, IpcBuffer));
     
     charSelect->L = lua_sys_open(B(charSelect));
+    lua_sys_run_file(B(charSelect), charSelect->L, EQP_CHAR_SELECT_SCRIPT_CHAR_CREATE, 0);
     
     charSelect->socket = udp_socket_create(B(charSelect));
     udp_socket_open(charSelect->socket, EQP_CHAR_SELECT_PORT);
@@ -272,4 +273,39 @@ void char_select_remove_client_from_unauthed_list(R(CharSelect*) charSelect, R(C
             return;
         }
     }
+}
+
+void char_select_get_starting_zone_and_loc(R(CharSelect*) charSelect, uint16_t race, uint8_t class, uint8_t gender, bool isTrilogy,
+        R(int*) zoneId, R(float*) x, R(float*) y, R(float*) z)
+{
+    R(lua_State*) L = charSelect->L;
+    
+    lua_getglobal(L, "char_select_get_starting_zone_and_loc");
+    
+    if (!lua_isfunction(L, -1))
+        goto err_default;
+    
+    lua_pushinteger(L, race);
+    lua_pushinteger(L, class);
+    lua_pushinteger(L, gender);
+    lua_pushboolean(L, isTrilogy);
+    
+    if (lua_sys_call_no_throw(B(charSelect), L, 4, 4))
+    {
+        *zoneId = lua_tointeger(L, -4);
+        *x      = lua_tonumber(L, -3);
+        *y      = lua_tonumber(L, -2);
+        *z      = lua_tonumber(L, -1);
+        
+        lua_clear(L);
+        return;
+    }
+    
+err_default:
+    lua_clear(L);
+    
+    *zoneId = 1;
+    *x      = 0.0f;
+    *y      = 0.0f;
+    *z      = 0.0f;
 }

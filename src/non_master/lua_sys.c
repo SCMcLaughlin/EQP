@@ -44,6 +44,20 @@ void lua_sys_run_file(R(Basic*) basic, R(lua_State*) L, R(const char*) path, int
         exception_throw(basic, ErrorLua);
 }
 
+int lua_sys_call_no_throw(R(Basic*) basic, R(lua_State*) L, int numArgs, int numReturns)
+{
+    int ret = true;
+    
+    if (lua_pcall(L, numArgs, numReturns, TRACEBACK_INDEX))
+    {
+        log_format(basic, LogLua, "[lua_sys_call_no_throw] %s", lua_tostring(L, -1));
+        lua_clear(L);
+        ret = false;
+    }
+    
+    return ret;
+}
+
 String* lua_sys_field_to_string(R(Basic*) basic, R(lua_State*) L, int index, R(const char*) field)
 {
     String* str;

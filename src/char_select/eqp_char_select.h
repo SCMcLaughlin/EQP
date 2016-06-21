@@ -25,6 +25,8 @@
 #define EQP_CHAR_SELECT_SERVER_LOCKED   -2
 #define EQP_CHAR_SELECT_UNCLAIMED_AUTHS_TIMEOUT 30000
 
+#define EQP_CHAR_SELECT_SCRIPT_CHAR_CREATE "scripts/char_select/char_create.lua"
+
 STRUCT_DEFINE(CharSelect)
 {
     // Core MUST be the first member of this struct
@@ -54,6 +56,9 @@ void    char_select_unclaimed_auths_timer_callback(R(Timer*) timer);
 void    char_select_handle_client_auth(R(CharSelect*) charSelect, R(CharSelectAuth*) auth);
 void    char_select_handle_unauthed_client(R(CharSelect*) charSelect, R(CharSelectClient*) client);
 void    char_select_remove_client_from_unauthed_list(R(CharSelect*) charSelect, R(CharSelectClient*) client);
+
+void    char_select_get_starting_zone_and_loc(R(CharSelect*) charSelect, uint16_t race, uint8_t class, uint8_t gender, bool isTrilogy,
+            R(int*) zoneId, R(float*) x, R(float*) y, R(float*) z);
 
 #define char_select_server_status(cs) ((cs)->serverStatus)
 #define char_select_player_count(cs) ((cs)->serverPlayerCount)

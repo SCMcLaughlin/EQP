@@ -35,13 +35,21 @@ STRUCT_DEFINE(CSTrilogy_CharCreateParams)
     uint8_t     class;
     uint8_t     face;
     uint8_t     currentHp;
-    uint8_t     STR;
-    uint8_t     STA;
-    uint8_t     CHA;
-    uint8_t     DEX;
-    uint8_t     INT;
-    uint8_t     AGI;
-    uint8_t     WIS;
+    union
+    {
+        struct
+        {
+            uint8_t     STR;
+            uint8_t     STA;
+            uint8_t     CHA;
+            uint8_t     DEX;
+            uint8_t     INT;
+            uint8_t     AGI;
+            uint8_t     WIS;
+        };
+        
+        uint8_t stats[7];
+    };
     uint8_t     deity;
     int         zoneId;
     float       x;

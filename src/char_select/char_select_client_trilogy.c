@@ -87,6 +87,9 @@ static void cs_client_trilogy_characters_callback(R(Query*) query)
     
     memset(cs, 0, sizeof(CSTrilogy_CharSelectInfo));
     
+    // We need to set these (probably not exactly like this, but close enough) to be able to
+    // tell which character slot is being referred to when the client asks for which weapon
+    // models to display in characters' hands, via WearChange requests.
     for (i = 0; i < 10; i++)
     {
         memset(cs->weirdA[i], i, sizeof(uint32_t));
@@ -129,8 +132,8 @@ static void cs_client_trilogy_characters_callback(R(Query*) query)
         // Weapon materials are handled specially and separately by the client 
         // for no apparent reason
 
-        client->weaponMaterialsTrilogy[i][0] = (uint32_t)query_get_int64(query, 15);
-        client->weaponMaterialsTrilogy[i][1] = (uint32_t)query_get_int64(query, 16);
+        client->weaponMaterialsTrilogy[i][0] = (uint8_t)query_get_int64(query, 15);
+        client->weaponMaterialsTrilogy[i][1] = (uint8_t)query_get_int64(query, 16);
         
         tints = cs->materialTints[i];
         
@@ -157,8 +160,6 @@ static void cs_client_trilogy_characters_callback(R(Query*) query)
         
         i++;
     }
-    
-    char_select_client_set_character_count(client, i);
     
     // Handle empty spaces
     for (; i < 10; i++)
@@ -266,8 +267,12 @@ void cs_client_trilogy_on_character_name_checked(R(CharSelectClient*) client, in
 
 static int cs_client_trilogy_char_creation_params_are_valid(R(CSTrilogy_CharCreateParams*) params)
 {
-    int class   = params->class - 1;
-    int race    = params->race - 1;
+    uint32_t class  = params->class - 1;
+    uint32_t race   = params->race - 1;
+    uint32_t totalExpected;
+    uint32_t total;
+    uint32_t maxSpendableOneStat;
+    int i;
     
     /*
         classesByRace encodes the following matrix, using 1 bit per entry:
@@ -288,7 +293,7 @@ static int cs_client_trilogy_char_creation_params_are_valid(R(CSTrilogy_CharCrea
         Magician     { true,  false,    true,   false,  true,   true,   false,  false, false, false, false,   true,  false },
         Enchanter    { true,  false,    true,   false,  true,   true,   false,  false, false, false, false,   true,  false }
     */
-    static uint16_t classesByRace[13] = {
+    static const uint16_t classesByRace[13] = {
         0x3dff, // Human
         0x0301, // Barbarian
         0x3c16, // Erudite
@@ -304,13 +309,88 @@ static int cs_client_trilogy_char_creation_params_are_valid(R(CSTrilogy_CharCrea
         0x0651  // Iksar
     };
     
-    //fixme: add stat value checks
+    static const uint8_t baseStatsByRace[13][7] = {
+        /*                 STR  STA  CHA  DEX  INT  AGI  WIS */
+        /* Human     */ {  75,  75,  75,  75,  75,  75,  75 },
+        /* Barbarian */ { 103,  95,  55,  70,  60,  82,  70 },
+        /* Erudite   */ {  60,  70,  70,  70, 107,  70,  83 },
+        /* Wood Elf  */ {  65,  65,  75,  80,  75,  95,  80 },
+        /* High Elf  */ {  55,  65,  80,  70,  92,  85,  95 },
+        /* Dark Elf  */ {  60,  65,  60,  75,  99,  90,  83 },
+        /* Half Elf  */ {  70,  70,  75,  85,  75,  90,  60 },
+        /* Dwarf     */ {  90,  90,  45,  90,  60,  70,  83 },
+        /* Troll     */ { 108, 109,  40,  75,  52,  83,  60 },
+        /* Ogre      */ { 130, 122,  37,  70,  60,  70,  67 },
+        /* Halfling  */ {  70,  75,  50,  90,  67,  95,  80 },
+        /* Gnome     */ {  60,  70,  60,  85,  98,  85,  67 },
+        /* Iksar     */ {  70,  70,  55,  85,  75,  90,  80 }
+    };
+    
+    static const uint8_t statBonusesByClass[14][7] = {
+        /*                   STR STA CHA DEX INT AGI WIS */
+        /* Warrior      */ { 10, 10,  0,  0,  0,  5,  0 },
+        /* Cleric       */ {  5,  5,  0,  0,  0,  0, 10 },
+        /* Paladin      */ { 10,  5, 10,  0,  0,  0,  5 },
+        /* Ranger       */ {  5, 10,  0,  0,  0, 10,  5 },
+        /* ShadowKnight */ { 10,  5,  5,  0, 10,  0,  0 },
+        /* Druid        */ {  0, 10,  0,  0,  0,  0, 10 },
+        /* Monk         */ {  5,  5,  0, 10,  0, 10,  0 },
+        /* Bard         */ {  5,  0, 10, 10,  0,  0,  0 },
+        /* Rogue        */ {  0,  0,  0, 10,  0, 10,  0 },
+        /* Shaman       */ {  0,  5,  5,  0,  0,  0, 10 },
+        /* Necromancer  */ {  0,  0,  0, 10, 10,  0,  0 },
+        /* Wizard       */ {  0, 10,  0,  0, 10,  0,  0 },
+        /* Magician     */ {  0, 10,  0,  0, 10,  0,  0 },
+        /* Enchanter    */ {  0,  0, 10,  0, 10,  0,  0 }
+    };
+    
+    static const uint8_t spendableStatPointsByClass[14] = {
+        25, // Warrior
+        30, // Cleric
+        20, // Paladin
+        20, // Ranger
+        20, // ShadowKnight
+        30, // Druid
+        20, // Monk
+        25, // Bard
+        30, // Rogue
+        30, // Shaman
+        30, // Necromancer
+        30, // Wizard
+        30, // Magician
+        30  // Enchanter
+    };
     
     // Iksar index correction
     if (race > 12)
         race = 12;
 
-    if (class < 0 || class >= 14 || (classesByRace[race] & (1 << class)) == 0)
+    // Is the race/class combination valid?
+    if (class >= 14 || (classesByRace[race] & (1 << class)) == 0)
+        return false;
+    
+    totalExpected       = spendableStatPointsByClass[class];
+    total               = 0;
+    maxSpendableOneStat = totalExpected;
+    
+    if (maxSpendableOneStat > 25)
+        maxSpendableOneStat = 25;
+    
+    for (i = 0; i < 7; i++)
+    {
+        uint32_t statValue  = params->stats[i];
+        uint32_t statTotal  = baseStatsByRace[race][i] + statBonusesByClass[class][i];
+
+        // Does this stat exceed the maximum possible value for this race and class?
+        if (statValue > (statTotal + maxSpendableOneStat))
+            return false;
+        
+        totalExpected += statTotal;
+        total += statValue;
+    }
+    
+    // Do they have more stat points overall than should be possible?
+    if (total > totalExpected)
         return false;
     
     return true;
@@ -388,10 +468,8 @@ static void cs_trilogy_handle_op_create_character(R(CharSelectClient*) client, R
     // deity
     params.deity        = aligned_read_uint16(a);
     
-    params.zoneId       = 54; //fixme: determine this from somewhere (lua script?)
-    params.x            = 0.0f;
-    params.y            = 0.0f;
-    params.z            = 0.0f;
+    char_select_get_starting_zone_and_loc((CharSelect*)protocol_handler_basic(handler), params.race, params.class, params.gender, true,
+        &params.zoneId, &params.x, &params.y, &params.z);
     
     // Verify that the given character creation parameters are valid
     if (!cs_client_trilogy_char_creation_params_are_valid(&params))
@@ -493,14 +571,17 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
     // If the flag is 0xb1, it is some kind of echo -- don't reply or it'll cause endless spam
     if (op != WEARCHANGE_OP_SWITCH_CHAR && flag != 0xb1)
     {
-        R(Basic*) basic             = protocol_handler_basic(handler);
-        R(PacketTrilogy*) packet    = packet_trilogy_create(basic, TrilogyOp_WearChange, sizeof(CSTrilogy_WearChange));
+        R(Basic*) basic;
+        R(PacketTrilogy*) packet;
         Aligned w;
 
         if (index >= 10 || (slot != 7 && slot != 8))
             return;
         
-        aligned_init(protocol_handler_basic(handler), &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+        basic   = protocol_handler_basic(handler);
+        packet  = packet_trilogy_create(basic, TrilogyOp_WearChange, sizeof(CSTrilogy_WearChange));
+        
+        aligned_init(basic, &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
         
         // unusedSpawnId
         aligned_write_uint32(&w, 0);

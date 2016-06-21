@@ -209,7 +209,7 @@ void login_client_handle_login_response(R(LoginClient*) client, int response)
 void login_client_generate_session_key(R(LoginClient*) client)
 {
     R(char*) key    = client->sessionKey;
-    uint32_t n      = sizeof(client->sessionKey);
+    uint32_t n      = sizeof(client->sessionKey) - 1;
     uint32_t i;
     
     for (i = 0; i < n; i++)

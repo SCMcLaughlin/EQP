@@ -42,8 +42,6 @@ static void cs_trilogy_handle_op_login_info(R(CharSelectClient*) client, R(Proto
     client->auth.accountId = strtol(account + 3, NULL, 10); // Skip "LS#"
     snprintf(client->auth.sessionKey, sizeof_field(CharSelectAuth, sessionKey), "%s", sessionKey);
     
-    printf("account: %s, sessionKey: %s\n", account, sessionKey);
-    
     char_select_handle_unauthed_client((CharSelect*)protocol_handler_basic(handler), client);
 }
 
@@ -129,8 +127,8 @@ static void cs_client_trilogy_characters_callback(R(Query*) query)
         materials[6] = (uint8_t)query_get_int(query, 14);
         
         // Weapon materials are handled specially and separately by the client 
-        // since they don't fit into the uint8_t's provided by the struct
-        
+        // for no apparent reason
+
         client->weaponMaterialsTrilogy[i][0] = (uint32_t)query_get_int64(query, 15);
         client->weaponMaterialsTrilogy[i][1] = (uint32_t)query_get_int64(query, 16);
         
@@ -242,7 +240,6 @@ static void cs_trilogy_handle_op_name_approval(R(CharSelectClient*) client, R(Pr
     uint32_t race;
     uint32_t class;
     
-    printf("NameApproval: %u\n", aligned_remaining(a));
     if (!char_select_client_is_authed(client) || aligned_remaining(a) < sizeof(CSTrilogy_NameApproval))
         return;
     
@@ -250,8 +247,6 @@ static void cs_trilogy_handle_op_name_approval(R(CharSelectClient*) client, R(Pr
     aligned_advance(a, sizeof_field(CSTrilogy_NameApproval, name));
     race    = aligned_read_uint32(a);
     class   = aligned_read_uint32(a);
-    
-    printf("Name approval: %s, race %u, class %u\n", name, race, class);
     
     char_select_client_query_character_name_taken(client, (CharSelect*)protocol_handler_basic(handler), name);
 }
@@ -314,8 +309,7 @@ static int cs_client_trilogy_char_creation_params_are_valid(R(CSTrilogy_CharCrea
     // Iksar index correction
     if (race > 12)
         race = 12;
-    
-    printf("Race/Class check: 0x%04x & 0x%04x == 0x%04x\n", classesByRace[race], (1 << class), (classesByRace[race] & (1 << class)));
+
     if (class < 0 || class >= 14 || (classesByRace[race] & (1 << class)) == 0)
         return false;
     
@@ -350,8 +344,6 @@ static void cs_trilogy_handle_op_create_character(R(CharSelectClient*) client, R
     CSTrilogy_CharCreateParams params;
     R(Database*) db;
     Query query;
-    
-    printf("CreateCharacter %u vs %lu\n", aligned_remaining(a), sizeof(CSTrilogy_CreateCharacter));
     
     if (!char_select_client_is_authed(client) || !char_select_client_is_name_approved(client) || aligned_remaining(a) < sizeof(CSTrilogy_CreateCharacter))
         return;
@@ -480,6 +472,7 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
     uint8_t slot;
     uint16_t op;
     uint8_t flag;
+	uint8_t mat;
     
     if (!char_select_client_is_authed(client) || aligned_remaining(a) < sizeof(CSTrilogy_WearChange))
         return;
@@ -487,31 +480,32 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
     // unusedSpawnId
     aligned_advance(a, sizeof(uint32_t));
     // slot
-    slot = aligned_read_uint8(a);
+    slot	= aligned_read_uint8(a);
     // material
-    aligned_advance(a, sizeof(uint8_t));
+	mat		= aligned_read_uint8(a);
     // operation
-    op = aligned_read_uint16(a);
+    op		= aligned_read_uint16(a);
     // color, unknownA
     aligned_advance(a, sizeof(uint32_t) + sizeof(uint8_t));
     // flag
-    flag = aligned_read_uint8(a);
+    flag	= aligned_read_uint8(a);
     
-    printf("WearChange slot: %u, op: 0x%04x, flag: 0x%02x\n", slot, op, flag);
-    
-    if (op == WEARCHANGE_OP_SWITCH_CHAR)
-    {
-        printf("WearChange is switch char (to?)\n");
-    }
-    else if (flag == 0x9d)
-    {
-        printf("WearChange flag is 0x9d (so don't proceed?)\n");
-    }
-    else
+	// If the flag is 0xb1, it is some kind of echo -- don't reply or it'll cause endless spam
+    if (op != WEARCHANGE_OP_SWITCH_CHAR && flag != 0xb1)
     {
         R(Basic*) basic             = protocol_handler_basic(handler);
         R(PacketTrilogy*) packet    = packet_trilogy_create(basic, TrilogyOp_WearChange, sizeof(CSTrilogy_WearChange));
         Aligned w;
+		int index					= 0;
+		
+		// If the flag is 0xf9, then the material given is the index for the character
+		// UNLESS it's the zeroth character... then either the flag is 0x54 (slot 7)
+		// or the material/index is 0x0a (slot 8)
+		if (flag == 0xf9 && mat != 0x0a)
+			index = mat;
+		
+		if (index < 0 || index >= 10 || (slot != 7 && slot != 8))
+			return;
         
         aligned_init(protocol_handler_basic(handler), &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
         
@@ -520,7 +514,7 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
         // slot
         aligned_write_uint8(&w, slot);
         // material
-        aligned_write_uint8(&w, 175); //fixme: get the actual thing we want here
+        aligned_write_uint8(&w, char_select_client_weapon_material(client, index, slot));
         // operation, color, unknownA, flag, unknownB
         aligned_write_zeroes(&w, sizeof(uint16_t) + sizeof(uint32_t) + sizeof(uint8_t) * 2 + sizeof(uint16_t));
         

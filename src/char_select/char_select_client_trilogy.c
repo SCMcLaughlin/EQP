@@ -89,8 +89,8 @@ static void cs_client_trilogy_characters_callback(R(Query*) query)
     
     for (i = 0; i < 10; i++)
     {
-        memset(cs->weirdA[i], i + 1, sizeof(uint32_t));
-        memset(cs->weirdB[i], i + 1, sizeof(uint32_t));
+        memset(cs->weirdA[i], i, sizeof(uint32_t));
+        memset(cs->weirdB[i], i, sizeof(uint32_t));
     }
     
     i = 0;
@@ -472,7 +472,7 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
     uint8_t slot;
     uint16_t op;
     uint8_t flag;
-	uint8_t mat;
+	uint8_t index;
     
     if (!char_select_client_is_authed(client) || aligned_remaining(a) < sizeof(CSTrilogy_WearChange))
         return;
@@ -480,32 +480,25 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
     // unusedSpawnId
     aligned_advance(a, sizeof(uint32_t));
     // slot
-    slot	= aligned_read_uint8(a);
+    slot    = aligned_read_uint8(a);
     // material
-	mat		= aligned_read_uint8(a);
+	index   = aligned_read_uint8(a);
     // operation
-    op		= aligned_read_uint16(a);
+    op      = aligned_read_uint16(a);
     // color, unknownA
     aligned_advance(a, sizeof(uint32_t) + sizeof(uint8_t));
     // flag
-    flag	= aligned_read_uint8(a);
-    
-	// If the flag is 0xb1, it is some kind of echo -- don't reply or it'll cause endless spam
+    flag    = aligned_read_uint8(a);
+	
+    // If the flag is 0xb1, it is some kind of echo -- don't reply or it'll cause endless spam
     if (op != WEARCHANGE_OP_SWITCH_CHAR && flag != 0xb1)
     {
         R(Basic*) basic             = protocol_handler_basic(handler);
         R(PacketTrilogy*) packet    = packet_trilogy_create(basic, TrilogyOp_WearChange, sizeof(CSTrilogy_WearChange));
         Aligned w;
-		int index					= 0;
-		
-		// If the flag is 0xf9, then the material given is the index for the character
-		// UNLESS it's the zeroth character... then either the flag is 0x54 (slot 7)
-		// or the material/index is 0x0a (slot 8)
-		if (flag == 0xf9 && mat != 0x0a)
-			index = mat;
-		
-		if (index < 0 || index >= 10 || (slot != 7 && slot != 8))
-			return;
+
+        if (index >= 10 || (slot != 7 && slot != 8))
+            return;
         
         aligned_init(protocol_handler_basic(handler), &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
         

@@ -23,10 +23,9 @@ STRUCT_DEFINE(CSTrilogy_CharSelectInfo)
     uint8_t     unknownA[2];
     uint32_t    materialTints[10][9];
     uint8_t     unknownB[20];
-    uint8_t     unknownC[4];
     uint8_t     weirdA[10][4];
     uint8_t     weirdB[10][4];
-    uint8_t     unknownD[144];
+    uint8_t     unknownC[148];
 };
 
 STRUCT_DEFINE(CSTrilogy_GuildEntry)

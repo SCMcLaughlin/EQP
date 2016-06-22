@@ -303,13 +303,31 @@ log-writer: $(BINLOGWRITER)
 
 console: $(BINCONSOLE)
 
-amalg: amalg-master amalg-log-writer amalg-console
+amalg: amalg-master amalg-login amalg-char-select amalg-zone-cluster amalg-log-writer amalg-console
 
 amalg-master: $(BCOMMON)exception.o
 	$(Q)luajit amalg/amalg.lua master src/master/
 	$(E) "\033[0;32mCreating amalgamated source file\033[0m"
 	$(E) "Building $(BINMASTER)"
 	$(Q)$(CC) -o $(BINMASTER) amalg/amalg_master.c $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEMASTER)
+
+amalg-login: $(BCOMMON)exception.o
+	$(Q)luajit amalg/amalg.lua login src/login/
+	$(E) "\033[0;32mCreating amalgamated source file\033[0m"
+	$(E) "Building $(BINLOGIN)"
+	$(Q)$(CC) -o $(BINLOGIN) amalg/amalg_login.c $^ $(LSTATIC) -lcrypto $(LDYNCORE) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDELOGIN) $(INCLUDENONMASTER)
+
+amalg-char-select: $(BCOMMON)exception.o
+	$(Q)luajit amalg/amalg.lua char_select src/char_select/
+	$(E) "\033[0;32mCreating amalgamated source file\033[0m"
+	$(E) "Building $(BINCHARSELECT)"
+	$(Q)$(CC) -o $(BINCHARSELECT) amalg/amalg_char_select.c $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDECHARSELECT) $(INCLUDENONMASTER)
+
+amalg-zone-cluster: $(BCOMMON)exception.o
+	$(Q)luajit amalg/amalg.lua zone_cluster src/zone_cluster/
+	$(E) "\033[0;32mCreating amalgamated source file\033[0m"
+	$(E) "Building $(BINZC)"
+	$(Q)$(CC) -o $(BINZC) amalg/amalg_zone_cluster.c $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEZC) $(INCLUDENONMASTER)
 
 amalg-log-writer: $(BCOMMON)exception.o
 	$(Q)luajit amalg/amalg.lua log_writer src/log/
@@ -321,7 +339,7 @@ amalg-console: $(BCOMMON)exception.o
 	$(Q)luajit amalg/amalg.lua console src/console/
 	$(E) "\033[0;32mCreating amalgamated source file\033[0m"
 	$(E) "Building $(BINCONSOLE)"
-	$(Q)$(CC) -o $(BINCONSOLE) amalg/amalg_console.c $^ -lsqlite3 $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDECONSOLE)
+	$(Q)$(CC) -o $(BINCONSOLE) amalg/amalg_console.c $^ -pthread -lrt -lsqlite3 -lz -lm -ldl $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDECONSOLE)
 
 $(BINMASTER): $(OMASTER) $(OCOMMON_ALL)
 	$(E) "Linking $@"

@@ -4,17 +4,22 @@ local lfs = require "lfs"
 local ipairs    = ipairs
 local table     = table
 
-local includePaths  = {"src/common/"}
+local includePaths  = {}
 local excludeSource = {["exception.c"] = true}
 
-for path in lfs.dir("src/common/") do
-    if path ~= "." and path ~= ".." then
-        path = "src/common/" .. path .. "/"
-        if lfs.attributes(path, "mode") == "directory" then
-            table.insert(includePaths, path)
+local function doIncludes(folder)
+    table.insert(includePaths, folder)
+    for path in lfs.dir(folder) do
+        if path ~= "." and path ~= ".." then
+            path = folder .. path .. "/"
+            if lfs.attributes(path, "mode") == "directory" then
+                table.insert(includePaths, path)
+            end
         end
     end
 end
+
+doIncludes("src/common/")
 
 local included  = {}
 local pending   = {}
@@ -52,7 +57,11 @@ local function includeFile(name)
 end
 
 local function buildFile(name, extraInclude)
-    table.insert(includePaths, extraInclude)
+    if name ~= "master" and name ~= "console" and name ~= "log_writer" then
+        doIncludes("src/non_master/")
+    end
+    
+    doIncludes(extraInclude)
     
     local file = assert(io.open("amalg/amalg_".. name .. ".c", "w+"))
     

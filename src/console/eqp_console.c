@@ -218,7 +218,7 @@ static void console_do_send(R(Console*) console, int argc, R(const char**) argv)
         cmd->optionCount++;
     }
     
-    ipc_buffer_write(B(console), console->ipcSend, ServerOpConsoleCommand, EQP_SOURCE_ID_CONSOLE, length, data);
+    ipc_buffer_write(B(console), console->ipcSend, ServerOp_ConsoleCommand, EQP_SOURCE_ID_CONSOLE, length, data);
 }
 
 int console_send(R(Console*) console, int argc, R(const char**) argv)
@@ -288,12 +288,12 @@ void console_recv(R(Console*) console)
         {
             switch (ipc_packet_opcode(&packet))
             {
-            case ServerOpConsoleMessage:
+            case ServerOp_ConsoleMessage:
                 console_write_packet(&packet);
                 time = clock_milliseconds();
                 break;
             
-            case ServerOpConsoleFinish:
+            case ServerOp_ConsoleFinish:
                 run = false;
                 break;
                 

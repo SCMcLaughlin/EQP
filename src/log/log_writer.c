@@ -39,7 +39,7 @@ void log_writer_main_loop(R(LogWriter*) logWriter)
             if (!ipc_buffer_read(B(logWriter), ipc, &packet))
                 break;
             
-            if (ipc_packet_opcode(&packet) == ServerOpShutdown)
+            if (ipc_packet_opcode(&packet) == ServerOp_Shutdown)
                 return;
             
             // Forward to the logging thread

@@ -48,7 +48,7 @@ void proc_shutdown(R(Master*) M, R(ChildProcess*) proc)
     
     if (proc->ipc)
     {
-        ipc_buffer_write(B(M), proc->ipc, ServerOpShutdown, EQP_SOURCE_ID_MASTER, 0, NULL);
+        ipc_buffer_write(B(M), proc->ipc, ServerOp_Shutdown, EQP_SOURCE_ID_MASTER, 0, NULL);
         proc_deinit(proc);
     }
     

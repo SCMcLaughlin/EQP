@@ -14,7 +14,7 @@ void char_select_init(R(CharSelect*) charSelect, R(const char*) ipcPath, R(const
     shm_viewer_init(&charSelect->shmViewerLogWriter);
     shm_viewer_open(B(charSelect), &charSelect->shmViewerLogWriter, logWriterIpcPath, sizeof(IpcBuffer));
     // Tell the log writer to open our log file
-    ipc_buffer_write(B(charSelect), shm_viewer_memory_type(&charSelect->shmViewerLogWriter, IpcBuffer), ServerOpLogOpen, EQP_SOURCE_ID_CHAR_SELECT, 0, NULL);
+    ipc_buffer_write(B(charSelect), shm_viewer_memory_type(&charSelect->shmViewerLogWriter, IpcBuffer), ServerOp_LogOpen, EQP_SOURCE_ID_CHAR_SELECT, 0, NULL);
     
     core_init(C(charSelect), EQP_SOURCE_ID_CHAR_SELECT, shm_viewer_memory_type(&charSelect->shmViewerLogWriter, IpcBuffer));
     
@@ -229,6 +229,7 @@ void char_select_unclaimed_auths_timer_callback(R(Timer*) timer)
 void char_select_handle_client_auth(R(CharSelect*) charSelect, R(CharSelectAuth*) auth)
 {
     uint32_t accountId          = auth->accountId;
+    R(const char*) sessionKey   = auth->sessionKey;
     R(CharSelectClient**) array = array_data_type(charSelect->unauthedClients, CharSelectClient*);
     uint32_t n                  = array_count(charSelect->unauthedClients);
     uint32_t i;
@@ -238,7 +239,7 @@ void char_select_handle_client_auth(R(CharSelect*) charSelect, R(CharSelectAuth*
     {
         R(CharSelectClient*) client = array[i];
         
-        if (char_select_client_account_id(client) == accountId)
+        if (char_select_client_account_id(client) == accountId && strcmp(char_select_client_session_key(client), sessionKey) == 0)
         {
             char_select_client_set_auth(client, auth);
             array_swap_and_pop(charSelect->unauthedClients, i);

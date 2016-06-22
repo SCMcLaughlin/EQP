@@ -184,7 +184,7 @@ static FILE* log_thread_determine_filename_and_open(R(LogThread*) logThread, int
                 
                 pos += (size_t)wrote;
                 
-                ipc_packet_init(B(logThread), &packet, ServerOpLogMessage, EQP_SOURCE_ID_MASTER, pos, message);
+                ipc_packet_init(B(logThread), &packet, ServerOp_LogMessage, EQP_SOURCE_ID_MASTER, pos, message);
                 array_push_back(B(logThread), &logThread->writeQueue, &packet);
             }
         }
@@ -258,15 +258,15 @@ static void log_thread_process_write_queue(R(LogThread*) logThread)
         
         switch (ipc_packet_opcode(packet))
         {
-        case ServerOpLogMessage:
+        case ServerOp_LogMessage:
             log_thread_write(logThread, packet);
             break;
         
-        case ServerOpLogOpen:
+        case ServerOp_LogOpen:
             log_thread_open(logThread, packet);
             break;
         
-        case ServerOpLogClose:
+        case ServerOp_LogClose:
             log_thread_close(logThread, packet);
             break;
         

@@ -32,6 +32,7 @@ void                char_select_client_delete_character_by_name(R(CharSelectClie
 #define             char_select_client_handler(client) ((client)->handler)
 #define             char_select_client_is_authed(client) ((client)->auth.timestamp != 0)
 #define             char_select_client_account_id(client) ((client)->auth.accountId)
+#define             char_select_client_session_key(client) ((client)->auth.sessionKey)
 #define             char_select_client_weapon_material(client, index, slot) ((client)->weaponMaterialsTrilogy[(index)][(slot) - 7])
 #define             char_select_client_is_name_approved(client) ((client)->isNameApproved)
 #define             char_select_client_set_name_approved(client, val) ((client)->isNameApproved = (val))

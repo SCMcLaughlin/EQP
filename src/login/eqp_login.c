@@ -17,7 +17,7 @@ void login_init(R(Login*) login, R(const char*) ipcPath, R(const char*) masterIp
     shm_viewer_init(&login->shmViewerLogWriter);
     shm_viewer_open(B(login), &login->shmViewerLogWriter, logWriterIpcPath, sizeof(IpcBuffer));
     // Tell the log writer to open our log file
-    ipc_buffer_write(B(login), shm_viewer_memory_type(&login->shmViewerLogWriter, IpcBuffer), ServerOpLogOpen, EQP_SOURCE_ID_LOGIN, 0, NULL);
+    ipc_buffer_write(B(login), shm_viewer_memory_type(&login->shmViewerLogWriter, IpcBuffer), ServerOp_LogOpen, EQP_SOURCE_ID_LOGIN, 0, NULL);
     
     core_init(C(login), EQP_SOURCE_ID_LOGIN, shm_viewer_memory_type(&login->shmViewerLogWriter, IpcBuffer));
     
@@ -63,7 +63,7 @@ static int login_check_ipc(R(Login*) login)
             if (!ipc_buffer_read(B(login), ipc, &packet))
                 break;
             
-            if (ipc_packet_opcode(&packet) == ServerOpShutdown)
+            if (ipc_packet_opcode(&packet) == ServerOp_Shutdown)
                 return true;
             
             ipc_packet_deinit(&packet);
@@ -75,7 +75,7 @@ static int login_check_ipc(R(Login*) login)
 
 static void login_send_keep_alive(R(Login*) login)
 {
-    ipc_buffer_write(B(login), login->ipcMaster, ServerOpKeepAlive, EQP_SOURCE_ID_LOGIN, 0, NULL);
+    ipc_buffer_write(B(login), login->ipcMaster, ServerOp_KeepAlive, EQP_SOURCE_ID_LOGIN, 0, NULL);
 }
 
 void login_main_loop(R(Login*) login)

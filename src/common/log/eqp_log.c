@@ -89,7 +89,7 @@ void log_from_vformat(R(Basic*) basic, int sourceId, LogType type, R(const char*
     uint32_t length = log_construct_message(basic, message, type, fmt, args);
     
     if (length)
-        ipc_buffer_write(basic, basic_log_ipc(basic)->ipc, ServerOpLogMessage, sourceId, length, message);
+        ipc_buffer_write(basic, basic_log_ipc(basic)->ipc, ServerOp_LogMessage, sourceId, length, message);
 }
 
 #undef ERR_STRFTIME

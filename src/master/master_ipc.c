@@ -13,7 +13,7 @@ void master_ipc_thread_console_reply(R(MasterIpcThread*) ipcThread, R(IpcBuffer*
 {
     if (!src)
     {
-        ipc_buffer_write(B(ipcThread), ipc, ServerOpConsoleMessage, EQP_SOURCE_ID_MASTER, strlen(msg) + 1, msg);
+        ipc_buffer_write(B(ipcThread), ipc, ServerOp_ConsoleMessage, EQP_SOURCE_ID_MASTER, strlen(msg) + 1, msg);
     }
     else
     {
@@ -24,13 +24,13 @@ void master_ipc_thread_console_reply(R(MasterIpcThread*) ipcThread, R(IpcBuffer*
         memcpy(buf, src, len1);
         memcpy(buf + len1, msg, len2);
         
-        ipc_buffer_write(B(ipcThread), ipc, ServerOpConsoleMessage, EQP_SOURCE_ID_MASTER, len1 + len2, buf);
+        ipc_buffer_write(B(ipcThread), ipc, ServerOp_ConsoleMessage, EQP_SOURCE_ID_MASTER, len1 + len2, buf);
     }
 }
 
 void master_ipc_thread_console_finish(R(MasterIpcThread*) ipcThread, R(IpcBuffer*) ipc, R(const char*) src)
 {
-    ipc_buffer_write(B(ipcThread), ipc, ServerOpConsoleFinish, EQP_SOURCE_ID_MASTER, src ? (strlen(src) + 1) : 0, src);
+    ipc_buffer_write(B(ipcThread), ipc, ServerOp_ConsoleFinish, EQP_SOURCE_ID_MASTER, src ? (strlen(src) + 1) : 0, src);
 }
 
 static uint32_t master_ipc_thread_console_message_push_string(R(MasterIpcThread*) ipcThread, R(lua_State*) L, R(byte*) data, uint32_t pos, const uint32_t length)
@@ -190,10 +190,10 @@ static int master_ipc_thread_handle_packet(R(MasterIpcThread*) ipcThread, R(Mast
     
     switch (opcode)
     {
-    case ServerOpKeepAlive:
+    case ServerOp_KeepAlive:
         break;
     
-    case ServerOpConsoleMessage:
+    case ServerOp_ConsoleMessage:
         if (master_ipc_thread_handle_console_message(ipcThread, M, L, packet, proc, 0))
             return true;
         break;

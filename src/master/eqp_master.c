@@ -90,7 +90,7 @@ static pid_t master_spawn_process(R(Master*) M, R(const char*) path, R(const cha
 void master_start_log_writer(R(Master*) M)
 {
     // Tell the log writer to open the log file for Master once it's started
-    ipc_buffer_write(B(M), proc_ipc(&M->procLogWriter), ServerOpLogOpen, EQP_SOURCE_ID_MASTER, 0, NULL);
+    ipc_buffer_write(B(M), proc_ipc(&M->procLogWriter), ServerOp_LogOpen, EQP_SOURCE_ID_MASTER, 0, NULL);
     
     // The log writer does not need to know about the master process or the log writer (obviously), its communication is all input only
     proc_start(&M->procLogWriter, master_spawn_process(M, BIN_LOG_WRITER, proc_shm_path(&M->procLogWriter), NULL, NULL));
@@ -168,7 +168,7 @@ static void master_restart_proc(R(Master*) M, R(ChildProcess*) proc, int sourceI
     log_format(B(M), LogInfo, "Detected that process %i for binary '%s' is non-responsive; restarting it", proc_pid(proc), binPath);
     
     // Tell log-writer to close the log for this process
-    ipc_buffer_write(B(M), proc_ipc(&M->procLogWriter), ServerOpLogClose, sourceId, 0, NULL);
+    ipc_buffer_write(B(M), proc_ipc(&M->procLogWriter), ServerOp_LogClose, sourceId, 0, NULL);
     
     proc_kill(proc);
     

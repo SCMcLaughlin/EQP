@@ -332,13 +332,13 @@ amalg-log-writer: $(BCOMMON)exception.o
 	$(Q)luajit amalg/amalg.lua log_writer src/log/
 	$(E) "\033[0;32mCreating amalgamated source file\033[0m"
 	$(E) "Building $(BINLOGWRITER)"
-	$(Q)$(CC) -o $(BINLOGWRITER) amalg/amalg_log_writer.c $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDELOGWRITER)
+	$(Q)$(CC) -o $(BINLOGWRITER) amalg/amalg_log_writer.c $^ $(LDYNAMIC) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDELOGWRITER)
 
 amalg-console: $(BCOMMON)exception.o
 	$(Q)luajit amalg/amalg.lua console src/console/
 	$(E) "\033[0;32mCreating amalgamated source file\033[0m"
 	$(E) "Building $(BINCONSOLE)"
-	$(Q)$(CC) -o $(BINCONSOLE) amalg/amalg_console.c $^ -pthread -lrt -lsqlite3 -lz -lm -ldl $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDECONSOLE)
+	$(Q)$(CC) -o $(BINCONSOLE) amalg/amalg_console.c $^ $(LDYNAMIC) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDECONSOLE)
 
 $(BINMASTER): $(OMASTER) $(OCOMMON_ALL)
 	$(E) "Linking $@"

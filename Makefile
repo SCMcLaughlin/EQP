@@ -192,6 +192,36 @@ INCLUDECHARSELECT= -I$(DIRCHARSELECT)
 BINCHARSELECT= $(DIRBIN)eqp-char-select
 
 ##############################################################################
+# Zone Cluster
+##############################################################################
+DIRZC= src/zone_cluster/
+BZC= build/$(BUILDTYPE)/zone_cluster/
+_OZC= zone_cluster_main.o \
+ zone_cluster.o lua_object.o
+_HZC= \
+ zone_cluster.h lua_object.h
+OZC= $(patsubst %,$(BZC)%,$(_OZC))
+HZC= $(patsubst %,$(DIRZC)%,$(_HZC))
+
+INCLUDEZC= -I$(DIRZC)
+BINZC= $(DIRBIN)eqp-zone-cluster
+
+##############################################################################
+# Zone Cluster / Mob
+##############################################################################
+DIRZC_MOB= $(DIRZC)mob/
+BZC_MOB= $(BZC)mob/
+_OZC_MOB= \
+ mob.o client.o client_packet_standard.o client_packet_trilogy.o
+_HZC_MOB= \
+ mob.h client.h client_packet_standard.h client_packet_trilogy.h
+OZC_MOB= $(patsubst %,$(BZC_MOB)%,$(_OZC_MOB))
+HZC_MOB= $(patsubst %,$(DIRZC_MOB)%,$(_HZC_MOB))
+
+INCLUDEZC+= -I$(DIRZC_MOB)
+HZC += $(HZC_MOB)
+
+##############################################################################
 # Log Writer
 ##############################################################################
 DIRLOGWRITER= src/log/
@@ -251,13 +281,15 @@ RM= rm -f
 ##############################################################################
 .PHONY: default all clean
 
-default all: master login char-select log-writer console
+default all: master login char-select zone-cluster log-writer console
 
 master: $(BINMASTER)
 
 login: $(BINLOGIN)
 
 char-select: $(BINCHARSELECT)
+
+zone-cluster: $(BINZC)
 
 log-writer: $(BINLOGWRITER)
 
@@ -295,6 +327,10 @@ $(BINCHARSELECT): $(OCHARSELECT) $(OCOMMON_ALL) $(ONONMASTER_ALL)
 	$(E) "Linking $@"
 	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS)
 
+$(BINZC): $(OZC) $(OZC_MOB) $(OCOMMON_ALL) $(ONONMASTER_ALL)
+	$(E) "Linking $@"
+	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS)
+
 $(BINLOGWRITER): $(OLOGWRITER)
 	$(E) "Linking $@"
 	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS)
@@ -327,6 +363,10 @@ $(BLOGIN)%.o: $(DIRLOGIN)%.c $(HLOGIN)
 $(BCHARSELECT)%.o: $(DIRCHARSELECT)%.c $(HCHARSELECT)
 	$(E) "\033[0;32mCC      $@\033[0m"
 	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDECHARSELECT) $(INCLUDENONMASTER)
+
+$(BZC)%.o: $(DIRZC)%.c $(HZC)
+	$(E) "\033[0;32mCC      $@\033[0m"
+	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEZC) $(INCLUDENONMASTER)
 
 $(BLOGWRITER)%.o: $(DIRLOGWRITER)%.c $(HLOGWRITER)
 	$(E) "\033[0;32mCC      $@\033[0m"
@@ -368,6 +408,12 @@ clean-char-select:
 	$(Q)$(RM) $(BINCHARSELECT)
 	$(E) "Cleaned char-select"
 
+clean-zone-cluster:
+	$(Q)$(RM) $(BZC)*.o
+	$(Q)$(RM) $(BZC_MOB)*.o
+	$(Q)$(RM) $(BINZC)
+	$(E) "Cleaned zone-cluster"
+
 clean-log-writer:
 	$(Q)$(RM) $(BLOGWRITER)*.o
 	$(Q)$(RM) $(BINLOGWRITER)
@@ -378,5 +424,5 @@ clean-console:
 	$(Q)$(RM) $(BINCONSOLE)
 	$(E) "Cleaned console"
 
-clean: clean-common clean-non-master clean-master clean-login clean-char-select clean-log-writer clean-console
+clean: clean-common clean-non-master clean-master clean-login clean-char-select clean-zone-cluster clean-log-writer clean-console
 

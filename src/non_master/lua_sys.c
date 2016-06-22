@@ -19,6 +19,14 @@ lua_State* lua_sys_open(R(Basic*) basic)
     lua_getfield(L, TRACEBACK_INDEX, "traceback");
     lua_replace(L, TRACEBACK_INDEX);
     
+    // Seed the RNG
+    lua_getglobal(L, "math");
+    lua_getfield(L, -1, "randomseed");
+    lua_pushinteger(L, clock_microseconds());
+    lua_sys_call(basic, L, 1, 0);
+    lua_pop(L, 1); // Pop math
+    
+    // Run the universal include file
     lua_sys_run_file(basic, L, SCRIPT_INCLUDE, 0);
     
     return L;
@@ -31,7 +39,7 @@ int lua_sys_run_file_no_throw(R(Basic*) basic, R(lua_State*) L, R(const char*) p
     if (luaL_loadfile(L, path) || lua_pcall(L, 0, numReturns, TRACEBACK_INDEX))
     {
         log_format(basic, LogLua, "[lua_sys_run_file_no_throw] %s", lua_tostring(L, -1));
-        lua_clear(L);
+        lua_pop(L, 1);
         ret = false;
     }
     
@@ -51,11 +59,17 @@ int lua_sys_call_no_throw(R(Basic*) basic, R(lua_State*) L, int numArgs, int num
     if (lua_pcall(L, numArgs, numReturns, TRACEBACK_INDEX))
     {
         log_format(basic, LogLua, "[lua_sys_call_no_throw] %s", lua_tostring(L, -1));
-        lua_clear(L);
+        lua_pop(L, 1);
         ret = false;
     }
     
     return ret;
+}
+
+void lua_sys_call(R(Basic*) basic, R(lua_State*) L, int numArgs, int numReturns)
+{
+    if (!lua_sys_call_no_throw(basic, L, numArgs, numReturns))
+        exception_throw(basic, ErrorLua);
 }
 
 String* lua_sys_field_to_string(R(Basic*) basic, R(lua_State*) L, int index, R(const char*) field)

@@ -3,7 +3,6 @@ local ffi = require "ffi"
 
 local lua = {
     "scripts/?.lua",
-    "scripts/sys/?.lua",
 }
 
 local dll = {

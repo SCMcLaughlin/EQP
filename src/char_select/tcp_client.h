@@ -18,14 +18,16 @@ STRUCT_DECLARE(CharSelect);
 
 STRUCT_DEFINE(LoginServerConfig)
 {
-    String* longName;
-    String* shortName;
-    String* host;
-    String* port;
-    String* username;
-    String* password;
-    String* remoteIp;
-    String* localIp;
+    uint32_t    index;
+    CharSelect* charSelect;
+    String*     longName;
+    String*     shortName;
+    String*     host;
+    String*     port;
+    String*     username;
+    String*     password;
+    String*     remoteIp;
+    String*     localIp;
 };
 
 STRUCT_DEFINE(TcpClient)
@@ -37,7 +39,7 @@ STRUCT_DEFINE(TcpClient)
     LoginServerConfig*  config;
     CharSelect*         charSelect;
     uint64_t            lastRemoteTime;
-    Timer               timer;  // For reconnection when not connected, or status updates when connected
+    Timer*              timer;  // For reconnection when not connected, or status updates when connected
 };
 
 void    tcp_client_init(R(CharSelect*) charSelect, R(TcpClient*) client, R(LoginServerConfig*) config);

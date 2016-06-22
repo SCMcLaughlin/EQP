@@ -18,6 +18,8 @@ local function gc(ptr)
     
     sys.objectGCByIndex(objIndex)
     sys.callbackGC(cbIndex)
+    
+    C.zc_lua_timer_destroy(ptr)
 end
 
 local function make(milliseconds, callback, start)

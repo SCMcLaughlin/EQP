@@ -52,6 +52,15 @@ void char_select_deinit(R(CharSelect*) charSelect)
     
     if (charSelect->loginServerConnections)
     {
+        R(TcpClient*) array = array_data_type(charSelect->loginServerConnections, TcpClient);
+        uint32_t n          = array_count(charSelect->loginServerConnections);
+        uint32_t i;
+        
+        for (i = 0; i < n; i++)
+        {
+            tcp_client_deinit(&array[i]);
+        }
+        
         array_destroy(charSelect->loginServerConnections);
         charSelect->loginServerConnections = NULL;
     }
@@ -95,6 +104,8 @@ void char_select_start_login_server_connections(R(CharSelect*) charSelect)
         lua_pushinteger(L, i);
         lua_gettable(L, -2);
         
+        server->index       = i - 1;
+        server->charSelect  = charSelect;
         server->longName    = lua_sys_field_to_string(B(charSelect), L, -1, "longname");
         server->shortName   = lua_sys_field_to_string(B(charSelect), L, -1, "shortname");
         server->host        = lua_sys_field_to_string(B(charSelect), L, -1, "host");
@@ -185,6 +196,11 @@ void char_select_tcp_recv(R(CharSelect*) charSelect)
         
         tcp_client_set_buffered(cli, buffered);
     }
+}
+
+TcpClient* char_select_get_tcp_client(R(CharSelect*) charSelect, uint32_t index)
+{
+    return array_get_type(charSelect->loginServerConnections, index, TcpClient);
 }
 
 void char_select_unclaimed_auths_timer_callback(R(Timer*) timer)

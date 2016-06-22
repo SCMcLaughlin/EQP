@@ -1,6 +1,7 @@
 
 #include "timer.h"
 #include "timer_pool.h"
+#include "eqp_alloc.h"
 
 #define INVALID_INDEX 0xffffffff
 
@@ -19,6 +20,21 @@ void timer_init(R(Timer*) timer, R(TimerPool*) pool, uint32_t periodMilliseconds
 void timer_deinit(R(Timer*) timer)
 {
     timer_stop(timer);
+}
+
+Timer* eqp_timer_create(R(Basic*) basic, R(TimerPool*) pool, uint32_t periodMilliseconds, TimerCallback callback, void* userdata, int start)
+{
+    R(Timer*) timer = eqp_alloc_type(basic, Timer);
+    
+    timer_init(timer, pool, periodMilliseconds, callback, userdata, start);
+    
+    return timer;
+}
+
+void timer_destroy(R(Timer*) timer)
+{
+    timer_deinit(timer);
+    free(timer);
 }
 
 void timer_stop(R(Timer*) timer)

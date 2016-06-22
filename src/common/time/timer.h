@@ -4,6 +4,7 @@
 
 #include "define.h"
 
+STRUCT_DECLARE(Basic);
 STRUCT_DECLARE(Timer);
 STRUCT_DECLARE(TimerPool);
 
@@ -20,6 +21,8 @@ STRUCT_DEFINE(Timer)
 
 void    timer_init(R(Timer*) timer, R(TimerPool*) pool, uint32_t periodMilliseconds, TimerCallback callback, void* userdata, int start);
 void    timer_deinit(R(Timer*) timer);
+Timer*  eqp_timer_create(R(Basic*) basic, R(TimerPool*) pool, uint32_t periodMilliseconds, TimerCallback callback, void* userdata, int start);
+void    timer_destroy(R(Timer*) timer);
 
 #define timer_set_period_milliseconds(timer, ms) ((timer)->periodMilliseconds = (ms))
 #define timer_set_callback(timer, cb) ((timer)->callback = (cb))

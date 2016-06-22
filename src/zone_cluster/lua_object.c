@@ -87,7 +87,7 @@ static void zc_lua_timer_callback(R(Timer*) timer)
 
 LuaTimer* zc_lua_timer_create(R(ZC*) zc, uint32_t periodMilliseconds, int luaCallback, int start)
 {
-    LuaTimer* timer = eqp_alloc_type(B(zc), LuaTimer);
+    R(LuaTimer*) timer = eqp_alloc_type(B(zc), LuaTimer);
     
     timer->luaObj.index = 0; // This will be set via zc_lua_object_update_index() just after this function returns (chicken vs egg matter)
     timer->luaCallback  = luaCallback;

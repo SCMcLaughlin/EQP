@@ -265,9 +265,17 @@ BINCONSOLE= $(DIRBIN)eqp
 # Core Linker flags
 ##############################################################################
 LFLAGS= -rdynamic
-LSTATIC= 
+#LSTATIC= 
 LDYNAMIC= -pthread -lrt -lsqlite3 -lz -lm -ldl
+#LDYNCORE= -lluajit-5.1 $(LDYNAMIC)
+
+ifeq ($(BUILDTYPE),debug)
+LSTATIC= $(DIRBIN)libluajit-valgrind.a
+LDYNCORE= $(LDYNAMIC)
+else
+LSTATIC= 
 LDYNCORE= -lluajit-5.1 $(LDYNAMIC)
+endif 
 
 ##############################################################################
 # Util

@@ -17,8 +17,7 @@ void tcp_client_init(R(CharSelect*) charSelect, R(TcpClient*) client, R(LoginSer
     client->recvBuf     = eqp_alloc_type_bytes(B(charSelect), EQP_TCP_CLIENT_BUFFER_SIZE, byte);
     client->config      = config;
     client->charSelect  = charSelect;
-    
-    timer_init(&client->timer, char_select_timer_pool(charSelect), RECONNECT_MILLISECONDS, NULL, client, false);
+    client->timer       = eqp_timer_create(B(charSelect), char_select_timer_pool(charSelect), RECONNECT_MILLISECONDS, NULL, config, false);
 }
 
 void tcp_client_deinit(R(TcpClient*) client)
@@ -61,7 +60,11 @@ void tcp_client_deinit(R(TcpClient*) client)
         client->config = NULL;
     }
     
-    timer_deinit(&client->timer);
+    if (client->timer)
+    {
+        timer_destroy(client->timer);
+        client->timer = NULL;
+    }
 }
 
 void tcp_client_restart_connection(R(TcpClient*) client)
@@ -105,8 +108,9 @@ static void tcp_client_send(R(CharSelect*) charSelect, R(TcpClient*) client, R(c
 
 static void tcp_client_status_update_callback(R(Timer*) timer)
 {
-    R(TcpClient*) client        = timer_userdata_type(timer, TcpClient);
-    R(CharSelect*) charSelect   = client->charSelect;
+    R(LoginServerConfig*) config    = timer_userdata_type(timer, LoginServerConfig);
+    R(CharSelect*) charSelect       = config->charSelect;
+    R(TcpClient*) client            = char_select_get_tcp_client(charSelect, config->index);
     Aligned write;
     R(Aligned*) w = &write;
     Tcp_LoginServerStatusSend send;
@@ -257,9 +261,10 @@ static void tcp_client_do_connect(R(CharSelect*) charSelect, R(TcpClient*) clien
 static void tcp_client_reconnect_callback(R(Timer*) timer)
 {
     ExceptionScope exScope;
-    R(TcpClient*) volatile client       = timer_userdata_type(timer, TcpClient);
-    R(CharSelect*) volatile charSelect  = client->charSelect;
-    struct addrinfo* volatile result    = NULL;
+    R(LoginServerConfig*) volatile config   = timer_userdata_type(timer, LoginServerConfig);
+    R(CharSelect*) volatile charSelect      = config->charSelect;
+    R(TcpClient*) volatile client           = char_select_get_tcp_client(charSelect, config->index);
+    struct addrinfo* volatile result        = NULL;
     
     switch (exception_try(B(charSelect), &exScope))
     {
@@ -302,7 +307,7 @@ static void tcp_client_reconnect_callback(R(Timer*) timer)
 
 void tcp_client_start_connect_cycle(R(TcpClient*) client, int immediate)
 {
-    R(Timer*) timer = &client->timer;
+    R(Timer*) timer = client->timer;
     
     timer_set_period_milliseconds(timer, RECONNECT_MILLISECONDS);
     timer_set_callback(timer, tcp_client_reconnect_callback);

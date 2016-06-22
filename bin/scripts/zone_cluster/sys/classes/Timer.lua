@@ -13,10 +13,8 @@ local ZC        = require "ZC"
 local Timer = class("Timer", LuaObject)
 
 local function gc(ptr)
-    local objIndex  = C.zc_lua_object_get_index(ptr)
-    local cbIndex   = C.zc_lua_timer_get_callback_index(ptr)
+    local cbIndex = C.zc_lua_timer_get_callback_index(ptr)
     
-    sys.objectGCByIndex(objIndex)
     sys.callbackGC(cbIndex)
     
     C.zc_lua_timer_destroy(ptr)

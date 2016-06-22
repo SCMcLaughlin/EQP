@@ -35,6 +35,7 @@ local callbacks = {}
 local objects   = {}
 local clients   = {}
 local npcs      = {}
+local timers    = setmetatable({}, {__weak = "v"})
 --------------------------------------------------------------------------------
 
 local sys = {}
@@ -97,9 +98,11 @@ function sys.createNPC(ptr)
 end
 
 function sys.createTimer(ptr, Timer)
-    local obj = class.wrap(Timer, ptr)
+    local obj   = class.wrap(Timer, ptr)
+    local i     = #timers + 1
+    timers[i]   = obj
     
-    C.zc_lua_object_update_index(ptr, pushObj(obj))
+    C.zc_lua_object_update_index(ptr, i)
     
     return obj
 end
@@ -110,6 +113,10 @@ end
 
 function sys.getObject(index)
     return objects[index]
+end
+
+function sys.getTimer(index)
+    return timers[index]
 end
 
 package.loaded["sys"] = sys

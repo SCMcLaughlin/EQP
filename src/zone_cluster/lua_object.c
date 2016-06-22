@@ -49,6 +49,11 @@ static void zc_lua_push_callback(R(ZC*) zc, R(lua_State*) L, int index)
     zc_lua_push(zc, L, index, "getCallback");
 }
 
+static void zc_lua_push_timer(R(ZC*) zc, R(lua_State*) L, int index)
+{
+    zc_lua_push(zc, L, index, "getTimer");
+}
+
 void zc_lua_create_object(R(ZC*) zc, R(lua_State*) L, R(LuaObject*) lobj, R(const char*) funcName)
 {
     lua_getfield(L, SYS_INDEX, funcName);
@@ -81,7 +86,7 @@ static void zc_lua_timer_callback(R(Timer*) timer)
     R(lua_State*) L     = zc->L;
     
     zc_lua_push_callback(zc, L, ltimer->luaCallback);
-    zc_lua_push_object(zc, L, ltimer->luaObj.index);
+    zc_lua_push_timer(zc, L, ltimer->luaObj.index);
     lua_sys_call_no_throw(B(zc), L, 1, 0);
 }
 

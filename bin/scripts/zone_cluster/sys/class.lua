@@ -7,13 +7,11 @@ local function call(t, ...)
     return t.new(...)
 end
 
-local class = {__call = call}
+local class = {
+    __call  = call,
+    __index = _G,
+}
 setmetatable(class, class)
-
---local mt = {__call = call} -- Needed to avoid class -> class index lookup loop
---mt.__index = mt
---local class = setmetatable({__call = call}, mt)
---class.__index = class
 
 function class.new(name, super)
     local is    = "is" .. name
@@ -41,6 +39,7 @@ end
 -- Inheritance goes like this: [obj] -> personal environment -> shared environment -> specific class -> class (as defined in this script)
 -- Any writes made to fields on the object are stored in the personal environment
 -- The shared environment is mainly for shared scripts, e.g. all NPCs of a particular type use the same events
+-- Not all objects have shared environments (ZC, timers) and the ZC object has no personal environment, since it would be equivalent to the global table
 function class.wrap(sharedEnv, ptr)
     -- For sanity's sake remember:
     -- each object/env is its own metatable, and its __index points to the next env in the hierarchy

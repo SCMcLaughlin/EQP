@@ -46,8 +46,13 @@ end
 
 function sys.objectGC(ptr)
     -- GCing plain pointers created by ffi.cast() works
-    local index     = C.zc_lua_object_get_index(ptr)
-    objects[index]  = nil
+    local index = C.zc_lua_object_get_index(ptr)
+    local obj   = objects[index]
+    
+    if obj then
+        obj._ptr        = nil
+        objects[index]  = nil
+    end
 end
 
 function sys.objectGCByIndex(index)
@@ -97,13 +102,13 @@ function sys.createNPC(ptr)
     return 0
 end
 
-function sys.createTimer(ptr, Timer)
-    local obj   = class.wrap(Timer, ptr)
-    local i     = #timers + 1
-    timers[i]   = obj
-    
-    C.zc_lua_object_update_index(ptr, i)
-    
+function sys.nextTimerIndex()
+    return #timers + 1
+end
+
+function sys.createTimer(ptr, index, Timer)
+    local obj       = class.wrap(Timer, ptr)
+    timers[index]   = obj
     return obj
 end
 

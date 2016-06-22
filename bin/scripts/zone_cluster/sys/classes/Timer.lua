@@ -22,9 +22,10 @@ end
 
 local function make(milliseconds, callback, start)
     local cbIndex   = sys.pushCallback(callback)
-    local ptr       = C.zc_lua_timer_create(ZC:ptr(), milliseconds, cbIndex, start and 1 or 0)
+    local tIndex    = sys.nextTimerIndex()
+    local ptr       = C.zc_lua_timer_create(ZC:ptr(), milliseconds, cbIndex, tIndex, start and 1 or 0)
     ffi.gc(ptr, gc)
-    return sys.createTimer(ptr, Timer)
+    return sys.createTimer(ptr, tIndex, Timer)
 end
 
 local function getMilliseconds(args)

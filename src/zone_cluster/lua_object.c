@@ -69,11 +69,6 @@ void zc_lua_create_object(R(ZC*) zc, R(lua_State*) L, R(LuaObject*) lobj, R(cons
     zc_lua_clear(L);
 }
 
-void zc_lua_object_update_index(R(LuaObject*) lobj, int index)
-{
-    lobj->index = index;
-}
-
 int zc_lua_object_get_index(R(LuaObject*) lobj)
 {
     return lobj->index;
@@ -90,11 +85,11 @@ static void zc_lua_timer_callback(R(Timer*) timer)
     lua_sys_call_no_throw(B(zc), L, 1, 0);
 }
 
-LuaTimer* zc_lua_timer_create(R(ZC*) zc, uint32_t periodMilliseconds, int luaCallback, int start)
+LuaTimer* zc_lua_timer_create(R(ZC*) zc, uint32_t periodMilliseconds, int luaCallback, int timerIndex, int start)
 {
     R(LuaTimer*) timer = eqp_alloc_type(B(zc), LuaTimer);
     
-    timer->luaObj.index = 0; // This will be set via zc_lua_object_update_index() just after this function returns (chicken vs egg matter)
+    timer->luaObj.index = timerIndex;
     timer->luaCallback  = luaCallback;
     timer_init(&timer->timer, &zc->timerPool, periodMilliseconds, zc_lua_timer_callback, timer, start);
     timer->zc           = zc;

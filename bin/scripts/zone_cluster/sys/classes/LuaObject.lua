@@ -22,8 +22,8 @@ end
 
 LuaObject.exists = LuaObject.isValid
 
-function LuaObject:updateIndex(index)
-    C.zc_lua_object_update_index(self:ptr(), index)
+function LuaObject:getIndex()
+    return C.zc_lua_object_get_index(self:ptr())
 end
 
 return LuaObject

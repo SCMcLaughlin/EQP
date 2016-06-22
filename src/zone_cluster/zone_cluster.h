@@ -26,6 +26,10 @@ STRUCT_DEFINE(ZC)
     TimerPool   timerPool;
     UdpSocket*  socket;
     
+    Array*      zoneList;
+    Array*      clientList;
+    Array*      npcList;
+    
     int         sourceId;
     IpcBuffer*  ipc;
     IpcBuffer*  ipcMaster;

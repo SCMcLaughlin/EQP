@@ -265,9 +265,8 @@ BINCONSOLE= $(DIRBIN)eqp
 # Core Linker flags
 ##############################################################################
 LFLAGS= -rdynamic
-#LSTATIC= 
 LDYNAMIC= -pthread -lrt -lsqlite3 -lz -lm -ldl
-#LDYNCORE= -lluajit-5.1 $(LDYNAMIC)
+LIBLUAJIT= -lluajit-5.1
 
 ifeq ($(BUILDTYPE),debug)
 LSTATIC= $(DIRBIN)libluajit-valgrind.a
@@ -309,7 +308,7 @@ amalg-master: $(BCOMMON)exception.o
 	$(Q)luajit amalg/amalg.lua master src/master/
 	$(E) "\033[0;32mCreating amalgamated source file\033[0m"
 	$(E) "Building $(BINMASTER)"
-	$(Q)$(CC) -o $(BINMASTER) amalg/amalg_master.c $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEMASTER)
+	$(Q)$(CC) -o $(BINMASTER) amalg/amalg_master.c $^ $(LIBLUAJIT) $(LDYNCORE) $(LFLAGS) $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEMASTER)
 
 amalg-login: $(BCOMMON)exception.o
 	$(Q)luajit amalg/amalg.lua login src/login/
@@ -343,7 +342,7 @@ amalg-console: $(BCOMMON)exception.o
 
 $(BINMASTER): $(OMASTER) $(OCOMMON_ALL)
 	$(E) "Linking $@"
-	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS)
+	$(Q)$(CC) -o $@ $^ $(LIBLUAJIT) $(LDYNCORE) $(LFLAGS)
 
 $(BINLOGIN): $(OLOGIN) $(OCOMMON_ALL) $(ONONMASTER_ALL)
 	$(E) "Linking $@"

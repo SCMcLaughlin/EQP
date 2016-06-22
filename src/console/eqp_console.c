@@ -151,7 +151,7 @@ static void console_force_start_master(R(Console*) console)
         if (result == NULL)
             break;
         
-        if (strncmp(entry.d_name, CONSOLE_ANY_SHM, sizeof(CONSOLE_ANY_SHM) - 1) == 0)
+        if (strncmp(entry.d_name, CONSOLE_ANY_SHM, sizeof(CONSOLE_ANY_SHM) - 1) == 0 && !strstr(entry.d_name, "console"))
         {
             char path[512];
             snprintf(path, sizeof(path), "shm/%s", entry.d_name);
@@ -221,6 +221,19 @@ static void console_do_send(R(Console*) console, int argc, R(const char**) argv)
     ipc_buffer_write(B(console), console->ipcSend, ServerOp_ConsoleCommand, EQP_SOURCE_ID_CONSOLE, length, data);
 }
 
+static int console_wait_start(R(Console*) console)
+{
+    clock_sleep_milliseconds(1000);
+    
+    if (!console_find_master_ipc(console))
+    {
+        printf("eqp-master startup seems to have failed...\n");
+        return false;
+    }
+    
+    return true;
+}
+
 int console_send(R(Console*) console, int argc, R(const char**) argv)
 {
     int isStart = console_command_is_start(argc, argv);
@@ -232,24 +245,25 @@ int console_send(R(Console*) console, int argc, R(const char**) argv)
         
         printf("Attempting to start eqp-master...\n");
         console_launch_master_process(B(console));
-        clock_sleep_milliseconds(1000);
-        if (!console_find_master_ipc(console))
-        {
-            printf("eqp-master startup seems to have failed...\n");
+        
+        if (!console_wait_start(console))
             return false;
-        }
     }
     else if (isStart)
     {
         if (console_command_has_force_option(argc, argv))
         {
+            printf("Attempting to force-start eqp-master...\n");
             console_force_start_master(console);
-            return false;
+            
+            if (console_wait_start(console))
+                goto do_send;
         }
         
         exception_throw_literal(B(console), ErrorConsole, CONSOLE_ERR_MASTER_ALREADY);
     }
     
+do_send:
     console_do_send(console, argc, argv);
     return true;
 }

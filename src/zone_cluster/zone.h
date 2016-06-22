@@ -5,11 +5,14 @@
 #include "define.h"
 #include "eqp_array.h"
 #include "eqp_string.h"
+#include "mob.h"
 
 STRUCT_DEFINE(Zone)
 {
     int     sourceId;
     
+    Array*  mobsByEntityId;
+    Array*  mobsByPosition;
     Array*  clientList;
     Array*  npcList;
     

@@ -156,9 +156,15 @@ static FILE* log_thread_determine_filename_and_open(R(LogThread*) logThread, int
         
     default:
         if (sourceId >= EQP_SOURCE_ID_ZONE_CLUSTER_OFFSET)
+        {
             snprintf(filename, 256, "log/zone_cluster%i.log", sourceId - EQP_SOURCE_ID_ZONE_CLUSTER_OFFSET);
+        }
         else
-            snprintf(filename, 256, "log/zone%i.log", sourceId);
+        {
+            int zoneId  = sourceId % EQP_SOURCE_ID_ZONE_INSTANCE_OFFSET;
+            int instId  = sourceId / EQP_SOURCE_ID_ZONE_INSTANCE_OFFSET;
+            snprintf(filename, 256, "log/zone_%s_instance%i.log", zone_short_name_by_id(zoneId), instId);
+        }
         break;
     }
     

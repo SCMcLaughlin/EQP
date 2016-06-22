@@ -25,10 +25,10 @@ DIRCOMMON= src/common/
 BCOMMON= build/$(BUILDTYPE)/common/
 _OCOMMON= \
  eqp_basic.o eqp_core.o eqp_alloc.o bit.o exception.o eqp_thread.o file.o \
- random.o
+ random.o zone_id.o
 _HCOMMON= define.h netcode.h \
  eqp_basic.h eqp_core.h eqp_alloc.h bit.h exception.h eqp_thread.h file.h \
- random.h
+ random.h zone_id.h
 OCOMMON= $(patsubst %,$(BCOMMON)%,$(_OCOMMON))
 HCOMMON= $(patsubst %,$(DIRCOMMON)%,$(_HCOMMON))
 
@@ -114,9 +114,9 @@ HCOMMON_ALL+= $(HCOMMON_TIME)
 DIRNONMASTER= src/non_master/
 BNONMASTER= build/$(BUILDTYPE)/non_master/
 _ONONMASTER= \
- aligned.o crc.o lua_sys.o zone_id.o
+ aligned.o crc.o lua_sys.o
 _HNONMASTER = \
- aligned.h crc.h lua_sys.h zone_id.h
+ aligned.h crc.h lua_sys.h
 ONONMASTER= $(patsubst %,$(BNONMASTER)%,$(_ONONMASTER))
 HNONMASTER= $(patsubst %,$(DIRNONMASTER)%,$(_HNONMASTER))
 
@@ -197,9 +197,9 @@ BINCHARSELECT= $(DIRBIN)eqp-char-select
 DIRZC= src/zone_cluster/
 BZC= build/$(BUILDTYPE)/zone_cluster/
 _OZC= zone_cluster_main.o \
- zone_cluster.o lua_object.o
+ zone_cluster.o zone_cluster_ipc.o zone.o lua_object.o
 _HZC= \
- zone_cluster.h lua_object.h
+ zone_cluster.h zone_cluster_ipc.h zone.h lua_object.h
 OZC= $(patsubst %,$(BZC)%,$(_OZC))
 HZC= $(patsubst %,$(DIRZC)%,$(_HZC))
 
@@ -236,7 +236,7 @@ HLOGWRITER= $(patsubst %,$(DIRLOGWRITER)%,$(_HLOGWRITER))
 # Log Writer doesn't need much, try to minimize what we link with...
 OLOGWRITER+= $(BCOMMON_TIME)eqp_clock.o $(OCOMMON_SYNC) $(OCOMMON_CONTAINER) $(BCOMMON)eqp_basic.o \
  $(BCOMMON)exception.o $(BCOMMON)eqp_thread.o $(BCOMMON)eqp_alloc.o $(BCOMMON)random.o $(BCOMMON)bit.o \
- $(BCOMMON)file.o $(BCOMMON_LOG)eqp_log.o
+ $(BCOMMON)file.o $(BCOMMON_LOG)eqp_log.o $(BCOMMON)zone_id.o
 
 INCLUDELOGWRITER= -I$(DIRLOGWRITER)
 BINLOGWRITER= $(DIRBIN)eqp-log-writer

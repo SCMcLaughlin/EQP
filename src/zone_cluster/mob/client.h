@@ -10,6 +10,7 @@ STRUCT_DEFINE(Client)
 {
     // Mob must be the first member of this struct
     Mob     mob;
+    int     zoneClientIndex;
 };
 
 #endif//EQP_CLIENT_H

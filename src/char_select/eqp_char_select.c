@@ -255,6 +255,7 @@ void char_select_handle_client_auth(R(CharSelect*) charSelect, R(CharSelectAuth*
 void char_select_handle_unauthed_client(R(CharSelect*) charSelect, R(CharSelectClient*) client)
 {
     uint32_t accountId          = char_select_client_account_id(client);
+    R(const char*) sessionKey   = char_select_client_session_key(client);
     R(CharSelectAuth*) array    = array_data_type(charSelect->unclaimedAuths, CharSelectAuth);
     uint32_t n                  = array_count(charSelect->unclaimedAuths);
     uint32_t i;
@@ -264,7 +265,7 @@ void char_select_handle_unauthed_client(R(CharSelect*) charSelect, R(CharSelectC
     {
         R(CharSelectAuth*) auth = &array[i];
         
-        if (auth->accountId == accountId)
+        if (auth->accountId == accountId && strcmp(auth->sessionKey, sessionKey) == 0)
         {
             char_select_client_set_auth(client, auth);
             array_swap_and_pop(charSelect->unclaimedAuths, i);

@@ -10,6 +10,7 @@ void zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath, R(
     
     timer_pool_init(B(zc), &zc->timerPool);
     
+    // IPC
     shm_viewer_init(&zc->shmViewerLogWriter);
     shm_viewer_open(B(zc), &zc->shmViewerLogWriter, logWriterIpcPath, sizeof(IpcBuffer));
     // Tell the log writer to open our log file
@@ -17,8 +18,13 @@ void zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath, R(
     
     core_init(C(zc), zc->sourceId, shm_viewer_memory_type(&zc->shmViewerLogWriter, IpcBuffer));
     
+    // Arrays
+    zc->zoneList = array_create_type(B(zc), ZoneBySourceId);
+    
+    // Lua
     zc_lua_init(zc);
     
+    // UDP socket
     zc->socket = udp_socket_create(B(zc));
     udp_socket_open(zc->socket, strtol(port, NULL, 10));
 }
@@ -54,6 +60,12 @@ void zc_main_loop(R(ZC*) zc)
         
         udp_socket_send(socket);
         udp_socket_check_timeouts(socket);
+        
+        if (zc_ipc_check(zc))
+        {
+            log_format(B(zc), LogInfo, "Shutting down cleanly");
+            break;
+        }
         
         clock_sleep_milliseconds(25);
     }

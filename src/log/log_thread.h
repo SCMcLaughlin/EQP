@@ -10,6 +10,7 @@
 #include "ipc_buffer.h"
 #include "server_op.h"
 #include "source_id.h"
+#include "zone_id.h"
 
 STRUCT_DEFINE(LogThread)
 {

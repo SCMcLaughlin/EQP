@@ -20,6 +20,7 @@
 #include "udp_socket.h"
 #include "lua_sys.h"
 #include "lua_object.h"
+#include "zone_cluster_ipc.h"
 
 STRUCT_DEFINE(ZC)
 {

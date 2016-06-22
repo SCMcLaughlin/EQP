@@ -36,7 +36,7 @@ function class.instance(class, tbl)
 end
 
 -- Complex, C-based classes use this instead
--- Inheritance goes like this: [obj] -> personal environment -> shared environment -> specific class -> class (as defined in this script)
+-- Inheritance goes like this: [obj] -> personal environment -> shared environment -> global script environment -> specific class -> class (as defined in this script)
 -- Any writes made to fields on the object are stored in the personal environment
 -- The shared environment is mainly for shared scripts, e.g. all NPCs of a particular type use the same events
 -- Not all objects have shared environments (ZC, timers) and the ZC object has no personal environment, since it would be equivalent to the global table

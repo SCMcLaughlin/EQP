@@ -26,6 +26,8 @@ void    zc_lua_init(R(ZC*) zc);
 void    zc_lua_clear(R(lua_State*) L);
 
 void    zc_lua_create_object(R(ZC*) zc, R(lua_State*) L, R(LuaObject*) lobj, R(const char*) funcName);
+#define zc_lua_create_zone(zc, zone) zc_lua_create_object((zc), zc_lua(zc), (LuaObject*)(zone), "createZone")
+void    zc_lua_destroy_object(R(ZC*) zc, R(LuaObject*) lobj);
 
 /* LuaJIT API */
 EQP_API int         zc_lua_object_get_index(R(LuaObject*) lobj);

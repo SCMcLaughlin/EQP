@@ -10,6 +10,7 @@ static void zc_ipc_handle(R(ZC*) zc, R(IpcPacket*) packet)
     switch (opcode)
     {
     case ServerOp_StartZone:
+        zc_start_zone(zc, sourceId);
         break;
     
     default:

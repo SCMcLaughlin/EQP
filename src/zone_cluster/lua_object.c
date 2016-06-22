@@ -6,6 +6,17 @@
 #define SYS_SCRIPT      "scripts/zone_cluster/sys/sys.lua"
 #define ZC_INIT_SCRIPT  "scripts/zone_cluster/init/zone_cluster_init.lua"
 
+static void zc_lua_push_sys_func(R(ZC*) zc, R(lua_State*) L, R(const char*) funcName)
+{
+    lua_getfield(L, SYS_INDEX, funcName);
+    
+    if (!lua_isfunction(L, -1))
+    {
+        exception_throw_format(B(zc), ErrorLua, "sys.%s() does not exist; expected it to be defined in " SYS_SCRIPT, funcName);
+        lua_pop(L, 1);
+    }
+}
+
 void zc_lua_init(R(ZC*) zc)
 {
     R(lua_State*) L = lua_sys_open(B(zc));
@@ -16,9 +27,7 @@ void zc_lua_init(R(ZC*) zc)
     lua_sys_run_file(B(zc), L, SYS_SCRIPT, 1);
     
     // Create the Lua-side ZC object
-    lua_getfield(L, SYS_INDEX, "createZoneCluster");
-    if (!lua_isfunction(L, -1))
-        exception_throw_literal(B(zc), ErrorLua, "sys.createZoneCluster() does not exist; expected it to be defined in " SYS_SCRIPT);
+    zc_lua_push_sys_func(zc, L, "createZoneCluster");
     lua_pushlightuserdata(L, zc);
     lua_sys_call(B(zc), L, 1, 0);
     
@@ -56,17 +65,20 @@ static void zc_lua_push_timer(R(ZC*) zc, R(lua_State*) L, int index)
 
 void zc_lua_create_object(R(ZC*) zc, R(lua_State*) L, R(LuaObject*) lobj, R(const char*) funcName)
 {
-    lua_getfield(L, SYS_INDEX, funcName);
-    
-    if (!lua_isfunction(L, -1))
-        exception_throw_format(B(zc), ErrorLua, "sys.%s() does not exist; expected it to be defined in " SYS_SCRIPT, funcName);
+    zc_lua_push_sys_func(zc, L, funcName);
     
     lua_pushlightuserdata(L, lobj);
-    lua_sys_call(B(zc), L, 1, 1);
-    
-    lobj->index = lua_tointeger(L, -1);
-    
+    lobj->index = (lua_sys_call_no_throw(B(zc), L, 1, 1)) ? lua_tointeger(L, -1) : 0;
     zc_lua_clear(L);
+}
+
+void zc_lua_destroy_object(R(ZC*) zc, R(LuaObject*) lobj)
+{
+    R(lua_State*) L = zc->L;
+    
+    zc_lua_push_sys_func(zc, L, "objectGC");
+    lua_pushinteger(L, lobj->index);
+    lua_sys_call_no_throw(B(zc), L, 1, 0);
 }
 
 int zc_lua_object_get_index(R(LuaObject*) lobj)

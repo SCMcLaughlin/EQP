@@ -45,7 +45,12 @@ function sys.callbackGC(index)
 end
 
 function sys.objectGC(index)
-    objects[index] = nil
+    local obj = objects[index]
+    
+    if obj then
+        obj._ptr        = nil
+        objects[index]  = nil
+    end
 end
 
 function sys.pushCallback(func)
@@ -80,14 +85,16 @@ function sys.createZoneCluster(ptr)
 end
 
 function sys.createZone(ptr)
+    -- Avoid requiring "ZC" before it has been set
+    local Zone = require "Zone"
+    return pushObj(Zone._wrap(ptr))
+end
+
+function sys.createClient(zone, ptr)
     return 0
 end
 
-function sys.createClient(ptr)
-    return 0
-end
-
-function sys.createNPC(ptr)
+function sys.createNPC(zone, ptr)
     return 0
 end
 

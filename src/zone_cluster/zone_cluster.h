@@ -47,6 +47,11 @@ void    zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath,
 void    zc_deinit(R(ZC*) zc);
 void    zc_main_loop(R(ZC*) zc);
 
+#define zc_lua(zc) ((zc)->L)
+
+void    zc_start_zone(R(ZC*) zc, int sourceId);
+Zone*   zc_get_zone_by_source_id(R(ZC*) zc, int sourceId);
+
 /* LuaJIT API */
 EQP_API void    zc_log(R(ZC*) zc, R(const char*) str);
 EQP_API void    zc_log_for(R(ZC*) zc, int sourceId, R(const char*) str);

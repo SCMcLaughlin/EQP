@@ -6,6 +6,12 @@ local C     = require "LuaObject_cdefs"
 local class = require "class"
 --------------------------------------------------------------------------------
 
+--------------------------------------------------------------------------------
+-- Caches
+--------------------------------------------------------------------------------
+local getmetatable  = getmetatable
+--------------------------------------------------------------------------------
+
 local LuaObject = class("LuaObject")
 
 function LuaObject:ptr()
@@ -24,6 +30,10 @@ LuaObject.exists = LuaObject.isValid
 
 function LuaObject:getObjectIndex()
     return C.zc_lua_object_get_index(self:ptr())
+end
+
+function LuaObject:getPersonalEnvironment()
+    return getmetatable(self)
 end
 
 return LuaObject

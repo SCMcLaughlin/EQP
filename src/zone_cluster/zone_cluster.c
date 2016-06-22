@@ -45,6 +45,21 @@ void zc_deinit(R(ZC*) zc)
         udp_socket_destroy(zc->socket);
         zc->socket = NULL;
     }
+    
+    if (zc->zoneList)
+    {
+        R(ZoneBySourceId*) array    = array_data_type(zc->zoneList, ZoneBySourceId);
+        uint32_t n                  = array_count(zc->zoneList);
+        uint32_t i;
+        
+        for (i = 0; i < n; i++)
+        {
+            zone_destroy(zc, array[i].zone);
+        }
+        
+        array_destroy(zc->zoneList);
+        zc->zoneList = NULL;
+    }
 }
 
 void zc_main_loop(R(ZC*) zc)
@@ -69,6 +84,52 @@ void zc_main_loop(R(ZC*) zc)
         
         clock_sleep_milliseconds(25);
     }
+}
+
+void zc_start_zone(R(ZC*) zc, int sourceId)
+{
+    ZoneBySourceId zone;
+    int zoneId;
+    int instId;
+    
+    // Make sure the sourceId is valid
+    zoneId = sourceId % EQP_SOURCE_ID_ZONE_INSTANCE_OFFSET;
+    instId = sourceId / EQP_SOURCE_ID_ZONE_INSTANCE_OFFSET;
+    
+    if (instId > EQP_ZONE_MAX_INSTANCE_ID)
+        return;
+    
+    //fixme: check zoneId max?
+    if (zoneId < 1)
+        return;
+    
+    // Make sure this zone isn't already running
+    if (zc_get_zone_by_source_id(zc, sourceId))
+        return;
+    
+    // Create our new zone
+    zone.sourceId   = sourceId;
+    zone.zone       = zone_create(zc, sourceId, zoneId, instId);
+    
+    array_push_back(B(zc), &zc->zoneList, &zone);
+    
+    // Tell the log writer to open a log for this zone / instance
+    ipc_buffer_write(B(zc), shm_viewer_memory_type(&zc->shmViewerLogWriter, IpcBuffer), ServerOp_LogOpen, sourceId, 0, NULL);
+}
+
+Zone* zc_get_zone_by_source_id(R(ZC*) zc, int sourceId)
+{
+    R(ZoneBySourceId*) array    = array_data_type(zc->zoneList, ZoneBySourceId);
+    uint32_t n                  = array_count(zc->zoneList);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        if (array[i].sourceId == sourceId)
+            return array[i].zone;
+    }
+    
+    return NULL;
 }
 
 /* LuaJIT API */

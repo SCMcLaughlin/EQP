@@ -24,8 +24,10 @@ local function make(milliseconds, callback, start)
     local cbIndex   = sys.pushCallback(callback)
     local tIndex    = sys.nextTimerIndex()
     local ptr       = C.zc_lua_timer_create(ZC:ptr(), milliseconds, cbIndex, tIndex, start and 1 or 0)
+    local obj       = class.wrap(Timer, ptr)
     ffi.gc(ptr, gc)
-    return sys.createTimer(ptr, tIndex, Timer)
+    sys.createTimer(obj, tIndex)
+    return obj
 end
 
 local function getMilliseconds(args)
@@ -61,16 +63,27 @@ function Timer.new(args)
     return make(ms, cb, not args.stopped)
 end
 
+local function onceEnd(timer)
+    timer:stop()
+    local ptr = timer:ptr()
+    sys.callbackGC(C.zc_lua_timer_get_callback_index(ptr))
+    C.zc_lua_timer_set_callback_index(ptr, 0)
+end
+
 function Timer.once(args)
     local ms    = getMilliseconds(args)
     local func  = getCallback(args)
     
-    local function callback(timer)
+    -- Single-use timers can be kept alive by their own callbacks
+    local timer
+    
+    local function callback()
         func(timer)
-        timer:stop()
+        onceEnd(timer)
     end
     
-    return make(ms, callback, not args.stopped)
+    timer = make(ms, callback, not args.stopped)
+    return timer
 end
 
 function Timer:_timer()

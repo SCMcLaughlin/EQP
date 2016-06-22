@@ -11,6 +11,7 @@ LuaTimer*   zc_lua_timer_create(ZC* zc, uint32_t periodMilliseconds, int luaCall
 void        zc_lua_timer_destroy(LuaTimer* timer);
 Timer*      zc_lua_timer_get_timer(LuaTimer* timer);
 int         zc_lua_timer_get_callback_index(LuaTimer* timer);
+void        zc_lua_timer_set_callback_index(LuaTimer* timer, int index);
 void        timer_stop(Timer* timer);
 void        timer_restart(Timer* timer);
 void        timer_delay(Timer* timer, uint32_t milliseconds);

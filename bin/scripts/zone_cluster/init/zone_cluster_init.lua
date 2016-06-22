@@ -5,10 +5,8 @@ local Timer = require "Timer"
 
 ZC:log("Testing, 1, 2, 3! %s, microseconds: %u", tostring(ZC), Clock.microseconds())
 
-z = Timer.once{seconds = 3.5, callback = function()
+Timer.once{seconds = 3.5, callback = function()
     io.write("Just once~\n")
-    z = nil
-    collectgarbage()
 end}
 
 t = Timer{seconds = 1, callback = function(timer)

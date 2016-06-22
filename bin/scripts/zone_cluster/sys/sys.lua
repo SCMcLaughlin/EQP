@@ -44,18 +44,7 @@ function sys.callbackGC(index)
     callbacks[index] = nil
 end
 
-function sys.objectGC(ptr)
-    -- GCing plain pointers created by ffi.cast() works
-    local index = C.zc_lua_object_get_index(ptr)
-    local obj   = objects[index]
-    
-    if obj then
-        obj._ptr        = nil
-        objects[index]  = nil
-    end
-end
-
-function sys.objectGCByIndex(index)
+function sys.objectGC(index)
     objects[index] = nil
 end
 
@@ -106,10 +95,8 @@ function sys.nextTimerIndex()
     return #timers + 1
 end
 
-function sys.createTimer(ptr, index, Timer)
-    local obj       = class.wrap(Timer, ptr)
-    timers[index]   = obj
-    return obj
+function sys.createTimer(obj, index)
+    timers[index] = obj
 end
 
 function sys.getCallback(index)

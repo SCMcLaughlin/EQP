@@ -33,5 +33,6 @@ EQP_API LuaTimer*   zc_lua_timer_create(R(ZC*) zc, uint32_t periodMilliseconds, 
 EQP_API void        zc_lua_timer_destroy(R(LuaTimer*) timer);
 EQP_API Timer*      zc_lua_timer_get_timer(R(LuaTimer*) timer);
 EQP_API int         zc_lua_timer_get_callback_index(R(LuaTimer*) timer);
+EQP_API void        zc_lua_timer_set_callback_index(R(LuaTimer*) timer, int index);
 
 #endif//EQP_LUA_OBJECT_H

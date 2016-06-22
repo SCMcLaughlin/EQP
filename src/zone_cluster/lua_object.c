@@ -113,6 +113,11 @@ int zc_lua_timer_get_callback_index(R(LuaTimer*) timer)
     return timer->luaCallback;
 }
 
+void zc_lua_timer_set_callback_index(R(LuaTimer*) timer, int index)
+{
+    timer->luaCallback = index;
+}
+
 #undef SYS_INDEX
 #undef SYS_SCRIPT
 #undef ZC_INIT_SCRIPT

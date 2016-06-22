@@ -13,6 +13,7 @@
 #include "share_mem.h"
 #include "timer_pool.h"
 #include "timer.h"
+#include "zone.h"
 #include "client.h"
 #include "client_packet_trilogy.h"
 #include "client_packet_standard.h"

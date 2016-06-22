@@ -35,7 +35,7 @@ local callbacks = {}
 local objects   = {}
 local clients   = {}
 local npcs      = {}
-local timers    = setmetatable({}, {__weak = "v"})
+local timers    = setmetatable({}, {__mode = "v"})
 --------------------------------------------------------------------------------
 
 local sys = {}

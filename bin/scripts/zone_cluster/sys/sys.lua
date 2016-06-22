@@ -14,9 +14,18 @@
 -- Imports
 --------------------------------------------------------------------------------
 require "zone_cluster/zc_include"
+require "LuaObject_cdefs"
 
 local ffi   = require "ffi"
+local class = require "class"
 local ZC    = require "ZoneCluster"
+--------------------------------------------------------------------------------
+
+--------------------------------------------------------------------------------
+-- Caches
+--------------------------------------------------------------------------------
+local C             = ffi.C
+local setmetatable  = setmetatable
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
@@ -30,8 +39,24 @@ local npcs      = {}
 
 local sys = {}
 
-local function objectGC(ptr)
+function sys.callbackGC(index)
+    callbacks[index] = nil
+end
+
+function sys.objectGC(ptr)
     -- GCing plain pointers created by ffi.cast() works
+    local index     = C.zc_lua_object_get_index(ptr)
+    objects[index]  = nil
+end
+
+function sys.objectGCByIndex(index)
+    objects[index] = nil
+end
+
+function sys.pushCallback(func)
+    local i         = #callbacks + 1
+    callbacks[i]    = func
+    return i
 end
 
 local function pushObj(obj)
@@ -71,8 +96,12 @@ function sys.createNPC(ptr)
     return 0
 end
 
-function sys.createTimer(func, period)
-
+function sys.createTimer(ptr, Timer)
+    local obj = class.wrap(Timer, ptr)
+    
+    C.zc_lua_object_update_index(ptr, pushObj(obj))
+    
+    return obj
 end
 
 function sys.getCallback(index)

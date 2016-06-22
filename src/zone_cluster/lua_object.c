@@ -31,6 +31,24 @@ void zc_lua_clear(R(lua_State*) L)
     lua_settop(L, SYS_INDEX);
 }
 
+static void zc_lua_push(R(ZC*) zc, R(lua_State*) L, int index, R(const char*) getName)
+{
+    lua_getfield(L, SYS_INDEX, getName);
+    lua_pushinteger(L, index);
+    if (!lua_sys_call_no_throw(B(zc), L, 1, 1))
+        lua_pushnil(L);
+}
+
+static void zc_lua_push_object(R(ZC*) zc, R(lua_State*) L, int index)
+{
+    zc_lua_push(zc, L, index, "getObject");
+}
+
+static void zc_lua_push_callback(R(ZC*) zc, R(lua_State*) L, int index)
+{
+    zc_lua_push(zc, L, index, "getCallback");
+}
+
 void zc_lua_create_object(R(ZC*) zc, R(lua_State*) L, R(LuaObject*) lobj, R(const char*) funcName)
 {
     lua_getfield(L, SYS_INDEX, funcName);
@@ -49,6 +67,50 @@ void zc_lua_create_object(R(ZC*) zc, R(lua_State*) L, R(LuaObject*) lobj, R(cons
 void zc_lua_object_update_index(R(LuaObject*) lobj, int index)
 {
     lobj->index = index;
+}
+
+int zc_lua_object_get_index(R(LuaObject*) lobj)
+{
+    return lobj->index;
+}
+
+static void zc_lua_timer_callback(R(Timer*) timer)
+{
+    R(LuaTimer*) ltimer = timer_userdata_type(timer, LuaTimer);
+    R(ZC*) zc           = ltimer->zc;
+    R(lua_State*) L     = zc->L;
+    
+    zc_lua_push_callback(zc, L, ltimer->luaCallback);
+    zc_lua_push_object(zc, L, ltimer->luaObj.index);
+    lua_sys_call_no_throw(B(zc), L, 1, 0);
+}
+
+LuaTimer* zc_lua_timer_create(R(ZC*) zc, uint32_t periodMilliseconds, int luaCallback, int start)
+{
+    LuaTimer* timer = eqp_alloc_type(B(zc), LuaTimer);
+    
+    timer->luaObj.index = 0; // This will be set via zc_lua_object_update_index() just after this function returns (chicken vs egg matter)
+    timer->luaCallback  = luaCallback;
+    timer_init(&timer->timer, &zc->timerPool, periodMilliseconds, zc_lua_timer_callback, timer, start);
+    timer->zc           = zc;
+    
+    return timer;
+}
+
+void zc_lua_timer_destroy(R(LuaTimer*) timer)
+{
+    timer_stop(&timer->timer);
+    free(timer);
+}
+
+Timer* zc_lua_timer_get_timer(R(LuaTimer*) timer)
+{
+    return &timer->timer;
+}
+
+int zc_lua_timer_get_callback_index(R(LuaTimer*) timer)
+{
+    return timer->luaCallback;
 }
 
 #undef SYS_INDEX

@@ -59,19 +59,4 @@ function class.wrap(sharedEnv, ptr)
     return setmetatable(obj, obj)
 end
 
-function class:ptr()
-    local ptr = self._ptr
-    if ptr == nil then
-        error "Attempt to use an object that has been destroyed on the C-side"
-    end
-    return ptr
-end
-
-function class:isValid()
-    local ptr = self._ptr
-    return ptr ~= nil
-end
-
-class.exists = class.isValid
-
 return class

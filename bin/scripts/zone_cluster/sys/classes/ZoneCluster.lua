@@ -9,10 +9,14 @@ local class = require "class"
 --------------------------------------------------------------------------------
 -- Caches
 --------------------------------------------------------------------------------
-local string    = string
+local string = string
 --------------------------------------------------------------------------------
 
 local ZC = class("ZoneCluster")
+
+function ZC:ptr()
+    return self._ptr
+end
 
 function ZC:log(str, ...)
     C.zc_log(self:ptr(), string.format(str, ...))

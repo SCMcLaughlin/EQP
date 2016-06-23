@@ -22,21 +22,25 @@ local Zone = class("Zone", LuaObject)
 
 local globalScriptEnv
 
-function Zone._wrap(ptr)
-    if not globalScriptEnv then
-        globalScriptEnv = {
-            __index = Zone,
-        }
-        
-        setmetatable(globalScriptEnv, globalScriptEnv)
-        
-        -- Run global zone init script
-        local script = loadfile("scripts/zone_cluster/init/global_zone_init.lua")
-        if script then
-            setfenv(script, globalScriptEnv)
-            script()
-        end
+local function runGlobalScript()
+    globalScriptEnv = {
+        __index = Zone,
+    }
+    
+    setmetatable(globalScriptEnv, globalScriptEnv)
+    
+    -- Run global zone init script
+    local script = loadfile("scripts/zone_cluster/init/global_zone_init.lua")
+    if script then
+        setfenv(script, globalScriptEnv)
+        script()
     end
+    
+    runGlobalScript = nil
+end
+
+function Zone._wrap(ptr)
+    if not globalScriptEnv then runGlobalScript() end
     
     local zone  = class.wrap(globalScriptEnv, ffi.cast("Zone*", ptr))
     local env   = zone:getPersonalEnvironment()

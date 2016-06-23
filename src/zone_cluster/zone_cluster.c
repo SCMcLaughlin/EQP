@@ -19,7 +19,8 @@ void zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath, R(
     core_init(C(zc), zc->sourceId, shm_viewer_memory_type(&zc->shmViewerLogWriter, IpcBuffer));
     
     // Arrays
-    zc->zoneList = array_create_type(B(zc), ZoneBySourceId);
+    zc->zoneList        = array_create_type(B(zc), ZoneBySourceId);
+    zc->expectedClients = array_create_type(B(zc), Client*);
     
     // Lua
     zc_lua_init(zc);
@@ -130,6 +131,54 @@ Zone* zc_get_zone_by_source_id(R(ZC*) zc, int sourceId)
     }
     
     return NULL;
+}
+
+static void zc_expected_client_timeout_callback(R(Timer*) timer)
+{
+    R(Client*) client   = timer_userdata_type(timer, Client);
+    R(ZC*) zc           = client_zone_cluster(client);
+    R(Client**) array   = array_data_type(zc->expectedClients, Client*);
+    uint32_t n          = array_count(zc->expectedClients);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        if (client == array[i])
+        {
+            client_drop(client);
+            array_swap_and_pop(zc->expectedClients, i);
+            break;
+        }
+    }
+    
+    timer_destroy(timer);
+}
+
+void zc_client_expected_to_zone_in(R(ZC*) zc, int sourceId, R(IpcPacket*) packet)
+{
+    R(Server_ClientZoning*) zoning;
+    R(Zone*) zone;
+    R(Client*) client;
+    
+    if (ipc_packet_length(packet) < sizeof(Server_ClientZoning))
+        return;
+    
+    zoning  = ipc_packet_data_type(packet, Server_ClientZoning);
+    zone    = zc_get_zone_by_source_id(zc, sourceId);
+    
+    if (!zone)
+        return;
+    
+    client = client_create(zc, zone, zoning);
+    
+    /*
+        This timer is not explicitly stored anywhere: it is safe for its callback to execute
+        when the client is not timing out, since they will be taken out of the expectedClient
+        list first; and the timer triggers its destruction from the callback.
+    */
+    eqp_timer_create(B(zc), zc_timer_pool(zc), EQP_CLIENT_ZONE_IN_EXPECTED_TIMEOUT, zc_expected_client_timeout_callback, client, true);
+    
+    array_push_back(B(zc), &zc->expectedClients, (void*)&client);
 }
 
 /* LuaJIT API */

@@ -9,6 +9,7 @@
 #include "eqp_array.h"
 #include "source_id.h"
 #include "server_op.h"
+#include "server_structs.h"
 #include "ipc_buffer.h"
 #include "share_mem.h"
 #include "timer_pool.h"
@@ -32,8 +33,9 @@ STRUCT_DEFINE(ZC)
     UdpSocket*  socket;
     
     Array*      zoneList;
-    Array*      clientList;
-    Array*      npcList;
+    Array*      expectedClients;    // Clients that haven't connected yet, but are expected to soon
+    //Array*      clientList;
+    //Array*      npcList;
     
     int         sourceId;
     IpcBuffer*  ipc;
@@ -48,9 +50,12 @@ void    zc_deinit(R(ZC*) zc);
 void    zc_main_loop(R(ZC*) zc);
 
 #define zc_lua(zc) ((zc)->L)
+#define zc_timer_pool(zc) (&(zc)->timerPool)
 
 void    zc_start_zone(R(ZC*) zc, int sourceId);
 Zone*   zc_get_zone_by_source_id(R(ZC*) zc, int sourceId);
+
+void    zc_client_expected_to_zone_in(R(ZC*) zc, int sourceId, R(IpcPacket*) packet);
 
 /* LuaJIT API */
 EQP_API void    zc_log(R(ZC*) zc, R(const char*) str);

@@ -13,6 +13,10 @@ static void zc_ipc_handle(R(ZC*) zc, R(IpcPacket*) packet)
         zc_start_zone(zc, sourceId);
         break;
     
+    case ServerOp_ClientZoning:
+        zc_client_expected_to_zone_in(zc, sourceId, packet);
+        break;
+    
     default:
         break;
     }

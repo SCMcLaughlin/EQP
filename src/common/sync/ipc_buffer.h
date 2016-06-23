@@ -60,5 +60,6 @@ void    ipc_packet_deinit(R(IpcPacket*) packet);
 #define ipc_packet_source_id(p) ((p)->sourceId)
 #define ipc_packet_length(p) ((p)->length)
 #define ipc_packet_data(p) ((p)->data)
+#define ipc_packet_data_type(p, type) (type*)ipc_packet_data(p)
 
 #endif//EQP_IPC_BUFFER_H

@@ -16,6 +16,7 @@ STRUCT_DEFINE(Mob)
     int         zoneMobIndex;
     
     Zone*       zone;
+    ZC*         zoneCluster;
 };
 
 STRUCT_DEFINE(MobByEntityId)
@@ -39,5 +40,9 @@ ENUM_DEFINE(MobType)
     MobType_Client,
     MobType_Pet
 };
+
+void    mob_init_client(R(Mob*) mob, R(ZC*) zc, R(Zone*) zone);
+
+#define mob_zone_cluster(mob) ((mob)->zoneCluster)
 
 #endif//EQP_MOB_H

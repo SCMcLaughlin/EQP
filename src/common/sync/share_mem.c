@@ -86,7 +86,7 @@ void share_mem_create(R(Basic*) basic, R(ShmCreator*) creator, R(ShmViewer*) vie
     
     shm_pick_name(creator, pathBase);
     
-#ifdef EQP_WINDOW
+#ifdef EQP_WINDOWS
     viewer->handle = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, length, creator->name);
     
     if (viewer->handle == NULL)

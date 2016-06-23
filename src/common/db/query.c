@@ -199,3 +199,9 @@ const byte* query_get_blob(R(Query*) query, int col, R(uint32_t*) len)
         *len = sqlite3_column_bytes(stmt, col);
     return (const byte*)sqlite3_column_blob(stmt, col);
 }
+
+int query_is_null(R(Query*) query, int col)
+{
+    col--;
+    return (sqlite3_column_type(query->stmt, col) == SQLITE_NULL);
+}

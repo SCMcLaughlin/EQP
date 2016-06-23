@@ -48,6 +48,7 @@ CREATE TABLE character (
     character_id    INTEGER PRIMARY KEY,
     fk_account_id   INT,
     name            TEXT    UNIQUE,
+    surname         TEXT,
     level           INT     DEFAULT 1,
     class           INT     DEFAULT 1,
     race            INT     DEFAULT 1,

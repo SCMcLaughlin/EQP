@@ -4,7 +4,9 @@
 
 #include "define.h"
 #include "lua_object.h"
+#include "eqp_string.h"
 
+STRUCT_DECLARE(ZC);
 STRUCT_DECLARE(Zone);
 
 STRUCT_DEFINE(Mob)
@@ -14,6 +16,8 @@ STRUCT_DEFINE(Mob)
     int         mobType;
     int         entityId;
     int         zoneMobIndex;
+    
+    String*     name;
     
     Zone*       zone;
     ZC*         zoneCluster;

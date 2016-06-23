@@ -7,6 +7,7 @@
 #include "protocol_handler.h"
 #include "mob.h"
 #include "server_structs.h"
+#include "expansion.h"
 
 #define EQP_CLIENT_ZONE_IN_EXPECTED_TIMEOUT TIMER_SECONDS(30)
 
@@ -20,8 +21,9 @@ STRUCT_DEFINE(Client)
     ProtocolHandler*    handler;
     atomic_int          refCount;
     
-    uint32_t    isTrilogy       : 1;
-    uint32_t    bools_unused    : 31;
+    int     expansion;
+    
+    uint32_t    bools_unused    : 32;
     
     union
     {
@@ -36,6 +38,8 @@ STRUCT_DEFINE(Client)
     } loaded;
     
     int     zoneClientIndex;
+    
+    String* surname;
 };
 
 Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning);

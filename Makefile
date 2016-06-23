@@ -41,8 +41,8 @@ HCOMMON_ALL= $(HCOMMON)
 ##############################################################################
 DIRCOMMON_CONTAINER= $(DIRCOMMON)container/
 BCOMMON_CONTAINER= $(BCOMMON)container/
-_OCOMMON_CONTAINER= eqp_string.o eqp_array.o
-_HCOMMON_CONTAINER= eqp_string.h eqp_array.h
+_OCOMMON_CONTAINER= eqp_string.o eqp_array.o eqp_hash_table.o
+_HCOMMON_CONTAINER= eqp_string.h eqp_array.h eqp_hash_table.h
 OCOMMON_CONTAINER= $(patsubst %,$(BCOMMON_CONTAINER)%,$(_OCOMMON_CONTAINER))
 HCOMMON_CONTAINER= $(patsubst %,$(DIRCOMMON_CONTAINER)%,$(_HCOMMON_CONTAINER))
 

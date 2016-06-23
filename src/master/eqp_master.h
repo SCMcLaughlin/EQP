@@ -17,7 +17,8 @@
 #define EQP_LOG_WRITER_SHM_PATH             "shm/eqp-log-writer-"
 #define EQP_LOGIN_SHM_PATH                  "shm/eqp-login-"
 #define EQP_CHAR_SELECT_SHM_PATH            "shm/eqp-char-select-"
-#define EQP_CHILD_PROC_TIMEOUT_MILLISECONDS 15000
+#define EQP_ZONE_CLUSTER_SHM_PATH           "shm/eqp-zone-cluster-"
+#define EQP_CHILD_PROC_TIMEOUT_MILLISECONDS TIMER_SECONDS(15)
 
 /*
     Master is the first server process to run and the last to shut down.
@@ -38,7 +39,7 @@
     2) The IPC thread, which handles requests from other processes, including Console commands
     3) The database thread (mostly for group and raid management and Console commands, but also generating shared memory for e.g. items)
     
-    Notably, both of these threads will spend most of their time blocking on semaphores. 
+    Thread 1 does not need to run very often; maybe once a second. Threads 2 and 3 will spend most of their time blocking on semaphores. 
 */
 
 STRUCT_DEFINE(Master)

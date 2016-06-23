@@ -10,7 +10,8 @@ STRUCT_DEFINE(Array)
     uint32_t    count;
     uint32_t    capacity;
     uint32_t    elementSize;
-    byte        data[0];
+    uint32_t    padding;
+    byte        data[0];    // Aligned on a 16-byte boundary
 };
 
 Array* array_create(R(Basic*) basic, size_t elementSize)

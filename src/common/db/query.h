@@ -65,6 +65,7 @@ int64_t     query_get_int64(R(Query*) query, int col);
 double      query_get_double(R(Query*) query, int col);
 const char* query_get_string(R(Query*) query, int col, R(uint32_t*) len);
 const byte* query_get_blob(R(Query*) query, int col, R(uint32_t*) len);
+int         query_is_null(R(Query*) query, int col);
 
 #define     query_execute_callback(q) if ((q)->callback) (q)->callback((q))
 #define     query_has_callback(q) ((q)->callback ? true : false)

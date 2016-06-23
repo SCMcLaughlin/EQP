@@ -22,7 +22,7 @@ STRUCT_DEFINE(Zone)
     uint16_t    zoneId;
     uint16_t    instanceId;
     
-    Array*      mobsByEntityId;
+    Array*      mobsByEntityId; //fixme: use entityId = array index
     Array*      mobsByPosition;
     Array*      clientList;
     Array*      npcList;

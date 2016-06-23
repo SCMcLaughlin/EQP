@@ -119,10 +119,18 @@ static void hash_table_do_insert(R(Basic*) basic, R(HashTable_Entry*) ent, R(con
     memcpy(ent->data, value, elemSize);
 }
 
+static void hash_table_entry_copy(R(HashTable_Entry*) newEnt, R(HashTable_Entry*) oldEnt, uint32_t elemSize)
+{
+    newEnt->key     = oldEnt->key;
+    newEnt->hash    = oldEnt->hash;
+    memcpy(newEnt->data, oldEnt->data, elemSize);
+}
+
 static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable*) oldTbl)
 {
     uint32_t n              = oldTbl->capacity;
     uint32_t newCap         = n * 2;
+    uint32_t elemSize       = oldTbl->elemSize;
     uint32_t entSize        = oldTbl->entSize;
     uint32_t initSize       = sizeof(HashTable) + (entSize * newCap);
     R(HashTable*) newTbl    = eqp_alloc_type_bytes(basic, initSize, HashTable);
@@ -132,7 +140,7 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
     memset(newTbl, 0, initSize);
     
     newTbl->capacity    = newCap;
-    newTbl->elemSize    = oldTbl->elemSize;
+    newTbl->elemSize    = elemSize;
     newTbl->entSize     = entSize;
     
     for (i = 0; i < newCap; i++)
@@ -153,7 +161,7 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
         if (newEnt->key == NULL)
         {
             // Copy key ptr, hash, value
-            memcpy(newEnt, oldEnt, entSize);
+            hash_table_entry_copy(newEnt, oldEnt, elemSize);
             
             if (pos != newFreeIndex)
                 continue;
@@ -174,7 +182,7 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
                 }
                 
                 mainEnt->next = newFreeIndex;
-                memcpy(newEnt, oldEnt, entSize);
+                hash_table_entry_copy(newEnt, oldEnt, elemSize);
             }
             else
             {
@@ -187,7 +195,7 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
                 
                 newEnt->next    = newFreeIndex;
                 freeEnt         = (HashTable_Entry*)&newTbl->data[entSize * newFreeIndex];
-                memcpy(freeEnt, oldEnt, entSize);
+                hash_table_entry_copy(newEnt, oldEnt, elemSize);
             }
         }
         
@@ -342,7 +350,7 @@ void hash_table_remove_by_cstr(R(HashTable*) tbl, R(const char*) key, uint32_t l
             // Found the one we want to remove
             string_destroy(ent->key);
             
-            // Need to fix links leading to this, if there were any
+            // Need to fix links leading to (or following) this, if there were any
             if (prev)
             {
                 // prev -> cur -> next ==> prev -> next

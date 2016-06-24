@@ -125,7 +125,9 @@ void share_mem_destroy(R(ShmCreator*) creator, R(ShmViewer*) viewer)
     if (viewer->memory)
     {
         shm_viewer_close(viewer);
-        unlink(creator->name);
+    
+        if (creator->name[0] != 0)
+            unlink(creator->name);
     }
 #endif
 }

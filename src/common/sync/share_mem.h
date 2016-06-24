@@ -28,6 +28,8 @@ void    shm_viewer_open(R(Basic*) basic, R(ShmViewer*) viewer, R(const char*) pa
 void    shm_viewer_close(R(ShmViewer*) viewer);
 #define shm_viewer_memory_type(viewer, type) (type*)((viewer)->memory)
 
+#define shm_creator_init(creator) memset(creator, 0, sizeof(ShmCreator))
+
 void    share_mem_create(R(Basic*) basic, R(ShmCreator*) creator, R(ShmViewer*) viewer, R(const char*) pathBase, uint32_t length);
 void    share_mem_destroy(R(ShmCreator*) creator, R(ShmViewer*) viewer);
 #define share_mem_path(shm) ((shm)->name)

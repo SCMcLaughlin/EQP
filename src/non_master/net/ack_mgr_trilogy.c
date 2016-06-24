@@ -210,7 +210,7 @@ void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*)
     {
         if (ackMgr->nextAckToRequest == 0)
         {
-            header |= PacketTrilogyIsFirstPacket;
+            //header |= PacketTrilogyIsFirstPacket;
             ackMgr->nextAckToRequest = 0x0001;//random_uint16() | 1; // Make sure the final value can't be zero
         }
         

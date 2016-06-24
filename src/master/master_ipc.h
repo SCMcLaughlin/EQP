@@ -8,10 +8,10 @@
 #include "atomic_mutex.h"
 #include "server_op.h"
 #include "source_id.h"
-#include <lua.h>
-#include <lualib.h>
-#include <luaconf.h>
-#include <lauxlib.h>
+#include "database.h"
+#include "db_thread.h"
+#include "lua_sys.h"
+#include "console_interface.h"
 
 #define EQP_MASTER_IPC_SCRIPT "scripts/master/master_ipc.lua"
 
@@ -23,6 +23,7 @@ STRUCT_DEFINE(MasterIpcThread)
     Master*     master;
     IpcBuffer*  ipcMaster;
     AtomicMutex mutexShutdown;
+    lua_State*  L;
 };
 
 void    master_ipc_thread_init(R(Master*) M, R(MasterIpcThread*) ipcThread);
@@ -31,6 +32,8 @@ void    master_ipc_thread_init(R(Master*) M, R(MasterIpcThread*) ipcThread);
 void    master_ipc_thread_main_loop(R(Thread*) thread);
 #define master_ipc_thread_start(basic, thread) thread_start_and_detach((basic), T(thread), master_ipc_thread_main_loop)
 #define master_ipc_thread_shutdown_received(thread) atomic_mutex_try_lock(&(thread)->mutexShutdown)
+
+#define master_ipc_thread_lua(thread) ((thread)->L)
 
 EQP_API void master_ipc_thread_console_reply(R(MasterIpcThread*) ipcThread, R(IpcBuffer*) ipc, R(const char*) src, R(const char*) msg);
 EQP_API void master_ipc_thread_console_finish(R(MasterIpcThread*) ipcThread, R(IpcBuffer*) ipc, R(const char*) src);

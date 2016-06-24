@@ -23,8 +23,10 @@ STRUCT_DEFINE(ChildProcess)
 };
 
 void        proc_init(R(ChildProcess*) proc);
+void        proc_deinit(R(ChildProcess*) proc);
 
-void        proc_create_ipc_buffer(R(Master*) M, R(ChildProcess*) proc, R(const char*) path);
+void        proc_create_ipc_buffer(R(Basic*) basic, R(ChildProcess*) proc, R(const char*) path);
+void        proc_open_ipc_buffer(R(Basic*) basic, R(ChildProcess*) proc, R(const char*) path);
 void        proc_start(R(ChildProcess*) proc, pid_t pid);
 void        proc_shutdown(R(Master*) M, R(ChildProcess*) proc);
 void        proc_kill(R(ChildProcess*) proc);

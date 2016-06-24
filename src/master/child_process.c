@@ -10,9 +10,10 @@ void proc_init(R(ChildProcess*) proc)
     proc->creationTimestamp     = 0;
     proc->pid                   = 0;
     shm_viewer_init(&proc->shmViewer);
+    shm_creator_init(&proc->shmCreator);
 }
 
-static void proc_deinit(R(ChildProcess*) proc)
+void proc_deinit(R(ChildProcess*) proc)
 {
     if (proc->ipc)
     {
@@ -22,10 +23,18 @@ static void proc_deinit(R(ChildProcess*) proc)
     }
 }
 
-void proc_create_ipc_buffer(R(Master*) M, R(ChildProcess*) proc, R(const char*) path)
+void proc_create_ipc_buffer(R(Basic*) basic, R(ChildProcess*) proc, R(const char*) path)
 {
     atomic_mutex_lock(&proc->mutex);
-    ipc_buffer_shm_create_init(B(M), &proc->ipc, &proc->shmCreator, &proc->shmViewer, path);
+    ipc_buffer_shm_create_init(basic, &proc->ipc, &proc->shmCreator, &proc->shmViewer, path);
+    atomic_mutex_unlock(&proc->mutex);
+}
+
+void proc_open_ipc_buffer(R(Basic*) basic, R(ChildProcess*) proc, R(const char*) path)
+{
+    atomic_mutex_lock(&proc->mutex);
+    shm_viewer_open(basic, &proc->shmViewer, path, sizeof(IpcBuffer));
+    proc->ipc = shm_viewer_memory_type(&proc->shmViewer, IpcBuffer);
     atomic_mutex_unlock(&proc->mutex);
 }
 

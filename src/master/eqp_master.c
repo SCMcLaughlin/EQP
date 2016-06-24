@@ -19,7 +19,7 @@ void master_init(R(Master*) M)
     ipc_buffer_shm_create_init(B(M), &master_ipc_thread_ipc_buffer(&M->ipcThread), &M->shmCreatorMaster, &M->shmViewerMaster, EQP_MASTER_SHM_PATH);
     
     // Create the IPC shared memory buffer for the log writer process early
-    proc_create_ipc_buffer(M, &M->procLogWriter, EQP_LOG_WRITER_SHM_PATH);
+    proc_create_ipc_buffer(B(M), &M->procLogWriter, EQP_LOG_WRITER_SHM_PATH);
     
     core_init(C(M), EQP_SOURCE_ID_MASTER, M->procLogWriter.ipc);
 }
@@ -104,7 +104,7 @@ static void master_start_process(R(Master*) M, R(const char*) binPath, R(ChildPr
     {
     case Try:
         atomic_mutex_lock(&M->mutexProcList);
-        proc_create_ipc_buffer(M, proc, ipcPath);
+        proc_create_ipc_buffer(B(M), proc, ipcPath);
         proc_start(proc, master_spawn_process(M, binPath, proc_shm_path(proc), share_mem_path(&M->shmCreatorMaster), proc_shm_path(&M->procLogWriter)));
         break;
     
@@ -121,7 +121,7 @@ void master_start_char_select(R(Master*) M)
     //master_start_process(M, BIN_CHAR_SELECT, &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH);
     
     //temp:
-    proc_create_ipc_buffer(M, &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH);
+    proc_create_ipc_buffer(B(M), &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH);
 }
 
 void master_start_login(R(Master*) M)

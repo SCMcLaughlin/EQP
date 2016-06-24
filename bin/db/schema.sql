@@ -16,7 +16,8 @@ CREATE TABLE parameter (
 INSERT INTO
     parameter (key, value) 
 VALUES
-    ('eqBaseUnixSeconds', strftime('%s', 'now'));
+    ('eqBaseUnixSeconds', strftime('%s', 'now')),
+    ('messageOfTheDay', 'Welcome to EQP!');
 
 -- If we are connected to two separate login servers, we need to make sure that
 -- an account (from login server A) with an id of 1 and name "abc" is treated as

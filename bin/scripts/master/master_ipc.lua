@@ -6,40 +6,40 @@ local ffi = require "ffi"
 
 local C = ffi.C
 
-local function replyAndFinish(thread, ipc, src, msg)
-    C.master_ipc_thread_console_reply(thread, ipc, src, msg)
-    C.master_ipc_thread_console_finish(thread, ipc, src)
+local function replyAndFinish(console, msg)
+    C.console_reply(console, msg, #msg)
+    C.console_finish(console)
 end
 
 local handlers = {
-    start = function(thread, M, ipc, src, args, opts)
-        replyAndFinish(thread, ipc, src, "eqp-master started successfully")
+    start = function(console, args, opts)
+        replyAndFinish(console, "eqp-master started successfully")
     end,
     
-    shutdown = function(thread, M, ipc, src, args, opts)
-        replyAndFinish(thread, ipc, src, "eqp-master is shutting down")
+    shutdown = function(console, args, opts)
+        replyAndFinish(console, "eqp-master is shutting down")
         return true
     end,
 }
 
-local function unknown_cmd(thread, ipc, src, cmd)
-    replyAndFinish(thread, ipc, src, string.format("Unknown command: %s", cmd))
+local function unknown_cmd(console, cmd)
+    replyAndFinish(console, string.format("Unknown command: %s", cmd))
 end
 
-local function no_cmd(thread, ipc, src)
-    replyAndFinish(thread, ipc, src, "No command provided")
+local function no_cmd(console)
+    replyAndFinish(console, "No command provided")
 end
 
-function handle_console(thread, M, ipc, src, cmd, args, opts)
+function handle_console(console, cmd, args, opts)
     if cmd then
         local func = handlers[cmd]
         
         if not func then
-            return unknown_cmd(thread, ipc, src, cmd)
+            return unknown_cmd(console, cmd)
         end
         
-        return func(thread, M, ipc, src, args, opts)
+        return func(console, args, opts)
     end
     
-    no_cmd(thread, ipc, src)
+    no_cmd(console)
 end

@@ -25,10 +25,10 @@ DIRCOMMON= src/common/
 BCOMMON= build/$(BUILDTYPE)/common/
 _OCOMMON= \
  eqp_basic.o eqp_core.o eqp_alloc.o bit.o exception.o eqp_thread.o file.o \
- random.o zone_id.o
+ random.o zone_id.o lua_sys.o aligned.o
 _HCOMMON= define.h netcode.h \
  eqp_basic.h eqp_core.h eqp_alloc.h bit.h exception.h eqp_thread.h file.h \
- random.h zone_id.h
+ random.h zone_id.h lua_sys.h aligned.h
 OCOMMON= $(patsubst %,$(BCOMMON)%,$(_OCOMMON))
 HCOMMON= $(patsubst %,$(DIRCOMMON)%,$(_HCOMMON))
 
@@ -114,9 +114,9 @@ HCOMMON_ALL+= $(HCOMMON_TIME)
 DIRNONMASTER= src/non_master/
 BNONMASTER= build/$(BUILDTYPE)/non_master/
 _ONONMASTER= \
- aligned.o crc.o lua_sys.o ipc_set.o
+ crc.o ipc_set.o
 _HNONMASTER = expansion.h tcp_packet_structs.h \
- aligned.h crc.h lua_sys.h ipc_set.h
+ crc.h ipc_set.h
 ONONMASTER= $(patsubst %,$(BNONMASTER)%,$(_ONONMASTER))
 HNONMASTER= $(patsubst %,$(DIRNONMASTER)%,$(_HNONMASTER))
 
@@ -150,9 +150,9 @@ HNONMASTER_ALL+= $(HNONMASTER_NET)
 DIRMASTER= src/master/
 BMASTER= build/$(BUILDTYPE)/master/
 _OMASTER= master_main.o \
- eqp_master.o master_ipc.o child_process.o
+ eqp_master.o master_ipc.o child_process.o console_interface.o
 _HMASTER= \
- eqp_master.h master_ipc.h child_process.h
+ eqp_master.h master_ipc.h child_process.h console_interface.h
 OMASTER= $(patsubst %,$(BMASTER)%,$(_OMASTER))
 HMASTER= $(patsubst %,$(DIRMASTER)%,$(_HMASTER))
 

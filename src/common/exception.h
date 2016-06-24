@@ -34,5 +34,6 @@ void    exception_handled(R(Basic*) basic);
 void    exception_end_try(R(Basic*) basic);
 void    exception_end_try_with_finally(R(Basic*) basic);
 String* exception_get_message(R(Basic*) basic);
+#define exception_message(basic) exception_get_message((basic))
 
 #endif//EQP_EXCEPTION_H

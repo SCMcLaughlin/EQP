@@ -4,4 +4,11 @@
 
 #include "define.h"
 
+STRUCT_DEFINE(Client)
+{
+    int64_t     characterId;
+    uint32_t    accountId;
+    char        name[32];
+};
+
 #endif//EQP_CLIENT_H

@@ -1,13 +1,17 @@
 
 #include "eqp_master.h"
 
-#define BIN_LOG_WRITER  "./eqp-log-writer"
-#define BIN_LOGIN       "./eqp-login"
-#define BIN_CHAR_SELECT "./eqp-char-select"
+#define BIN_LOG_WRITER      "./eqp-log-writer"
+#define BIN_LOGIN           "./eqp-login"
+#define BIN_CHAR_SELECT     "./eqp-char-select"
+#define BIN_ZONE_CLUSTER    "./eqp-zone-cluster"
 
 void master_init(R(Master*) M)
 {
     atomic_mutex_init(&M->mutexProcList);
+    
+    timer_pool_init(B(M), &M->timerPool);
+    timer_init(&M->timerStatusChecks, &M->timerPool, EQP_STATUS_CHECK_FREQUENCY, master_status_checks_callback, M, true);
     
     master_ipc_thread_init(M, &M->ipcThread);
     
@@ -27,6 +31,8 @@ void master_init(R(Master*) M)
 void master_deinit(R(Master*) M)
 {
     master_shut_down_all_child_processes(M);
+    
+    timer_pool_deinit(&M->timerPool);
     
     core_deinit(C(M));
     
@@ -185,6 +191,14 @@ static void master_check_child_procs_status(R(Master*) M)
         master_restart_proc(M, &M->procLogin, EQP_SOURCE_ID_LOGIN, BIN_LOGIN, EQP_LOGIN_SHM_PATH);
 }
 
+void master_status_checks_callback(R(Timer*) timer)
+{
+    R(Master*) M = timer_userdata_type(timer, Master);
+    
+    master_check_threads_status(M);
+    master_check_child_procs_status(M);
+}
+
 void master_main_loop(R(Master*) M)
 {
     for (;;)
@@ -196,16 +210,14 @@ void master_main_loop(R(Master*) M)
             break;
         }
         
-        // Check that threads are still running
-        master_check_threads_status(M);
+        db_thread_execute_query_callbacks(core_db_thread(C(M)));
+        timer_pool_execute_callbacks(&M->timerPool);
         
-        // Check whether any child processes have timed out or disappeared
-        master_check_child_procs_status(M);
-        
-        clock_sleep_milliseconds(1000);
+        clock_sleep_milliseconds(50);
     }
 }
 
 #undef BIN_LOG_WRITER
 #undef BIN_LOGIN
 #undef BIN_CHAR_SELECT
+#undef BIN_ZONE_CLUSTER

@@ -192,7 +192,7 @@ void char_select_start_login_server_connections(R(CharSelect*) charSelect)
     uint32_t n;
     uint32_t i;
     
-    lua_sys_run_file(B(charSelect), L, EQP_LUA_SYS_LOGIN_CONFIG_SCRIPT, 1);
+    lua_sys_run_file(B(charSelect), L, EQP_CHAR_SELECT_LOGIN_CONFIG, 1);
     
     n = lua_objlen(L, -1);
     

@@ -12,6 +12,7 @@
 #include "db_thread.h"
 #include "lua_sys.h"
 #include "console_interface.h"
+#include "client_manager.h"
 
 #define EQP_MASTER_IPC_SCRIPT "scripts/master/master_ipc.lua"
 
@@ -23,7 +24,10 @@ STRUCT_DEFINE(MasterIpcThread)
     Master*     master;
     IpcBuffer*  ipcMaster;
     AtomicMutex mutexShutdown;
+    
     lua_State*  L;
+    Database*   db;
+    ClientMgr   clientMgr;
 };
 
 void    master_ipc_thread_init(R(Master*) M, R(MasterIpcThread*) ipcThread);
@@ -34,8 +38,6 @@ void    master_ipc_thread_main_loop(R(Thread*) thread);
 #define master_ipc_thread_shutdown_received(thread) atomic_mutex_try_lock(&(thread)->mutexShutdown)
 
 #define master_ipc_thread_lua(thread) ((thread)->L)
-
-EQP_API void master_ipc_thread_console_reply(R(MasterIpcThread*) ipcThread, R(IpcBuffer*) ipc, R(const char*) src, R(const char*) msg);
-EQP_API void master_ipc_thread_console_finish(R(MasterIpcThread*) ipcThread, R(IpcBuffer*) ipc, R(const char*) src);
+#define master_ipc_thread_db(thread) ((thread)->db)
 
 #endif//EQP_MASTER_IPC_H

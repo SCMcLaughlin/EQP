@@ -9,7 +9,8 @@ void master_ipc_thread_init(R(Master*) M, R(MasterIpcThread*) ipcThread)
     atomic_mutex_init(&ipcThread->mutexShutdown);
     atomic_mutex_lock(&ipcThread->mutexShutdown);
     
-    ipcThread->master = M;
+    ipcThread->master   = M;
+    ipcThread->db       = core_db(C(M));
 }
 
 static int master_ipc_thread_handle_packet(R(MasterIpcThread*) ipcThread, R(Master*) M, R(IpcPacket*) packet)
@@ -45,6 +46,9 @@ static int master_ipc_thread_handle_packet(R(MasterIpcThread*) ipcThread, R(Mast
     case ServerOp_ConsoleMessage:
         return console_receive(ipcThread, M, proc, sourceId, packet);
     
+    case ServerOp_ClientZoning:
+        break;
+    
     default:
         log_format(B(ipcThread), LogError, "Received unexpected ServerOp: %u", opcode);
         break;
@@ -76,7 +80,7 @@ static void master_ipc_loop(R(MasterIpcThread*) ipcThread)
             ipc_packet_deinit(&packet);
             
             if (done)
-                break;
+                return;
         }
     }
 }
@@ -89,8 +93,11 @@ void master_ipc_thread_main_loop(R(Thread*) thread)
     
     lua_sys_run_file(B(ipcThread), L, EQP_MASTER_IPC_SCRIPT, 0);
     
+    client_mgr_init(ipcThread, &ipcThread->clientMgr, L);
+    
     master_ipc_loop(ipcThread);
     
-    atomic_mutex_unlock(&ipcThread->mutexShutdown);
+    client_mgr_deinit(&ipcThread->clientMgr);
     lua_close(L);
+    atomic_mutex_unlock(&ipcThread->mutexShutdown);
 }

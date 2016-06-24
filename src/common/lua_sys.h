@@ -11,8 +11,6 @@
 #include <luaconf.h>
 #include <lauxlib.h>
 
-#define EQP_LUA_SYS_LOGIN_CONFIG_SCRIPT "scripts/config/login_config_loader.lua"
-
 STRUCT_DECLARE(Basic);
 
 lua_State*  lua_sys_open(R(Basic*) basic);

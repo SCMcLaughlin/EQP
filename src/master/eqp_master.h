@@ -12,6 +12,8 @@
 #include "master_ipc.h"
 #include "eqp_clock.h"
 #include "child_process.h"
+#include "timer_pool.h"
+#include "timer.h"
 
 #define EQP_MASTER_SHM_PATH                 "shm/eqp-master-"
 #define EQP_LOG_WRITER_SHM_PATH             "shm/eqp-log-writer-"
@@ -19,6 +21,7 @@
 #define EQP_CHAR_SELECT_SHM_PATH            "shm/eqp-char-select-"
 #define EQP_ZONE_CLUSTER_SHM_PATH           "shm/eqp-zone-cluster-"
 #define EQP_CHILD_PROC_TIMEOUT_MILLISECONDS TIMER_SECONDS(15)
+#define EQP_STATUS_CHECK_FREQUENCY          TIMER_SECONDS(3)
 
 /*
     Master is the first server process to run and the last to shut down.
@@ -49,6 +52,8 @@ STRUCT_DEFINE(Master)
     
     AtomicMutex     mutexProcList; // Locked when any child processes are being created or destroyed
     
+    TimerPool       timerPool;
+    
     // Master IPC
     MasterIpcThread ipcThread;
     ShmViewer       shmViewerMaster;
@@ -58,6 +63,8 @@ STRUCT_DEFINE(Master)
     ChildProcess    procCharSelect;
     ChildProcess    procLogWriter;
     ChildProcess    procLogin;
+    
+    Timer           timerStatusChecks;
 };
 
 void            master_init(R(Master*) M);
@@ -72,6 +79,10 @@ void            master_start_log_writer(R(Master*) M);
 void            master_start_char_select(R(Master*) M);
 void            master_start_login(R(Master*) M);
 
+void            master_status_checks_callback(R(Timer*) timer);
+
 ChildProcess*   master_get_child_process(R(Master*) M, int sourceId);
+
+#define         master_db(M) core_db(C((M)))
 
 #endif//EQP_MASTER_H

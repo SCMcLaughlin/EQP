@@ -57,6 +57,7 @@ void        query_bind_int64(R(Query*) query, int col, int64_t value);
 void        query_bind_double(R(Query*) query, int col, double value);
 void        query_bind_string(R(Query*) query, int col, R(const char*) str, int len);
 void        query_bind_string_no_copy(R(Query*) query, int col, R(const char*) str, int len);
+#define     query_bind_string_literal(q, col, str) query_bind_string_no_copy((q), (col), (str), sizeof(str) - 1)
 void        query_bind_blob(R(Query*) query, int col, R(const void*) blob, uint32_t len);
 void        query_bind_blob_no_copy(R(Query*) query, int col, R(const void*) blob, uint32_t len);
 

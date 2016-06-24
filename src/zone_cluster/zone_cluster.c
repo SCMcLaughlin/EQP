@@ -63,6 +63,12 @@ void zc_deinit(R(ZC*) zc)
     }
 }
 
+void ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet)
+{
+    (void)basic;
+    (void)packet;
+}
+
 void zc_main_loop(R(ZC*) zc)
 {
     R(UdpSocket*) socket = zc->socket;

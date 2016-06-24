@@ -7,9 +7,7 @@
 #include "eqp_log.h"
 #include "eqp_clock.h"
 #include "source_id.h"
-#include "server_op.h"
-#include "ipc_buffer.h"
-#include "share_mem.h"
+#include "ipc_set.h"
 #include "udp_socket.h"
 #include "tcp_server.h"
 #include "login_crypto.h"
@@ -24,11 +22,7 @@ STRUCT_DEFINE(Login)
     // Core MUST be the first member of this struct
     Core            core;
     
-    IpcBuffer*      ipc;
-    IpcBuffer*      ipcMaster;
-    ShmViewer       shmViewerSelf;
-    ShmViewer       shmViewerMaster;
-    ShmViewer       shmViewerLogWriter;
+    IpcSet          ipcSet;
     
     ServerList      serverList;
     ClientList      clientList;

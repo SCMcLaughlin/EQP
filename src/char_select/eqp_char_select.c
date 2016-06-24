@@ -66,6 +66,12 @@ void char_select_deinit(R(CharSelect*) charSelect)
     }
 }
 
+void ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet)
+{
+    (void)basic;
+    (void)packet;
+}
+
 void char_select_main_loop(R(CharSelect*) charSelect)
 {
     R(UdpSocket*) socket = charSelect->socket;

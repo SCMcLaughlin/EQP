@@ -114,9 +114,9 @@ HCOMMON_ALL+= $(HCOMMON_TIME)
 DIRNONMASTER= src/non_master/
 BNONMASTER= build/$(BUILDTYPE)/non_master/
 _ONONMASTER= \
- aligned.o crc.o lua_sys.o
-_HNONMASTER = \
- aligned.h crc.h lua_sys.h
+ aligned.o crc.o lua_sys.o ipc_set.o
+_HNONMASTER = expansion.h tcp_packet_structs.h \
+ aligned.h crc.h lua_sys.h ipc_set.h
 ONONMASTER= $(patsubst %,$(BNONMASTER)%,$(_ONONMASTER))
 HNONMASTER= $(patsubst %,$(DIRNONMASTER)%,$(_HNONMASTER))
 

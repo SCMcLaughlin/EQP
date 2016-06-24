@@ -29,6 +29,7 @@ STRUCT_DEFINE(LoginClient)
     char                passwordTemp[32];
     int                 passwordLength;
     char                sessionKey[16];
+    bool                isLocal;
 };
 
 LoginClient*    login_client_create(R(ProtocolHandler*) handler, int expansion, int state);
@@ -48,6 +49,8 @@ void            login_client_set_account_name(R(LoginClient*) client, R(const ch
 #define         login_client_set_account_id(client, id) ((client)->accountId = (id))
 void            login_client_set_password_temp(R(LoginClient*) client, R(const char*) password, int length);
 #define         login_client_clear_password_temp(client) memset((client)->passwordTemp, 0, sizeof((client)->passwordTemp))
+#define         login_client_set_is_local(client, val) ((client)->isLocal = (val))
+#define         login_client_is_local(client) ((client)->isLocal)
 
 void            login_client_check_credentials(R(LoginClient*) client, R(Login*) login, R(const char*) username, int nameLength, R(const char*) password, int passLength);
 

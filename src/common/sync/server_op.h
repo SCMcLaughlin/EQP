@@ -19,6 +19,7 @@ ENUM_DEFINE(ServerOp)
     ServerOp_ConsoleFinish,
     /* Zoning (CharSelect/ZoneCluster) */
     ServerOp_ClientZoning,
+    ServerOp_ClientZoningReject,
     /* ZoneCluster */
     ServerOp_StartZone,
     ServerOp_COUNT

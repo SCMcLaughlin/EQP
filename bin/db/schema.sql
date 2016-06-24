@@ -1,12 +1,22 @@
 
 -- Enable WAL mode
 PRAGMA journal_mode = WAL;
-    
+
 CREATE TABLE login (
     username    TEXT PRIMARY KEY,
     password    BLOB,
     salt        BLOB
 );
+
+CREATE TABLE parameter (
+    key     TEXT PRIMARY KEY,
+    value
+);
+
+INSERT INTO
+    parameter (key, value) 
+VALUES
+    ('eqBaseUnixSeconds', strftime('%s', 'now'));
 
 -- If we are connected to two separate login servers, we need to make sure that
 -- an account (from login server A) with an id of 1 and name "abc" is treated as

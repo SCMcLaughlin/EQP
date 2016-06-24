@@ -109,6 +109,24 @@ void network_client_trilogy_send_pure_ack(R(NetworkClientTrilogy*) client, uint1
     network_client_send(&client->base, buf, sizeof(buf));
 }
 
+void network_client_trilogy_send_disconnect(R(NetworkClientTrilogy*) client)
+{
+    STRUCT_DEFINE(TrilogyDisconnect)
+    {
+        uint16_t    header;
+        uint16_t    seq;
+        uint32_t    crc;
+    };
+    
+    TrilogyDisconnect dis;
+    
+    dis.header  = PacketTrilogyIsClosing | PacketTrilogyIsClosing2;
+    dis.seq     = toNetworkUint16(client->nextSeqToSend++);
+    dis.crc     = crc_calc32_network(&dis, sizeof(dis) - sizeof(uint32_t));
+    
+    network_client_send(&client->base, &dis, sizeof(dis));
+}
+
 static void network_client_trilogy_send_fragment(R(NetworkClientTrilogy*) client, R(OutputPacketTrilogy*) wrapper, R(Aligned*) a,
     uint32_t dataLength, uint16_t opcode, uint16_t ackResponse, uint32_t fragIndex)
 {

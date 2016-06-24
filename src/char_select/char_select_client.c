@@ -198,3 +198,19 @@ void char_select_client_delete_character_by_name(R(CharSelectClient*) client, R(
     
     db_schedule(core_db(C(charSelect)), &query);
 }
+
+void char_select_client_on_zone_in_failure(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) zoneShortName)
+{
+    if (client->expansion == ExpansionId_Trilogy)
+        cs_client_trilogy_on_zone_in_failure(client, charSelect, zoneShortName);
+    //else
+    //    cs_client_standard_on_zone_in_failure(client, charSelect, zoneShortName);
+}
+
+void char_select_client_on_zone_in_success(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(Server_ZoneAddress*) zoneAddr)
+{
+    if (client->expansion == ExpansionId_Trilogy)
+        cs_client_trilogy_on_zone_in_success(client, charSelect, zoneAddr);
+    //else
+    //    cs_client_standard_on_zone_in_success(client, charSelect, zoneAddr);
+}

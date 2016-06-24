@@ -81,7 +81,7 @@ void server_list_update_by_index(R(ServerList*) list, uint32_t index, int player
     server->playerCount = playerCount;
 }
 
-void server_list_send_client_login_request_by_ip_address(R(Login*) login, R(const char*) ipAddress, uint32_t accountId)
+void server_list_send_client_login_request_by_ip_address(R(Login*) login, R(LoginClient*) client, R(const char*) ipAddress, uint32_t accountId)
 {
     R(ServerList*) list     = login_server_list(login);
     R(ServerListing*) array = array_data_type(list->array, ServerListing);
@@ -94,6 +94,14 @@ void server_list_send_client_login_request_by_ip_address(R(Login*) login, R(cons
         
         if (string_compare_cstr(server->remoteIpAddress, ipAddress) == 0)
         {
+            login_client_set_is_local(client, false);
+            tcp_server_send_client_login_request(login_tcp_server(login), (int)i, accountId);
+            return;
+        }
+        
+        if (string_compare_cstr(server->localIpAddress, ipAddress) == 0)
+        {
+            login_client_set_is_local(client, true);
             tcp_server_send_client_login_request(login_tcp_server(login), (int)i, accountId);
             return;
         }

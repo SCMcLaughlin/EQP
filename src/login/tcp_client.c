@@ -178,7 +178,7 @@ static void tcp_client_send_client_auth(R(Login*) login, R(TcpClient*) client, R
     
     login_client_generate_session_key(loginClient);
     
-    //fixme: loginAdmin, serverAdmin, isLocal need to be determined
+    //fixme: loginAdmin and serverAdmin need to be determined (do these matter much?)
     
     // header.opcode
     aligned_write_uint16(w, TcpOp_ClientLoginAuth);
@@ -197,7 +197,7 @@ static void tcp_client_send_client_auth(R(Login*) login, R(TcpClient*) client, R
     // ip
     aligned_write_uint32(w, protocol_handler_ip_address(login_client_handler(loginClient))->sin_addr.s_addr);
     // isLocal
-    aligned_write_uint8(w, true);
+    aligned_write_uint8(w, login_client_is_local(loginClient));
 
     tcp_client_send(login, client, &auth, sizeof(Tcp_ClientLoginAuth));
 }

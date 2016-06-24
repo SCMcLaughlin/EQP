@@ -11,6 +11,7 @@
 #include "char_select_client.h"
 #include "char_select_structs_trilogy.h"
 #include "zone_id.h"
+#include "eq_time.h"
 
 /* Login handshake, in order of appearance */
 #define TrilogyOp_LoginInfo         0x1858
@@ -25,6 +26,12 @@
 #define TrilogyOp_CreateCharacter   0x2049
 #define TrilogyOp_DeleteCharacter   0x205a
 #define TrilogyOp_WearChange        0x2092
+
+/* Replies to client zone in requests */
+#define TrilogyOp_ZoneUnavailable   0x8005
+#define TrilogyOp_MessageOfTheDay   0x21dd
+#define TrilogyOp_TimeOfDay         0x20f2
+#define TrilogyOp_ZoneAddress       0x8004
 
 STRUCT_DEFINE(CSTrilogy_CharCreateParams)
 {
@@ -60,5 +67,7 @@ STRUCT_DEFINE(CSTrilogy_CharCreateParams)
 void    cs_client_trilogy_on_auth(R(CharSelectClient*) client);
 void    cs_client_trilogy_on_account_id(R(CharSelectClient*) client, uint32_t accountId);
 void    cs_client_trilogy_on_character_name_checked(R(CharSelectClient*) client, int taken);
+void    cs_client_trilogy_on_zone_in_failure(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) zoneShortName);
+void    cs_client_trilogy_on_zone_in_success(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(Server_ZoneAddress*) zoneAddr);
 
 #endif//EQP_CHAR_SELECT_CLIENT_TRILOGY_H

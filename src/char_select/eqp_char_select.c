@@ -3,20 +3,14 @@
 
 void char_select_init(R(CharSelect*) charSelect, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath)
 {
-    (void)ipcPath;
-    (void)masterIpcPath;
-    
     charSelect->serverStatus        = EQP_CHAR_SELECT_SERVER_LOCKED;
     charSelect->serverPlayerCount   = 0;
     
     timer_pool_init(B(charSelect), &charSelect->timerPool);
     
-    shm_viewer_init(&charSelect->shmViewerLogWriter);
-    shm_viewer_open(B(charSelect), &charSelect->shmViewerLogWriter, logWriterIpcPath, sizeof(IpcBuffer));
-    // Tell the log writer to open our log file
-    ipc_buffer_write(B(charSelect), shm_viewer_memory_type(&charSelect->shmViewerLogWriter, IpcBuffer), ServerOp_LogOpen, EQP_SOURCE_ID_CHAR_SELECT, 0, NULL);
+    ipc_set_open(B(charSelect), &charSelect->ipcSet, EQP_SOURCE_ID_CHAR_SELECT, ipcPath, masterIpcPath, logWriterIpcPath);
     
-    core_init(C(charSelect), EQP_SOURCE_ID_CHAR_SELECT, shm_viewer_memory_type(&charSelect->shmViewerLogWriter, IpcBuffer));
+    core_init(C(charSelect), EQP_SOURCE_ID_CHAR_SELECT, ipc_set_log_writer_ipc(&charSelect->ipcSet));
     
     charSelect->L = lua_sys_open(B(charSelect));
     lua_sys_run_file(B(charSelect), charSelect->L, EQP_CHAR_SELECT_SCRIPT_CHAR_CREATE, 0);
@@ -29,14 +23,15 @@ void char_select_init(R(CharSelect*) charSelect, R(const char*) ipcPath, R(const
     timer_init(&charSelect->timerUnclaimedAuths, &charSelect->timerPool, EQP_CHAR_SELECT_UNCLAIMED_AUTHS_TIMEOUT,
         char_select_unclaimed_auths_timer_callback, charSelect, true);
     
-    charSelect->unclaimedAuths  = array_create_type(B(charSelect), CharSelectAuth);
-    charSelect->unauthedClients = array_create_type(B(charSelect), CharSelectClient*);
+    charSelect->unclaimedAuths              = array_create_type(B(charSelect), CharSelectAuth);
+    charSelect->unauthedClients             = array_create_type(B(charSelect), CharSelectClient*);
+    charSelect->clientsAttemptingToZoneIn   = array_create_type(B(charSelect), CharSelectClientAttemptingZoneIn);
 }
 
 void char_select_deinit(R(CharSelect*) charSelect)
 {
     core_deinit(C(charSelect));
-    shm_viewer_close(&charSelect->shmViewerLogWriter);
+    ipc_set_deinit(&charSelect->ipcSet);
     
     if (charSelect->L)
     {
@@ -64,17 +59,110 @@ void char_select_deinit(R(CharSelect*) charSelect)
         array_destroy(charSelect->loginServerConnections);
         charSelect->loginServerConnections = NULL;
     }
+    
+    if (charSelect->unclaimedAuths)
+    {
+        array_destroy(charSelect->unclaimedAuths);
+        charSelect->unclaimedAuths = NULL;
+    }
+    
+    if (charSelect->unauthedClients)
+    {
+        array_destroy(charSelect->unauthedClients);
+        charSelect->unauthedClients = NULL;
+    }
+    
+    if (charSelect->clientsAttemptingToZoneIn)
+    {
+        array_destroy(charSelect->clientsAttemptingToZoneIn);
+        charSelect->clientsAttemptingToZoneIn = NULL;
+    }
+}
+
+static void char_select_handle_op_client_zoning(R(CharSelect*) charSelect, R(byte*) data, uint32_t length)
+{
+    R(Server_ZoneAddress*) zoneAddr;
+    R(CharSelectClientAttemptingZoneIn*) array;
+    uint32_t accountId;
+    uint32_t n;
+    uint32_t i;
+    
+    if (length < sizeof(Server_ZoneAddress))
+        return;
+    
+    zoneAddr = (Server_ZoneAddress*)data;
+    
+    if (length < (offsetof(Server_ZoneAddress, messageOfTheDay) + zoneAddr->motdLength))
+        return;
+    
+    accountId   = zoneAddr->accountId;
+    array       = array_data_type(charSelect->clientsAttemptingToZoneIn, CharSelectClientAttemptingZoneIn);
+    n           = array_count(charSelect->clientsAttemptingToZoneIn);
+    
+    for (i = 0; i < n; i++)
+    {
+        if (array[i].accountId == accountId)
+        {
+            char_select_client_on_zone_in_success(array[i].client, charSelect, zoneAddr);
+            array_swap_and_pop(charSelect->clientsAttemptingToZoneIn, i);
+            break;
+        }
+    }
+}
+
+static void char_select_handle_op_client_zoning_rejected(R(CharSelect*) charSelect, R(byte*) data, uint32_t length)
+{
+    R(Server_ClientZoningReject*) reject;
+    R(CharSelectClientAttemptingZoneIn*) array;
+    uint32_t accountId;
+    uint32_t n;
+    uint32_t i;
+    
+    if (length < sizeof(Server_ClientZoningReject))
+        return;
+    
+    reject      = (Server_ClientZoningReject*)data;
+    accountId   = reject->accountId;
+    array       = array_data_type(charSelect->clientsAttemptingToZoneIn, CharSelectClientAttemptingZoneIn);
+    n           = array_count(charSelect->clientsAttemptingToZoneIn);
+    
+    for (i = 0; i < n; i++)
+    {
+        if (array[i].accountId == accountId)
+        {
+            char_select_client_on_zone_in_failure(array[i].client, charSelect, reject->zoneShortName);
+            array_swap_and_pop(charSelect->clientsAttemptingToZoneIn, i);
+            break;
+        }
+    }
 }
 
 void ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet)
 {
-    (void)basic;
-    (void)packet;
+    R(CharSelect*) charSelect   = (CharSelect*)basic;
+    ServerOp opcode             = ipc_packet_opcode(packet);
+    uint32_t length             = ipc_packet_length(packet);
+    R(byte*) data               = ipc_packet_data(packet);
+    
+    switch (opcode)
+    {
+    case ServerOp_ClientZoning:
+        char_select_handle_op_client_zoning(charSelect, data, length);
+        break;
+    
+    case ServerOp_ClientZoningReject:
+        char_select_handle_op_client_zoning_rejected(charSelect, data, length);
+        break;
+    
+    default:
+        break;
+    }
 }
 
 void char_select_main_loop(R(CharSelect*) charSelect)
 {
-    R(UdpSocket*) socket = charSelect->socket;
+    R(UdpSocket*) socket    = charSelect->socket;
+    R(IpcSet*) ipcSet       = &charSelect->ipcSet;
     
     for (;;)
     {
@@ -87,6 +175,12 @@ void char_select_main_loop(R(CharSelect*) charSelect)
         udp_socket_check_timeouts(socket);
         
         char_select_tcp_recv(charSelect);
+        
+        if (ipc_set_receive(B(charSelect), ipcSet))
+        {
+            log_format(B(charSelect), LogInfo, "Shutting down cleanly");
+            break;
+        }
         
         clock_sleep_milliseconds(50);
     }
@@ -297,6 +391,54 @@ void char_select_remove_client_from_unauthed_list(R(CharSelect*) charSelect, R(C
             return;
         }
     }
+}
+
+static void char_select_client_zone_in_timeout_callback(R(Timer*) timer)
+{
+    R(CharSelectClient*) client                 = timer_userdata_type(timer, CharSelectClient);
+    R(CharSelect*) charSelect                   = (CharSelect*)protocol_handler_basic(char_select_client_handler(client));
+    R(CharSelectClientAttemptingZoneIn*) array  = array_data_type(charSelect->clientsAttemptingToZoneIn, CharSelectClientAttemptingZoneIn);
+    uint32_t n                                  = array_count(charSelect->clientsAttemptingToZoneIn);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        if (array[i].client == client)
+        {
+            array_swap_and_pop(charSelect->clientsAttemptingToZoneIn, i);
+            char_select_client_on_zone_in_failure(client, charSelect, "qeynos"); //fixme: get the real shortname? may not be worth the bother
+            break;
+        }
+    }
+    
+    char_select_client_drop(client);
+    timer_destroy(timer);
+}
+
+void char_select_send_client_zone_in_request(R(CharSelect*) charSelect, R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(const char*) charName)
+{
+    CharSelectClientAttemptingZoneIn record;
+    Server_ClientZoning zoning;
+    
+    zoning.accountId    = char_select_client_account_id(client);
+    zoning.ipAddress    = protocol_handler_ip_address(handler)->sin_addr.s_addr;
+    zoning.characterId  = 0;
+    zoning.isLocal      = char_select_client_is_local(client);
+    snprintf(zoning.accountName, sizeof(zoning.accountName), "%s", char_select_client_account_name(client));
+    snprintf(zoning.characterName, sizeof(zoning.characterName), "%s", charName);
+    
+    ipc_set_send(B(charSelect), &charSelect->ipcSet, ServerOp_ClientZoning, EQP_SOURCE_ID_CHAR_SELECT, sizeof(zoning), &zoning);
+    
+    record.accountId    = zoning.accountId;
+    record.client       = client;
+    
+    array_push_back(B(charSelect), &charSelect->clientsAttemptingToZoneIn, &record);
+    
+    char_select_client_grab(client);
+    
+    // Single-run timer
+    eqp_timer_create(B(charSelect), char_select_timer_pool(charSelect), EQP_CHAR_SELECT_ZONE_ATTEMPT_TIMEOUT,
+        char_select_client_zone_in_timeout_callback, client, true);
 }
 
 void char_select_get_starting_zone_and_loc(R(CharSelect*) charSelect, uint16_t race, uint8_t class, uint8_t gender, bool isTrilogy,

@@ -60,6 +60,7 @@ uint8_t     aligned_peek_uint8(R(Aligned*) a);
 // Write
 #define     aligned_write_zero_all(a) (memset((a)->buffer, 0, (a)->length))
 void        aligned_write_uint8(R(Aligned*) a, uint8_t v);
+#define     aligned_write_byte(a, v) aligned_write_uint8((a), (v))
 #define     aligned_write_int8(a, v) (aligned_write_uint8((a), (uint8_t)(v)))
 #define     aligned_write_bool(a, v) (aligned_write_uint8((a), (v) ? 1 : 0))
 void        aligned_write_uint16(R(Aligned*) a, uint16_t v);

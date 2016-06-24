@@ -118,8 +118,10 @@ static void master_start_process(R(Master*) M, R(const char*) binPath, R(ChildPr
 
 void master_start_char_select(R(Master*) M)
 {
-    (void)M;
     //master_start_process(M, BIN_CHAR_SELECT, &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH);
+    
+    //temp:
+    proc_create_ipc_buffer(M, &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH);
 }
 
 void master_start_login(R(Master*) M)

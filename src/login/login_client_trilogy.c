@@ -289,7 +289,7 @@ static void login_trilogy_handle_op_server_status_request(R(LoginClient*) client
     if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
         return;
     
-    server_list_send_client_login_request_by_ip_address((Login*)protocol_handler_basic(handler), ipAddress, login_client_account_id(client));
+    server_list_send_client_login_request_by_ip_address((Login*)protocol_handler_basic(handler), client, ipAddress, login_client_account_id(client));
 }
 
 void login_client_trilogy_handle_login_response(R(LoginClient*) client, int response)

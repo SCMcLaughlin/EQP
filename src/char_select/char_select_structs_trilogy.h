@@ -99,6 +99,27 @@ STRUCT_DEFINE(CSTrilogy_WearChange)
     uint16_t    unknownB;
 };
 
+STRUCT_DEFINE(CSTrilogy_ZoneUnavailable)
+{
+    char    shortName[20];
+};
+
+STRUCT_DEFINE(CSTrilogy_ZoneAddress)
+{
+    char        ipAddress[75];
+    char        zoneShortName[53];
+    uint16_t    portHostByteOrder;
+};
+
+STRUCT_DEFINE(CSTrilogy_TimeOfDay)
+{
+    uint8_t     hour;
+    uint8_t     minute;
+    uint8_t     day;
+    uint8_t     month;
+    uint16_t    year;
+};
+
 #pragma pack()
 
 #endif//EQP_CHAR_SELECT_STRUCTS_TRILOGY_H

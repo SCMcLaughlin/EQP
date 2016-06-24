@@ -47,6 +47,7 @@ void    ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(v
 void    ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*) packet, int noAckRequest);
 #define ack_mgr_trilogy_send_queued(ackMgr) network_client_trilogy_send_queued((&(ackMgr)->client))
 #define ack_mgr_trilogy_send_pure_ack(ackMgr, ack) network_client_trilogy_send_pure_ack(&(ackMgr)->client, (ack))
+#define ack_mgr_trilogy_send_disconnect(ackMgr) network_client_trilogy_send_disconnect(&(ackMgr)->client)
 
 #define ack_mgr_trilogy_next_ack_response(ack) network_client_trilogy_next_ack_response(&(ack)->client)
 #define ack_mgr_trilogy_next_ack_request_expected(ack) network_client_trilogy_next_ack_request_expected(&(ack)->client)

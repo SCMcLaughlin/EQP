@@ -598,16 +598,83 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
 
 static void cs_trilogy_handle_op_enter(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
-    R(const char*) name;
-
-    (void)handler;
-    
     printf("Enter %u\n", aligned_remaining(a));
     if (!char_select_client_is_authed(client) || aligned_remaining(a) < 2)
         return;
     
-    name = (const char*)aligned_current(a);
-    printf("Enter: %s\n", name);
+    char_select_send_client_zone_in_request((CharSelect*)protocol_handler_basic(handler), client, handler, (const char*)aligned_current(a));
+}
+
+void cs_client_trilogy_on_zone_in_failure(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) zoneShortName)
+{
+    R(PacketTrilogy*) packet    = packet_trilogy_create(B(charSelect), TrilogyOp_ZoneUnavailable, sizeof(CSTrilogy_ZoneUnavailable));
+    R(ProtocolHandler*) handler = char_select_client_handler(client);
+    Aligned w;
+    
+    aligned_init(B(charSelect), &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+    
+    aligned_write_snprintf_full_advance(&w, sizeof_field(CSTrilogy_ZoneUnavailable, shortName), "%s", zoneShortName);
+    
+    cs_trilogy_schedule_packet(handler, packet);
+}
+
+void cs_client_trilogy_on_zone_in_success(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(Server_ZoneAddress*) zoneAddr)
+{
+    R(ProtocolHandler*) handler = char_select_client_handler(client);
+    R(PacketTrilogy*) packet;
+    EQ_Time eqTime;
+    Aligned write;
+    R(Aligned*) w = &write;
+    uint32_t length;
+    uint32_t ip;
+    
+    aligned_set_basic(w, B(charSelect));
+    
+    // MotD
+    length  = zoneAddr->motdLength;
+    packet  = packet_trilogy_create(B(charSelect), TrilogyOp_MessageOfTheDay, length + 1);
+    aligned_reinit(w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+    
+    aligned_write_buffer(w, zoneAddr->messageOfTheDay, length);
+    aligned_write_byte(w, 0);
+    
+    cs_trilogy_schedule_packet(handler, packet);
+    
+    // TimeOfDay
+    packet = packet_trilogy_create(B(charSelect), TrilogyOp_TimeOfDay, sizeof(CSTrilogy_TimeOfDay));
+    aligned_reinit(w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+    
+    // This is the game world time, not real time
+    eq_time_calc(&eqTime, zoneAddr->eqTimeBaseUnixSeconds);
+    
+    // hour
+    aligned_write_uint8(w, eqTime.hour);
+    // minute
+    aligned_write_uint8(w, eqTime.minute);
+    // day
+    aligned_write_uint8(w, eqTime.day);
+    // month
+    aligned_write_uint8(w, eqTime.month);
+    // year
+    aligned_write_uint16(w, eqTime.year);
+    
+    cs_trilogy_schedule_packet(handler, packet);
+    
+    // Zone address
+    packet = packet_trilogy_create(B(charSelect), TrilogyOp_ZoneAddress, sizeof(CSTrilogy_ZoneAddress));
+    aligned_reinit(w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+    
+    // ipAddress
+    ip = zoneAddr->ipAddress;
+    aligned_write_snprintf_full_advance(w, sizeof_field(CSTrilogy_ZoneAddress, ipAddress), "%u.%u.%u.%u",
+        (ip >> 0) & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
+        
+    // zoneShortName
+    aligned_write_snprintf_full_advance(w, sizeof_field(CSTrilogy_ZoneAddress, zoneShortName), "%s", zoneAddr->shortName);
+    // portHostByteOrder
+    aligned_write_uint16(w, zoneAddr->portHostByteOrder);
+    
+    cs_trilogy_schedule_packet(handler, packet);
 }
 
 void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a)

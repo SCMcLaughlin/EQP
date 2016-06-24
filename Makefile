@@ -99,8 +99,8 @@ HCOMMON_ALL+= $(HCOMMON_SYNC)
 ##############################################################################
 DIRCOMMON_TIME= $(DIRCOMMON)time/
 BCOMMON_TIME= $(BCOMMON)time/
-_OCOMMON_TIME= eqp_clock.o timer.o timer_pool.o
-_HCOMMON_TIME= eqp_clock.h timer.h timer_pool.h
+_OCOMMON_TIME= eqp_clock.o timer.o timer_pool.o eq_time.o
+_HCOMMON_TIME= eqp_clock.h timer.h timer_pool.h eq_time.h
 OCOMMON_TIME= $(patsubst %,$(BCOMMON_TIME)%,$(_OCOMMON_TIME))
 HCOMMON_TIME= $(patsubst %,$(DIRCOMMON_TIME)%,$(_HCOMMON_TIME))
 

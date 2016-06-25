@@ -26,95 +26,6 @@ void zc_mgr_init(R(MasterIpcThread*) ipcThread, R(ZoneClusterMgr*) mgr, R(lua_St
         lua_pushlightuserdata(L, mgr);
         lua_sys_call_no_throw(B(ipcThread), L, 1, 0);
     }
-    
-    /*if (lua_sys_run_file_no_throw(B(ipcThread), L, ZONE_CLUSTER_CONFIG, 1))
-    {
-        int n;
-        int i;
-        
-        if (!lua_istable(L, -1))
-        {
-            lua_pop(L, 1);
-            log_format(B(ipcThread), LogLua, "[zc_mgr_init] Expected config script '" ZONE_CLUSTER_CONFIG "' to return a table; aborting zone cluster initialization");
-            return;
-        }
-        
-        // Get the global maxZonesPerCluster setting, if one was given
-        lua_getfield(L, -1, "maxzonespercluster");
-        if (lua_isnumber(L, -1))
-            mgr->maxZonesPerCluster = lua_tointeger(L, -1);
-        lua_pop(L, 1);
-        
-        n = lua_objlen(L, -1);
-        
-        for (i = 1; i <= n; i++)
-        {
-            R(ZoneCluster*) zc;
-            int m;
-            int j;
-            
-            lua_pushinteger(L, i);
-            lua_gettable(L, -2);
-            
-            if (!lua_istable(L, -1))
-                goto skip_cluster;
-            
-            // A Cluster entry is now on the stack
-            zc = zc_mgr_start_zone_cluster(mgr);
-            
-            // Is there a maxZones setting for this specific cluster?
-            lua_getfield(L, -1, "maxzones");
-            if (lua_isnumber(L, -1))
-                zone_cluster_set_max_zones(zc, lua_tointeger(L, -1));
-            lua_pop(L, 1);
-            
-            m = lua_objlen(L, -1);
-            
-            for (j = 1; j <= m; j++)
-            {
-                ZoneReservation res;
-                R(const char*) shortName;
-                
-                res.sourceId    = 0;
-                res.alwaysUp    = 0;
-                res.zoneCluster = zc;
-                
-                lua_pushinteger(L, j);
-                lua_gettable(L, -2);
-                
-                if (!lua_istable(L, -1))
-                    goto skip_zone;
-                
-                // A Zone entry is now on the stack
-                lua_getfield(L, -1, "shortname");
-                if (lua_isstring(L, -1))
-                    res.sourceId = zone_id_by_short_name(mgr->zoneShortNameMap, lua_tostring(L, -1), lua_objlen(L, -1));
-                lua_pop(L, 1);
-                
-                lua_getfield(L, -1, "zoneid");
-                if (lua_isnumber(L, -1))
-                    res.sourceId = lua_tointeger(L, -1);
-                
-                if (res.sourceId <= 0 || res.sourceId > EQP_SOURCE_ID_ZONE_MAX)
-                    goto skip_zone;
-                
-                //lua_getfield(L, -1, "instanceid");
-                //if (lua_isnumber(L, -1))
-                
-                //create reservation
-                //if alwayson is set, send the signal to start the zone
-                
-            skip_zone:
-                lua_pop(L, 1);
-            }
-            
-        skip_cluster:
-            lua_pop(L, 1); // pop Cluster entry
-        }
-        
-        lua_pop(L, 1);
-    }
-    */
 }
 
 void zc_mgr_deinit(R(ZoneClusterMgr*) mgr)
@@ -171,16 +82,20 @@ ZoneCluster* zc_mgr_get(R(ZoneClusterMgr*) mgr, int sourceId)
 void zc_mgr_set_max_zones_per_cluster(R(ZoneClusterMgr*) mgr, uint16_t maxPer)
 {
     mgr->maxZonesPerCluster = maxPer;
+    log_format(B(mgr->ipcThread), LogInfo, "Adjusted max zones per zone cluster to %u", maxPer);
 }
 
 ZoneCluster* zc_mgr_start_zone_cluster(R(ZoneClusterMgr*) mgr)
 {
     R(MasterIpcThread*) ipcThread   = mgr->ipcThread;
     uint16_t id                     = array_count(mgr->activeZoneClusters);
+    uint16_t port                   = mgr->nextZoneClusterPort++;
     ZoneClusterBySourceId bySrc;
     R(ZoneCluster*) zc;
     
-    zc = zone_cluster_create(ipcThread, id, mgr->nextZoneClusterPort++, mgr->maxZonesPerCluster);
+    zc = zone_cluster_create(ipcThread, id, port, mgr->maxZonesPerCluster);
+    
+    log_format(B(ipcThread), LogInfo, "Started zone_cluster%u on port %u", id, port);
     
     bySrc.sourceId      = ((int)id) + EQP_SOURCE_ID_ZONE_CLUSTER_OFFSET;
     bySrc.zoneCluster   = zc;
@@ -193,6 +108,7 @@ ZoneCluster* zc_mgr_start_zone_cluster(R(ZoneClusterMgr*) mgr)
 
 void zc_mgr_add_zone_reservation(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, R(const char*) shortName, int zoneId, int instanceId, int alwaysUp)
 {
+    R(Basic*) basic = B(mgr->ipcThread);
     ZoneReservation res;
     
     res.sourceId = 0;
@@ -210,7 +126,10 @@ void zc_mgr_add_zone_reservation(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, R(c
     res.alwaysUp    = alwaysUp;
     res.zoneCluster = zc;
     
-    array_push_back(B(mgr->ipcThread), &mgr->zoneReservations, &res);
+    array_push_back(basic, &mgr->zoneReservations, &res);
+    
+    log_format(basic, LogInfo, "zone_cluster%u: reserved sourceId %i (%s_instance%i)", zone_cluster_id(zc), res.sourceId,
+        shortName ? shortName : zone_short_name_by_id(zoneId), instanceId);
     
     zone_cluster_increment_reserved_zones(zc);
     

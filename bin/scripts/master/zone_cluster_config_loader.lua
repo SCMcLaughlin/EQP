@@ -71,13 +71,15 @@ return function(mgr)
             C.zone_cluster_set_max_zones(zc, per)
         end
         
-        for _, zone in ipairs(cluster) do
-            local name  = zone.shortname
-            local id    = zone.zoneid or 0
-            local inst  = zone.instanceid or 0
-            local up    = zone.alwaysup and 1 or 0
-            
-            C.zc_mgr_add_zone_reservation(mgr, zc, name, id, inst, up)
+        for _, zone in pairs(cluster) do
+            if type(zone) == "table" then
+                local name  = zone.shortname
+                local id    = zone.zoneid or 0
+                local inst  = zone.instanceid or 0
+                local up    = zone.alwaysup and 1 or 0
+                
+                C.zc_mgr_add_zone_reservation(mgr, zc, name, id, inst, up)
+            end
         end
     end
 end

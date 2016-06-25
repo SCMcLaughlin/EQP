@@ -195,7 +195,7 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
                 
                 newEnt->next    = newFreeIndex;
                 freeEnt         = (HashTable_Entry*)&newTbl->data[entSize * newFreeIndex];
-                hash_table_entry_copy(newEnt, oldEnt, elemSize);
+                hash_table_entry_copy(freeEnt, oldEnt, elemSize);
             }
         }
         

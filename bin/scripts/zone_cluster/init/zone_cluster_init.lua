@@ -1,4 +1,5 @@
 
+--[=[
 local ZC    = require "ZC"
 local Clock = require "Clock"
 local Timer = require "Timer"
@@ -15,3 +16,4 @@ t = Timer{seconds = 1, callback = function(timer)
     collectgarbage()
 end}
 t.x = 10
+--]=]

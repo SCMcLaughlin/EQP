@@ -3,20 +3,13 @@
 
 void zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath, R(const char*) sourceId, R(const char*) port)
 {
-    (void)ipcPath;
-    (void)masterIpcPath;
-    
     zc->sourceId = strtol(sourceId, NULL, 10) + EQP_SOURCE_ID_ZONE_CLUSTER_OFFSET;
     
     timer_pool_init(B(zc), &zc->timerPool);
     
-    // IPC
-    shm_viewer_init(&zc->shmViewerLogWriter);
-    shm_viewer_open(B(zc), &zc->shmViewerLogWriter, logWriterIpcPath, sizeof(IpcBuffer));
-    // Tell the log writer to open our log file
-    ipc_buffer_write(B(zc), shm_viewer_memory_type(&zc->shmViewerLogWriter, IpcBuffer), ServerOp_LogOpen, zc->sourceId, 0, NULL);
-    
-    core_init(C(zc), zc->sourceId, shm_viewer_memory_type(&zc->shmViewerLogWriter, IpcBuffer));
+    ipc_set_open(B(zc), &zc->ipcSet, zc->sourceId, ipcPath, masterIpcPath, logWriterIpcPath);
+
+    core_init(C(zc), zc->sourceId, ipc_set_log_writer_ipc(&zc->ipcSet));
     
     // Arrays
     zc->zoneList        = array_create_type(B(zc), ZoneBySourceId);
@@ -33,7 +26,7 @@ void zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath, R(
 void zc_deinit(R(ZC*) zc)
 {
     core_deinit(C(zc));
-    shm_viewer_close(&zc->shmViewerLogWriter);
+    ipc_set_deinit(&zc->ipcSet);
     
     if (zc->L)
     {
@@ -63,15 +56,11 @@ void zc_deinit(R(ZC*) zc)
     }
 }
 
-void ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet)
-{
-    (void)basic;
-    (void)packet;
-}
-
 void zc_main_loop(R(ZC*) zc)
 {
-    R(UdpSocket*) socket = zc->socket;
+    R(UdpSocket*) socket    = zc->socket;
+    R(IpcSet*) ipcSet       = &zc->ipcSet;
+    int sourceId            = zc->sourceId;
     
     for (;;)
     {
@@ -83,11 +72,13 @@ void zc_main_loop(R(ZC*) zc)
         udp_socket_send(socket);
         udp_socket_check_timeouts(socket);
         
-        if (zc_ipc_check(zc))
+        if (ipc_set_receive(B(zc), ipcSet))
         {
             log_format(B(zc), LogInfo, "Shutting down cleanly");
             break;
         }
+        
+        ipc_set_keep_alive(B(zc), ipcSet, sourceId);
         
         clock_sleep_milliseconds(25);
     }
@@ -121,7 +112,7 @@ void zc_start_zone(R(ZC*) zc, int sourceId)
     array_push_back(B(zc), &zc->zoneList, &zone);
     
     // Tell the log writer to open a log for this zone / instance
-    ipc_buffer_write(B(zc), shm_viewer_memory_type(&zc->shmViewerLogWriter, IpcBuffer), ServerOp_LogOpen, sourceId, 0, NULL);
+    ipc_set_log_file_open(B(zc), &zc->ipcSet, sourceId);
 }
 
 Zone* zc_get_zone_by_source_id(R(ZC*) zc, int sourceId)

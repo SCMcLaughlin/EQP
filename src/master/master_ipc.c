@@ -17,23 +17,38 @@ static int master_ipc_thread_handle_packet(R(MasterIpcThread*) ipcThread, R(Mast
 {
     ServerOp opcode     = ipc_packet_opcode(packet);
     int sourceId        = ipc_packet_source_id(packet);
+    int ret             = false;
+    ZoneCluster* zc     = NULL;
     ChildProcess* proc;
     
-    if (sourceId == EQP_SOURCE_ID_CONSOLE)
-        return console_receive(ipcThread, M, NULL, EQP_SOURCE_ID_CONSOLE, packet);
+    master_ipc_thread_lock(ipcThread);
     
-    proc = master_get_child_process(M, sourceId);
+    if (sourceId == EQP_SOURCE_ID_CONSOLE)
+    {
+        ret = console_receive(ipcThread, M, NULL, EQP_SOURCE_ID_CONSOLE, packet);
+        goto finish;
+    }
+    
+    if (sourceId >= EQP_SOURCE_ID_PROCESS_OFFSET)
+    {
+        proc = master_get_child_process(M, sourceId);
+    }
+    else
+    {
+        zc      = client_mgr_get_zone_cluster(&ipcThread->clientMgr, sourceId);
+        proc    = zone_cluster_proc(zc);
+    }
     
     if (proc == NULL)
     {
         log_format(B(ipcThread), LogError, "Received IPC request from unknown or inactive process, sourceId: %i", sourceId);
-        return false;
+        goto finish;
     }
     
     if (proc->ipc == NULL)
     {
         log_format(B(ipcThread), LogError, "Received IPC request from process with NULL IpcBuffer, sourceId: %i, pid: %u", sourceId, proc->pid);
-        return false;
+        goto finish;
     }
     
     proc_update_last_activity_time(proc);
@@ -44,9 +59,11 @@ static int master_ipc_thread_handle_packet(R(MasterIpcThread*) ipcThread, R(Mast
         break;
     
     case ServerOp_ConsoleMessage:
-        return console_receive(ipcThread, M, proc, sourceId, packet);
+        ret = console_receive(ipcThread, M, proc, sourceId, packet);
+        break;
     
     case ServerOp_ClientZoning:
+        client_mgr_handle_zone_in_from_char_select(&ipcThread->clientMgr, packet);
         break;
     
     default:
@@ -54,7 +71,9 @@ static int master_ipc_thread_handle_packet(R(MasterIpcThread*) ipcThread, R(Mast
         break;
     }
     
-    return false;
+finish:
+    master_ipc_thread_unlock(ipcThread);
+    return ret;
 }
 
 static void master_ipc_loop(R(MasterIpcThread*) ipcThread)

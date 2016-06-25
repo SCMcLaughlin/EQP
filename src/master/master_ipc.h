@@ -39,5 +39,8 @@ void    master_ipc_thread_main_loop(R(Thread*) thread);
 
 #define master_ipc_thread_lua(thread) ((thread)->L)
 #define master_ipc_thread_db(thread) ((thread)->db)
+#define master_ipc_thread_lock_init(thread) client_mgr_lock_init(&(thread)->clientMgr)
+#define master_ipc_thread_lock(thread) client_mgr_lock(&(thread)->clientMgr)
+#define master_ipc_thread_unlock(thread) client_mgr_unlock(&(thread)->clientMgr)
 
 #endif//EQP_MASTER_IPC_H

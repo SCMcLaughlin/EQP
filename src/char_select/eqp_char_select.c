@@ -182,6 +182,8 @@ void char_select_main_loop(R(CharSelect*) charSelect)
             break;
         }
         
+        ipc_set_keep_alive(B(charSelect), ipcSet, EQP_SOURCE_ID_CHAR_SELECT);
+        
         clock_sleep_milliseconds(50);
     }
 }

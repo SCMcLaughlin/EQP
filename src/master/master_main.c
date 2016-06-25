@@ -13,11 +13,11 @@ int master_main(R(Master*) M)
     {
     case Try:
         master_init(M);
-        master_start_ipc_thread(M);
-        // Start core child processes
         master_start_log_writer(M);
         master_start_login(M);
         master_start_char_select(M);
+        // Start the IPC thread now to avoid needing to hold the lock while the above processes start
+        master_start_ipc_thread(M);
         master_main_loop(M);
         break;
     

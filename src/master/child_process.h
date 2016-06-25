@@ -14,7 +14,6 @@ STRUCT_DECLARE(Master);
 STRUCT_DEFINE(ChildProcess)
 {
     IpcBuffer*  ipc;
-    AtomicMutex mutex;
     uint64_t    lastActivityTimestamp;
     uint64_t    creationTimestamp;
     pid_t       pid;

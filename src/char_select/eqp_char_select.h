@@ -10,8 +10,6 @@
 #include "eqp_string.h"
 #include "source_id.h"
 #include "server_op.h"
-#include "ipc_buffer.h"
-#include "share_mem.h"
 #include "ipc_set.h"
 #include "timer_pool.h"
 #include "timer.h"

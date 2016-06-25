@@ -58,6 +58,9 @@ function Zone._wrap(ptr)
     return zone
 end
 
+-- Lookup optimization
+Zone.ptr = LuaObject.ptr
+
 function Zone:log(str, ...)
     ZC:logFor(self:getSourceId(), str, ...)
 end

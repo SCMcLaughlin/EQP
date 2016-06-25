@@ -14,6 +14,8 @@
 #include "child_process.h"
 #include "timer_pool.h"
 #include "timer.h"
+#include "eqp_array.h"
+#include "zone_cluster.h"
 
 #define EQP_MASTER_SHM_PATH                 "shm/eqp-master-"
 #define EQP_LOG_WRITER_SHM_PATH             "shm/eqp-log-writer-"
@@ -42,15 +44,13 @@
     2) The IPC thread, which handles requests from other processes, including Console commands
     3) The database thread (mostly for group and raid management and Console commands, but also generating shared memory for e.g. items)
     
-    Thread 1 does not need to run very often; maybe once a second. Threads 2 and 3 will spend most of their time blocking on semaphores. 
+    Threads 2 and 3 will spend most of their time blocking on semaphores. 
 */
 
 STRUCT_DEFINE(Master)
 {
     // Core MUST be the first member of this struct
-    Core core;
-    
-    AtomicMutex     mutexProcList; // Locked when any child processes are being created or destroyed
+    Core            core;
     
     TimerPool       timerPool;
     
@@ -63,6 +63,7 @@ STRUCT_DEFINE(Master)
     ChildProcess    procCharSelect;
     ChildProcess    procLogWriter;
     ChildProcess    procLogin;
+    Array*          zoneClusterProcs;
     
     Timer           timerStatusChecks;
 };
@@ -78,11 +79,15 @@ void            master_main_loop(R(Master*) M);
 void            master_start_log_writer(R(Master*) M);
 void            master_start_char_select(R(Master*) M);
 void            master_start_login(R(Master*) M);
+void            master_start_zone_cluster(R(Master*) M, R(ZoneCluster*) zoneCluster, uint16_t id, uint16_t port);
 
 void            master_status_checks_callback(R(Timer*) timer);
 
 ChildProcess*   master_get_child_process(R(Master*) M, int sourceId);
 
 #define         master_db(M) core_db(C((M)))
+#define         master_lock_init(M) master_ipc_thread_lock_init(&(M)->ipcThread)
+#define         master_lock(M) master_ipc_thread_lock(&(M)->ipcThread)
+#define         master_unlock(M) master_ipc_thread_unlock(&(M)->ipcThread)
 
 #endif//EQP_MASTER_H

@@ -38,13 +38,11 @@ void client_mgr_init(R(MasterIpcThread*) ipcThread, R(ClientMgr*) mgr, R(lua_Sta
     Query query;
     R(Database*) db = master_ipc_thread_db(ipcThread);
     
-    mgr->ipcThread = ipcThread;
-    
-    atomic_mutex_init(&mgr->mutex);
-    atomic_mutex_lock(&mgr->mutex);
-    
+    mgr->ipcThread      = ipcThread;
     mgr->clientsByName  = hash_table_create_type(B(ipcThread), Client*);
-    mgr->clients        = array_create_type(B(ipcThread), Client*); //fixme: any discriminator? charId, accountId? IP?
+    mgr->clients        = array_create_type(B(ipcThread), ClientByIds);
+    
+    atomic_mutex_lock(&mgr->mutex);
     
     query_init(&query);
     query_set_userdata(&query, mgr);
@@ -61,9 +59,13 @@ void client_mgr_init(R(MasterIpcThread*) ipcThread, R(ClientMgr*) mgr, R(lua_Sta
     atomic_mutex_unlock(&mgr->mutex);
 
     lua_sys_run_file(B(ipcThread), L, EQP_MASTER_LOGIN_CONFIG, 1);
-    
     mgr->remoteAddress  = lua_sys_field_to_string(B(ipcThread), L, -1, "remoteaddress");
     mgr->localAddress   = lua_sys_field_to_string(B(ipcThread), L, -1, "localaddress");
+    lua_pop(L, 1);
+    
+    atomic_mutex_lock(&mgr->mutex);
+    zc_mgr_init(ipcThread, &mgr->zoneClusterMgr, L);
+    atomic_mutex_unlock(&mgr->mutex);
 }
 
 void client_mgr_deinit(R(ClientMgr*) mgr)
@@ -97,6 +99,8 @@ void client_mgr_deinit(R(ClientMgr*) mgr)
         array_destroy(mgr->clients);
         mgr->clients = NULL;
     }
+    
+    zc_mgr_deinit(&mgr->zoneClusterMgr);
 }
 
 uint64_t client_mgr_eq_time_base_unix_seconds(R(ClientMgr*) mgr)
@@ -115,4 +119,19 @@ String* client_mgr_message_of_the_day(R(ClientMgr*) mgr)
     str = mgr->messageOfTheDay;
     atomic_mutex_unlock(&mgr->mutex);
     return str;
+}
+
+void client_mgr_handle_zone_in_from_char_select(R(ClientMgr*) mgr, R(IpcPacket*) packet)
+{
+    R(Server_ClientZoning*) zoning;
+    R(Database*) db;
+    Query query;
+    (void)mgr;
+    (void)packet;
+    
+    if (ipc_packet_length(packet) < sizeof(Server_ClientZoning))
+        return;
+    
+    zoning  = (Server_ClientZoning*)ipc_packet_data(packet);
+    db      = client_mgr_db(mgr);
 }

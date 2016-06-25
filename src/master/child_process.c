@@ -5,7 +5,6 @@
 void proc_init(R(ChildProcess*) proc)
 {
     proc->ipc                   = NULL;
-    atomic_mutex_init(&proc->mutex);
     proc->lastActivityTimestamp = 0;
     proc->creationTimestamp     = 0;
     proc->pid                   = 0;
@@ -25,57 +24,41 @@ void proc_deinit(R(ChildProcess*) proc)
 
 void proc_create_ipc_buffer(R(Basic*) basic, R(ChildProcess*) proc, R(const char*) path)
 {
-    atomic_mutex_lock(&proc->mutex);
     ipc_buffer_shm_create_init(basic, &proc->ipc, &proc->shmCreator, &proc->shmViewer, path);
-    atomic_mutex_unlock(&proc->mutex);
 }
 
 void proc_open_ipc_buffer(R(Basic*) basic, R(ChildProcess*) proc, R(const char*) path)
 {
-    atomic_mutex_lock(&proc->mutex);
     shm_viewer_open(basic, &proc->shmViewer, path, sizeof(IpcBuffer));
     proc->ipc = shm_viewer_memory_type(&proc->shmViewer, IpcBuffer);
-    atomic_mutex_unlock(&proc->mutex);
 }
 
 void proc_start(R(ChildProcess*) proc, pid_t pid)
 {
     uint32_t time = clock_milliseconds();
     
-    atomic_mutex_lock(&proc->mutex);
-    
     proc->pid                   = pid;
     proc->lastActivityTimestamp = time;
     proc->creationTimestamp     = time;
-    
-    atomic_mutex_unlock(&proc->mutex);
 }
 
 void proc_shutdown(R(Master*) M, R(ChildProcess*) proc)
 {
-    atomic_mutex_lock(&proc->mutex);
-    
     if (proc->ipc)
     {
         ipc_buffer_write(B(M), proc->ipc, ServerOp_Shutdown, EQP_SOURCE_ID_MASTER, 0, NULL);
         proc_deinit(proc);
     }
-    
-    atomic_mutex_unlock(&proc->mutex);
 }
 
 void proc_kill(R(ChildProcess*) proc)
 {
     char command[256];
     
-    atomic_mutex_lock(&proc->mutex);
-    
     snprintf(command, sizeof(command), "kill -s 9 %i", proc->pid);
     system(command);
     
     proc_deinit(proc);
-    
-    atomic_mutex_unlock(&proc->mutex);
 }
 
 void proc_ipc_send(R(Master*) M, R(ChildProcess*) proc, ServerOp opcode, uint32_t length, R(const void*) data)
@@ -86,16 +69,10 @@ void proc_ipc_send(R(Master*) M, R(ChildProcess*) proc, ServerOp opcode, uint32_
 
 void proc_update_last_activity_time(R(ChildProcess*) proc)
 {
-    atomic_mutex_lock(&proc->mutex);
     proc->lastActivityTimestamp = clock_milliseconds();
-    atomic_mutex_unlock(&proc->mutex);
 }
 
 uint64_t proc_last_activity_time(R(ChildProcess*) proc)
 {
-    uint64_t value;
-    atomic_mutex_lock(&proc->mutex);
-    value = proc->lastActivityTimestamp;
-    atomic_mutex_unlock(&proc->mutex);
-    return value;
+    return proc->lastActivityTimestamp;
 }

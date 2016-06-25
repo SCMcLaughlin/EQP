@@ -9,9 +9,8 @@
 #include "eqp_array.h"
 #include "source_id.h"
 #include "server_op.h"
+#include "ipc_set.h"
 #include "server_structs.h"
-#include "ipc_buffer.h"
-#include "share_mem.h"
 #include "timer_pool.h"
 #include "timer.h"
 #include "zone.h"
@@ -38,11 +37,7 @@ STRUCT_DEFINE(ZC)
     //Array*      npcList;
     
     int         sourceId;
-    IpcBuffer*  ipc;
-    IpcBuffer*  ipcMaster;
-    ShmViewer   shmViewerSelf;
-    ShmViewer   shmViewerMaster;
-    ShmViewer   shmViewerLogWriter;
+    IpcSet      ipcSet;
 };
 
 void    zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath, R(const char*) sourceId, R(const char*) port);

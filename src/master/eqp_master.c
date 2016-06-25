@@ -60,11 +60,14 @@ void master_shut_down_all_child_processes(R(Master*) M)
     
     for (i = 0; i < n; i++)
     {
-        proc_shutdown(M, zone_cluster_proc(zcProcs[i]));
+        R(ZoneCluster*) zc = zcProcs[i];
+        
+        proc_shutdown(M, zone_cluster_proc(zc));
+        zone_cluster_destroy(zc);
     }
     
     // Shut down the log writer last, and give other processes some time to do any last logging
-    clock_sleep_milliseconds(250);
+    clock_sleep_milliseconds(500);
     proc_shutdown(M, &M->procLogWriter);
 
     master_unlock(M);

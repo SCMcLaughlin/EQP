@@ -32,15 +32,9 @@ void zc_mgr_deinit(R(ZoneClusterMgr*) mgr)
 {
     if (mgr->activeZoneClusters)
     {
-        R(ZoneCluster**) array  = array_data_type(mgr->activeZoneClusters, ZoneCluster*);
-        uint32_t n              = array_count(mgr->activeZoneClusters);
-        uint32_t i;
-        
-        for (i = 0; i < n; i++)
-        {
-            zone_cluster_destroy(array[i]);
-        }
-        
+        // Master is responsible for destroying the actual individual zone clusters
+        // otherwise we run into an issue where it's trying to send shutdown signals after
+        // the IPC path has already been closed.
         array_destroy(mgr->activeZoneClusters);
         mgr->activeZoneClusters = NULL;
     }
@@ -77,6 +71,19 @@ ZoneCluster* zc_mgr_get(R(ZoneClusterMgr*) mgr, int sourceId)
     }
     
     return NULL;
+}
+
+void zc_mgr_start_zone_on_cluster(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, int sourceId)
+{
+    ZoneClusterBySourceId bySrc;
+    
+    zone_cluster_increment_zone_count(zc);
+    zone_cluster_start_zone(zc, sourceId);
+    
+    bySrc.sourceId      = sourceId;
+    bySrc.zoneCluster   = zc;
+    
+    array_push_back(B(mgr->ipcThread), &mgr->zoneClustersBySourceId, &bySrc);
 }
 
 void zc_mgr_set_max_zones_per_cluster(R(ZoneClusterMgr*) mgr, uint16_t maxPer)
@@ -134,10 +141,7 @@ void zc_mgr_add_zone_reservation(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, R(c
     zone_cluster_increment_reserved_zones(zc);
     
     if (alwaysUp)
-    {
-        zone_cluster_increment_zone_count(zc);
-        zone_cluster_start_zone(zc, res.sourceId);
-    }
+        zc_mgr_start_zone_on_cluster(mgr, zc, res.sourceId);
 }
 
 #undef ZONE_CLUSTER_CONFIG

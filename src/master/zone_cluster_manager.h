@@ -37,6 +37,8 @@ void            zc_mgr_deinit(R(ZoneClusterMgr*) mgr);
 
 ZoneCluster*    zc_mgr_get(R(ZoneClusterMgr*) mgr, int sourceId);
 
+void            zc_mgr_start_zone_on_cluster(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, int sourceId);
+
 EQP_API void            zc_mgr_set_max_zones_per_cluster(R(ZoneClusterMgr*) mgr, uint16_t maxPer);
 EQP_API ZoneCluster*    zc_mgr_start_zone_cluster(R(ZoneClusterMgr*) mgr);
 EQP_API void            zc_mgr_add_zone_reservation(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, R(const char*) shortName, int zoneId, int instanceId, int alwaysUp);

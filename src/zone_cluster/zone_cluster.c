@@ -94,11 +94,10 @@ void zc_start_zone(R(ZC*) zc, int sourceId)
     zoneId = sourceId % EQP_SOURCE_ID_ZONE_INSTANCE_OFFSET;
     instId = sourceId / EQP_SOURCE_ID_ZONE_INSTANCE_OFFSET;
     
-    if (instId > EQP_ZONE_MAX_INSTANCE_ID)
+    if (instId < 0 || instId > EQP_SOURCE_ID_ZONE_INSTANCE_MAX)
         return;
     
-    //fixme: check zoneId max?
-    if (zoneId < 1)
+    if (zoneId < 1 || zoneId > EQP_SOURCE_ID_ZONE_MAX)
         return;
     
     // Make sure this zone isn't already running

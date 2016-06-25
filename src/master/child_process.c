@@ -61,10 +61,10 @@ void proc_kill(R(ChildProcess*) proc)
     proc_deinit(proc);
 }
 
-void proc_ipc_send(R(Master*) M, R(ChildProcess*) proc, ServerOp opcode, uint32_t length, R(const void*) data)
+void proc_ipc_send(R(Basic*) basic, R(ChildProcess*) proc, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data)
 {
     if (proc->ipc)
-        ipc_buffer_write(B(M), proc->ipc, opcode, EQP_SOURCE_ID_MASTER, length, data);
+        ipc_buffer_write(basic, proc->ipc, opcode, sourceId, length, data);
 }
 
 void proc_update_last_activity_time(R(ChildProcess*) proc)

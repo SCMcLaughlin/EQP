@@ -2,7 +2,7 @@
 #ifndef EQP_SOURCE_ID_H
 #define EQP_SOURCE_ID_H
 
-#define EQP_SOURCE_ID_ZONE_INSTANCE_OFFSET  1000    /* E.g.: 2054 is instance 2 of zone 54; max instance id is 999*/
+#define EQP_SOURCE_ID_ZONE_INSTANCE_OFFSET  1000    /* E.g.: 2054 is instance 2 of zone 54; max instance id is 999 */
 #define EQP_SOURCE_ID_ZONE_CLUSTER_OFFSET   1000000
 #define EQP_SOURCE_ID_PROCESS_OFFSET        2000000
 #define EQP_SOURCE_ID_MASTER                (EQP_SOURCE_ID_PROCESS_OFFSET + 1)

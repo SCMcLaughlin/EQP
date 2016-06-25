@@ -6,17 +6,19 @@
 #include "child_process.h"
 #include "eqp_alloc.h"
 #include "source_id.h"
+#include "zone_id.h"
 
 STRUCT_DECLARE(MasterIpcThread);
 
 STRUCT_DEFINE(ZoneCluster)
 {
-    ChildProcess    proc;
-    uint16_t        portHostByteOrder;
-    uint16_t        id;
-    uint16_t        maxZones;
-    uint16_t        reservedZones;
-    uint16_t        zoneCount;
+    ChildProcess        proc;
+    uint16_t            portHostByteOrder;
+    uint16_t            id;
+    uint16_t            maxZones;
+    uint16_t            reservedZones;
+    uint16_t            zoneCount;
+    MasterIpcThread*    ipcThread;
 };
 
 STRUCT_DEFINE(ZoneClusterBySourceId)
@@ -27,6 +29,8 @@ STRUCT_DEFINE(ZoneClusterBySourceId)
 
 ZoneCluster*    zone_cluster_create(R(MasterIpcThread*) ipcThread, uint16_t id, uint16_t port, uint16_t maxZones);
 #define         zone_cluster_destroy(zc) free(zc)
+
+void            zone_cluster_start_zone(R(ZoneCluster*) zc, int sourceId);
 
 #define         zone_cluster_proc(zc) (&(zc)->proc)
 #define         zone_cluster_source_id(zc) (((int)((zc)->id)) + EQP_SOURCE_ID_ZONE_CLUSTER_OFFSET)

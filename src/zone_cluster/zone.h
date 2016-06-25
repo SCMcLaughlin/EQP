@@ -10,8 +10,6 @@
 #include "mob.h"
 #include "zone_id.h"
 
-#define EQP_ZONE_MAX_INSTANCE_ID 999
-
 STRUCT_DECLARE(ZC);
 
 STRUCT_DEFINE(Zone)

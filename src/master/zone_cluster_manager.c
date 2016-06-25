@@ -135,8 +135,8 @@ void zc_mgr_add_zone_reservation(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, R(c
     
     if (alwaysUp)
     {
-        //fixme: start the zone
         zone_cluster_increment_zone_count(zc);
+        zone_cluster_start_zone(zc, res.sourceId);
     }
 }
 

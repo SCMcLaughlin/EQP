@@ -289,10 +289,7 @@ static void tcp_client_reconnect_callback(R(Timer*) timer)
         
         errmsg = exception_get_message(B(charSelect));
         if (string_length(errmsg) > 0)
-        {
             log_format(B(charSelect), LogNetwork, "%s", string_data(errmsg));
-            printf("Error: %s\n", string_data(errmsg)); //fixme: remove this line later
-        }
         
         exception_handled(B(charSelect));
         break;
@@ -385,8 +382,6 @@ void tcp_client_handle_packet(R(TcpClient*) client)
     
     opcode = aligned_read_uint16(a);
     aligned_advance(a, sizeof(uint16_t)); // We already know the packet's data length
-    
-    printf("TCP packet, opcode: 0x%04x, length: %u\n", opcode, aligned_remaining(a));
     
     switch (opcode)
     {

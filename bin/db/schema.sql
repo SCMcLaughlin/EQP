@@ -56,47 +56,50 @@ END;
 -- but we really have no reason to split them into their own table... 
 -- only used for char select, anyway.
 CREATE TABLE character (
-    character_id    INTEGER PRIMARY KEY,
-    fk_name_id_pair INT,
-    name            TEXT    UNIQUE,
-    surname         TEXT,
-    level           INT     DEFAULT 1,
-    class           INT     DEFAULT 1,
-    race            INT     DEFAULT 1,
-    zone_id         INT     DEFAULT 1,
-    instance_id     INT     DEFAULT 0,
-    gender          INT     DEFAULT 0,
-    face            INT     DEFAULT 0,
-    deity           INT     DEFAULT 140,
-    x               REAL    DEFAULT 0,
-    y               REAL    DEFAULT 0,
-    z               REAL    DEFAULT 0,
-    current_hp      INT     DEFAULT 10,
-    current_mana    INT     DEFAULT 0,
-    experience      INT     DEFAULT 0,
-    base_str        INT     DEFAULT 0,
-    base_sta        INT     DEFAULT 0,
-    base_dex        INT     DEFAULT 0,
-    base_agi        INT     DEFAULT 0,
-    base_int        INT     DEFAULT 0,
-    base_wis        INT     DEFAULT 0,
-    base_cha        INT     DEFAULT 0,
-    material0       INT     DEFAULT 0,
-    material1       INT     DEFAULT 0,
-    material2       INT     DEFAULT 0,
-    material3       INT     DEFAULT 0,
-    material4       INT     DEFAULT 0,
-    material5       INT     DEFAULT 0,
-    material6       INT     DEFAULT 0,
-    material7       INT     DEFAULT 0,
-    material8       INT     DEFAULT 0,
-    tint0           INT     DEFAULT 0,
-    tint1           INT     DEFAULT 0,
-    tint2           INT     DEFAULT 0,
-    tint3           INT     DEFAULT 0,
-    tint4           INT     DEFAULT 0,
-    tint5           INT     DEFAULT 0,
-    tint6           INT     DEFAULT 0
+    character_id        INTEGER PRIMARY KEY,
+    fk_name_id_pair     INT,
+    name                TEXT    UNIQUE,
+    surname             TEXT,
+    level               INT     DEFAULT 1,
+    class               INT     DEFAULT 1,
+    race                INT     DEFAULT 1,
+    zone_id             INT     DEFAULT 1,
+    instance_id         INT     DEFAULT 0,
+    gender              INT     DEFAULT 0,
+    face                INT     DEFAULT 0,
+    deity               INT     DEFAULT 140,
+    x                   REAL    DEFAULT 0,
+    y                   REAL    DEFAULT 0,
+    z                   REAL    DEFAULT 0,
+    current_hp          INT     DEFAULT 10,
+    current_mana        INT     DEFAULT 0,
+    current_endurance   INT     DEFAULT 0,
+    experience          INT     DEFAULT 0,
+    base_str            INT     DEFAULT 0,
+    base_sta            INT     DEFAULT 0,
+    base_dex            INT     DEFAULT 0,
+    base_agi            INT     DEFAULT 0,
+    base_int            INT     DEFAULT 0,
+    base_wis            INT     DEFAULT 0,
+    base_cha            INT     DEFAULT 0,
+    fk_guild_id         INT     DEFAULT 0,
+    guild_rank          INT     DEFAULT 0,
+    material0           INT     DEFAULT 0,
+    material1           INT     DEFAULT 0,
+    material2           INT     DEFAULT 0,
+    material3           INT     DEFAULT 0,
+    material4           INT     DEFAULT 0,
+    material5           INT     DEFAULT 0,
+    material6           INT     DEFAULT 0,
+    material7           INT     DEFAULT 0,
+    material8           INT     DEFAULT 0,
+    tint0               INT     DEFAULT 0,
+    tint1               INT     DEFAULT 0,
+    tint2               INT     DEFAULT 0,
+    tint3               INT     DEFAULT 0,
+    tint4               INT     DEFAULT 0,
+    tint5               INT     DEFAULT 0,
+    tint6               INT     DEFAULT 0
 );
 
 CREATE INDEX index_character_account_id_and_name ON character (fk_name_id_pair, name);
@@ -105,9 +108,25 @@ CREATE TABLE inventory (
     character_id    INT,
     slot_id         INT,
     aug_slot_id     INT DEFAULT 0,
-    item_id         INT,
     stack_amount    INT DEFAULT 1,
     charges         INT DEFAULT 0,
+    item_id         INT
+);
+
+-- Why not PRIMARY KEY (character_id, slot_id, aug_slot_id)?
+-- Because the "cursor queue" will expect multiple entries to
+-- have slot_id = 30 and aug_slot_id = 0
+CREATE INDEX index_inventory_character_id ON inventory (character_id);
+
+CREATE TABLE skill (
+    character_id    INT,
+    skill_id        INT,
+    value           INT,
     
-    PRIMARY KEY(character_id, slot_id, aug_slot_id)
+    PRIMARY KEY (character_id, skill_id)
+);
+
+CREATE TABLE guild (
+    guild_id    INTEGER PRIMARY KEY,
+    name        TEXT    UNIQUE
 );

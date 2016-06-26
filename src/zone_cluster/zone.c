@@ -34,7 +34,7 @@ void zone_destroy(R(ZC*) zc, R(Zone*) zone)
         zone->mobsByPosition = NULL;
     }
     
-    zc_lua_destroy_object(zc, (LuaObject*)zone);
+    zc_lua_destroy_object(zc, &zone->luaObj);
     
     free(zone);
 }

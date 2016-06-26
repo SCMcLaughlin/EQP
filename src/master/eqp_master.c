@@ -147,10 +147,7 @@ static void master_start_process(R(Master*) M, R(const char*) binPath, R(ChildPr
 
 void master_start_char_select(R(Master*) M)
 {
-    //master_start_process(M, BIN_CHAR_SELECT, &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH, NULL, NULL);
-    
-    //temp:
-    proc_create_ipc_buffer(B(M), &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH);
+    master_start_process(M, BIN_CHAR_SELECT, &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH, NULL, NULL);
 }
 
 void master_start_login(R(Master*) M)
@@ -228,8 +225,8 @@ static void master_check_child_procs_status(R(Master*) M)
     if ((time - proc_last_activity_time(&M->procLogin)) >= EQP_CHILD_PROC_TIMEOUT_MILLISECONDS)
         master_restart_proc(M, &M->procLogin, EQP_SOURCE_ID_LOGIN, BIN_LOGIN, EQP_LOGIN_SHM_PATH, NULL, NULL);
 
-    //if ((time - proc_last_activity_time(&M->procCharSelect)) >= EQP_CHILD_PROC_TIMEOUT_MILLISECONDS)
-    //    master_restart_proc(M, &M->procCharSelect, EQP_SOURCE_ID_CHAR_SELECT, BIN_CHAR_SELECT, EQP_CHAR_SELECT_SHM_PATH, NULL, NULL);
+    if ((time - proc_last_activity_time(&M->procCharSelect)) >= EQP_CHILD_PROC_TIMEOUT_MILLISECONDS)
+        master_restart_proc(M, &M->procCharSelect, EQP_SOURCE_ID_CHAR_SELECT, BIN_CHAR_SELECT, EQP_CHAR_SELECT_SHM_PATH, NULL, NULL);
     
     (void)zcProcs;
     (void)n;

@@ -38,4 +38,15 @@ STRUCT_DEFINE(Inventory)
     Array*  cursorQueue;
 };
 
+ENUM_DEFINE(InvSlot)
+{
+    InvSlot_Head,
+    InvSlot_Cursor = 30,
+};
+
+void    inventory_init(R(Basic*) basic, R(Inventory*) inv);
+void    inventory_deinit(R(Inventory*) inv);
+
+void    inventory_add_from_database(R(Basic*) basic, R(Inventory*) inv, R(InventorySlot*) slot);
+
 #endif//EQP_INVENTORY_H

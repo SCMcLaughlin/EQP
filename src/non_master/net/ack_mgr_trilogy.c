@@ -91,8 +91,6 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
     InputPacketTrilogy input;
     R(InputPacketTrilogy*) ptr;
     
-    printf("ack_mgr_trilogy_recv_packet ackReq 0x%04x, nextAck 0x%04x\n", ackRequest, nextAck);
-    
     if (ackRequest == nextAck && fragCount == 0)
     {
         network_client_trilogy_set_next_ack_request_expected(&ackMgr->client, nextAck + 1);
@@ -151,12 +149,10 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
     {
         R(InputPacketTrilogy*) packet = &ptr[i];
         
-        printf("[%u] ackRequest: 0x%04x\n", i, packet->ackRequest);
         if (packet->ackRequest == 0)
             break;
         
         fragCount = packet->fragCount;
-        printf("[%u] fragCount: %u\n", i, fragCount);
         
         if (fragCount == 0)
         {
@@ -165,14 +161,12 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
         }
         else
         {
-            printf("[%u] %u >= %u?\n", i, fragCount, n);
             if (fragCount > n)
                 break;
             
             length += packet->length;
             frags++;
             
-            printf("[%u] frags vs fragCount: %u vs %u\n", i, frags, fragCount);
             if (frags == fragCount)
             {
                 diff += frags;
@@ -209,10 +203,7 @@ void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*)
     if (!noAckRequest)
     {
         if (ackMgr->nextAckToRequest == 0)
-        {
-            //header |= PacketTrilogyIsFirstPacket;
-            ackMgr->nextAckToRequest = 0x0001;//random_uint16() | 1; // Make sure the final value can't be zero
-        }
+            ackMgr->nextAckToRequest = 0x0001; //fixme: do we even need to bother with this? can we just start from 0?
         
         wrapper.ackRequest = ackMgr->nextAckToRequest;
         ackMgr->nextAckToRequest += fragCount;

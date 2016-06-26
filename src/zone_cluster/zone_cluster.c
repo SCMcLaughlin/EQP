@@ -11,9 +11,9 @@ void zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath, R(
 
     core_init(C(zc), zc->sourceId, ipc_set_log_writer_ipc(&zc->ipcSet));
     
-    // Arrays
-    zc->zoneList        = array_create_type(B(zc), ZoneBySourceId);
-    zc->expectedClients = array_create_type(B(zc), Client*);
+    // Containers
+    zc->zoneList                = array_create_type(B(zc), ZoneBySourceId);
+    zc->expectedClientsByName   = hash_table_create_type(B(zc), Client*);
     
     // Lua
     zc_lua_init(zc);
@@ -53,6 +53,12 @@ void zc_deinit(R(ZC*) zc)
         
         array_destroy(zc->zoneList);
         zc->zoneList = NULL;
+    }
+    
+    if (zc->expectedClientsByName)
+    {
+        hash_table_destroy(zc->expectedClientsByName);
+        zc->expectedClientsByName = NULL;
     }
 }
 
@@ -133,18 +139,12 @@ static void zc_expected_client_timeout_callback(R(Timer*) timer)
 {
     R(Client*) client   = timer_userdata_type(timer, Client);
     R(ZC*) zc           = client_zone_cluster(client);
-    R(Client**) array   = array_data_type(zc->expectedClients, Client*);
-    uint32_t n          = array_count(zc->expectedClients);
-    uint32_t i;
+    R(String*) name     = client_name(client);
     
-    for (i = 0; i < n; i++)
+    if (hash_table_get_by_str(zc->expectedClientsByName, name))
     {
-        if (client == array[i])
-        {
-            client_drop(client);
-            array_swap_and_pop(zc->expectedClients, i);
-            break;
-        }
+        hash_table_remove_by_str(zc->expectedClientsByName, name);
+        client_drop(client);
     }
     
     timer_destroy(timer);
@@ -174,7 +174,31 @@ void zc_client_expected_to_zone_in(R(ZC*) zc, int sourceId, R(IpcPacket*) packet
     */
     eqp_timer_create(B(zc), zc_timer_pool(zc), EQP_CLIENT_ZONE_IN_EXPECTED_TIMEOUT, zc_expected_client_timeout_callback, client, true);
     
-    array_push_back(B(zc), &zc->expectedClients, (void*)&client);
+    hash_table_set_by_cstr(B(zc), &zc->expectedClientsByName, zoning->characterName, strlen(zoning->characterName), (void*)&client);
+}
+
+void zc_client_match_with_expected(R(ZC*) zc, R(Client*) clientStub, R(ProtocolHandler*) handler, R(const char*) name)
+{
+    // Working with the assumption that the IPC notification of this zone in (as handled by zc_client_expected_to_zone_in() above)
+    // will always occur before the client connects and sends enough UDP packets to trigger this call.
+    uint32_t len        = strlen(name);
+    R(Client**) pclient = hash_table_get_type_by_cstr(zc->expectedClientsByName, name, len, Client*);
+    
+    if (pclient)
+    {
+        R(Client*) client = *pclient;
+        
+        hash_table_remove_by_cstr(zc->expectedClientsByName, name, len);
+        
+        client_set_handler(client, handler);
+        client_catch_up_with_loading_progress(client);
+    }
+    else
+    {
+        protocol_handler_drop(handler);
+    }
+    
+    free(clientStub);
 }
 
 /* LuaJIT API */

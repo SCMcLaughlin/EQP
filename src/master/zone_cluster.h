@@ -9,6 +9,7 @@
 #include "zone_id.h"
 
 STRUCT_DECLARE(MasterIpcThread);
+STRUCT_DECLARE(Client);
 
 STRUCT_DEFINE(ZoneCluster)
 {
@@ -32,10 +33,15 @@ ZoneCluster*    zone_cluster_create(R(MasterIpcThread*) ipcThread, uint16_t id, 
 
 void            zone_cluster_start_zone(R(ZoneCluster*) zc, int sourceId);
 
+void            zone_cluster_ipc_send(R(ZoneCluster*) zc, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data);
+void            zone_cluster_inform_of_client_zoning_in(R(ZoneCluster*) zc, R(Client*) client, int sourceId);
+
 #define         zone_cluster_proc(zc) (&(zc)->proc)
 #define         zone_cluster_source_id(zc) (((int)((zc)->id)) + EQP_SOURCE_ID_ZONE_CLUSTER_OFFSET)
 #define         zone_cluster_port(zc) ((zc)->portHostByteOrder)
 #define         zone_cluster_id(zc) ((zc)->id)
+
+#define         zone_cluster_has_free_space(zc) ((zc)->zoneCount < (zc)->maxZones)
 
 #define         zone_cluster_increment_reserved_zones(zc) ((zc)->reservedZones++)
 #define         zone_cluster_increment_zone_count(zc) ((zc)->zoneCount++)

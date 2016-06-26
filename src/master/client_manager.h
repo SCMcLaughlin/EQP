@@ -45,11 +45,9 @@ STRUCT_DEFINE(ClientMgr)
 void        client_mgr_init(R(MasterIpcThread*) ipcThread, R(ClientMgr*) mgr, R(lua_State*) L);
 void        client_mgr_deinit(R(ClientMgr*) mgr);
 
-uint64_t    client_mgr_eq_time_base_unix_seconds(R(ClientMgr*) mgr);
-String*     client_mgr_message_of_the_day(R(ClientMgr*) mgr);
-
 void        client_mgr_handle_zone_in_from_char_select(R(ClientMgr*) mgr, R(IpcPacket*) packet);
 
+#define     client_mgr_get_or_start_zone_cluster(mgr, sourceId) zc_mgr_get_or_start(&(mgr)->zoneClusterMgr, (sourceId))
 #define     client_mgr_get_zone_cluster(mgr, sourceId) zc_mgr_get(&(mgr)->zoneClusterMgr, (sourceId))
 
 #define     client_mgr_db(mgr) master_ipc_thread_db((mgr)->ipcThread)

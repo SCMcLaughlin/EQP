@@ -16,11 +16,11 @@ void query_deinit(R(Query*) query)
     query->stmt = NULL;
 }
 
-void query_set_db_and_stmt(R(Query*) query, R(Database*) db, R(sqlite3_stmt*) stmt)
+void query_set_db_and_stmt(R(Query*) query, R(Database*) db, R(sqlite3_stmt*) stmt, uint32_t queryId)
 {
     query->stmt         = stmt;
     query->database     = db;
-    query->queryId      = db_get_next_query_id(db);
+    query->queryId      = queryId;
     query->timestamp    = clock_microseconds();
 }
 

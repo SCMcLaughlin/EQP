@@ -57,13 +57,14 @@ END;
 -- only used for char select, anyway.
 CREATE TABLE character (
     character_id    INTEGER PRIMARY KEY,
-    fk_account_id   INT,
+    fk_name_id_pair INT,
     name            TEXT    UNIQUE,
     surname         TEXT,
     level           INT     DEFAULT 1,
     class           INT     DEFAULT 1,
     race            INT     DEFAULT 1,
     zone_id         INT     DEFAULT 1,
+    instance_id     INT     DEFAULT 0,
     gender          INT     DEFAULT 0,
     face            INT     DEFAULT 0,
     deity           INT     DEFAULT 140,
@@ -98,28 +99,15 @@ CREATE TABLE character (
     tint6           INT     DEFAULT 0
 );
 
-CREATE INDEX index_character_account_id ON character (fk_account_id);
-CREATE INDEX index_character_name ON character (name);
+CREATE INDEX index_character_account_id_and_name ON character (fk_name_id_pair, name);
 
 CREATE TABLE inventory (
     character_id    INT,
     slot_id         INT,
+    aug_slot_id     INT DEFAULT 0,
     item_id         INT,
     stack_amount    INT DEFAULT 1,
     charges         INT DEFAULT 0,
     
-    PRIMARY KEY(character_id, slot_id)
-);
-
---SELECT inv.slot_id, inv.item_id, aug.aug_slot, aug.aug_item_id FROM inventory inv
---JOIN inventory_augment aug ON aug.character_id = inv.character_id AND aug.inventory_slot_id = inv.slot_id
---WHERE inv.character_id = ?
---ORDER BY inv.slot_id
-CREATE TABLE inventory_augment (
-    character_id        INT,
-    inventory_slot_id   INT,
-    aug_slot            INT,
-    aug_item_id         INT,
-    
-    PRIMARY KEY(character_id, inventory_slot_id, aug_slot)
+    PRIMARY KEY(character_id, slot_id, aug_slot_id)
 );

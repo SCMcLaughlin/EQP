@@ -9,6 +9,7 @@
 #include "eqp_clock.h"
 #include "eqp_log.h"
 #include <sqlite3.h>
+#include <stdatomic.h>
 
 #define EQP_SQLITE_MAIN_DATABASE_PATH   "db/eqp.db"
 #define EQP_SQLITE_MAIN_SCHEMA_PATH     "db/schema.sql"
@@ -22,7 +23,7 @@ STRUCT_DEFINE(Database)
     sqlite3*    sqlite;
     DbThread*   dbThread;
     String*     dbPath;
-    uint32_t    nextQueryId;
+    atomic_uint nextQueryId;
 };
 
 EQP_API Database*   db_create(R(Core*) core);
@@ -41,6 +42,6 @@ EQP_API void        db_schedule(R(Database*) db, R(Query*) query);
 #define             db_get_core(db) ((db)->core)
 #define             db_get_sqlite(db) ((db)->sqlite)
 #define             db_get_path_cstr(db) (string_data((db)->dbPath))
-#define             db_get_next_query_id(db) (++(db)->nextQueryId)
+#define             db_get_next_query_id(db) atomic_fetch_add(&(db)->nextQueryId, 1)
 
 #endif//EQP_DATABASE_H

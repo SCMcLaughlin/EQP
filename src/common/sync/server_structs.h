@@ -11,7 +11,7 @@ STRUCT_DEFINE(Server_ClientZoning)
     int64_t     characterId;
     bool        isLocal;
     char        accountName[64];
-    char        characterName[64];
+    char        characterName[32];
 };
 
 STRUCT_DEFINE(Server_ClientZoningReject)
@@ -23,7 +23,7 @@ STRUCT_DEFINE(Server_ClientZoningReject)
 STRUCT_DEFINE(Server_ZoneAddress)
 {
     uint32_t    accountId;
-    uint32_t    ipAddress;
+    char        ipAddress[128];
     uint16_t    portHostByteOrder;
     char        shortName[32];
     uint64_t    eqTimeBaseUnixSeconds;

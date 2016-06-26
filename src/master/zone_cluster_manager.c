@@ -58,6 +58,75 @@ void zc_mgr_deinit(R(ZoneClusterMgr*) mgr)
     }
 }
 
+static ZoneCluster* zc_mgr_start_zone_from_reserved_list(R(ZoneClusterMgr*) mgr, int zoneSourceId)
+{
+    R(ZoneReservation*) array   = array_data_type(mgr->zoneReservations, ZoneReservation);
+    uint32_t n                  = array_count(mgr->zoneReservations);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        R(ZoneReservation*) res = &array[i];
+        
+        if (res->sourceId == zoneSourceId)
+        {
+            R(ZoneCluster*) zc = res->zoneCluster;
+            
+            zc_mgr_start_zone_on_cluster(mgr, zc, zoneSourceId);
+            return zc;
+        }
+    }
+    
+    return NULL;
+}
+
+static ZoneCluster* zc_mgr_start_zone_from_free_space(R(ZoneClusterMgr*) mgr, int zoneSourceId)
+{
+    R(ZoneCluster**) array  = array_data_type(mgr->activeZoneClusters, ZoneCluster*);
+    uint32_t n              = array_count(mgr->activeZoneClusters);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        R(ZoneCluster*) zc = array[i];
+        
+        if (zone_cluster_has_free_space(zc))
+        {
+            zc_mgr_start_zone_on_cluster(mgr, zc, zoneSourceId);
+            return zc;
+        }
+    }
+    
+    return NULL;
+}
+
+ZoneCluster* zc_mgr_get_or_start(R(ZoneClusterMgr*) mgr, int zoneSourceId)
+{
+    R(ZoneCluster*) zc;
+    
+    // Is the zone already running?
+    zc = zc_mgr_get(mgr, zoneSourceId);
+    if (zc)
+        goto ret;
+    
+    // Is the zone reserved by an active ZoneCluster, but not yet started?
+    zc = zc_mgr_start_zone_from_reserved_list(mgr, zoneSourceId);
+    if (zc)
+        goto ret;
+    
+    // Is there an active ZoneCluster with space for another zone?
+    zc = zc_mgr_start_zone_from_free_space(mgr, zoneSourceId);
+    if (zc)
+        goto ret;
+    
+    // If all else fails, start a brand new ZoneCluster process
+    zc = zc_mgr_start_zone_cluster(mgr);
+    zc_mgr_start_zone_on_cluster(mgr, zc, zoneSourceId);
+    
+ret:
+    return zc;
+}
+
 ZoneCluster* zc_mgr_get(R(ZoneClusterMgr*) mgr, int sourceId)
 {
     R(ZoneClusterBySourceId*) array = array_data_type(mgr->zoneClustersBySourceId, ZoneClusterBySourceId);

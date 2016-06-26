@@ -35,6 +35,7 @@ STRUCT_DEFINE(ZoneReservation)
 void            zc_mgr_init(R(MasterIpcThread*) ipcThread, R(ZoneClusterMgr*) mgr, R(lua_State*) L);
 void            zc_mgr_deinit(R(ZoneClusterMgr*) mgr);
 
+ZoneCluster*    zc_mgr_get_or_start(R(ZoneClusterMgr*) mgr, int zoneSourceId);
 ZoneCluster*    zc_mgr_get(R(ZoneClusterMgr*) mgr, int sourceId);
 
 void            zc_mgr_start_zone_on_cluster(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, int sourceId);

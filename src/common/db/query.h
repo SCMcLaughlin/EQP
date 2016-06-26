@@ -9,6 +9,7 @@
 
 #define QUERY_HAS_RESULTS -1
 #define QUERY_NOT_YET_RUN -2
+#define QUERY_CALC_LENGTH -1
 
 STRUCT_DECLARE(Core);
 STRUCT_DECLARE(Database);
@@ -42,7 +43,7 @@ STRUCT_DEFINE(Query)
 void        query_init(R(Query*) query);
 void        query_deinit(R(Query*) query);
 
-void        query_set_db_and_stmt(R(Query*) query, R(Database*) db, R(sqlite3_stmt*) stmt);
+void        query_set_db_and_stmt(R(Query*) query, R(Database*) db, R(sqlite3_stmt*) stmt, uint32_t queryId);
 #define     query_set_state(q, st) ((q)->state = (st))
 #define     query_set_callback(q, cb) ((q)->callback = (cb))
 void        query_update_last_insert_id(R(Query*) query);

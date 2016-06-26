@@ -23,7 +23,8 @@ void db_init(R(Core*) core, R(Database*) db)
     db->sqlite      = NULL;
     db->dbThread    = core_db_thread(core);
     db->dbPath      = NULL;
-    db->nextQueryId = 0;
+    atomic_init(&db->nextQueryId, 1);
+    //db->nextQueryId = 0;
 }
 
 void db_deinit(R(Database*) db)
@@ -122,9 +123,11 @@ void db_prepare(R(Database*) db, R(Query*) query, R(const char*) sql, int len, Q
     
     if (rc == SQLITE_OK)
     {
-        query_set_db_and_stmt(query, db, stmt);
+        uint32_t queryId = db_get_next_query_id(db);
+        
+        query_set_db_and_stmt(query, db, stmt, queryId);
         log_format(B(db->core), LogSql, "Prepared query %u against database '%s' in %llu microseconds. SQL: \"%s\"",
-            db->nextQueryId, string_data(db->dbPath), perf_microseconds(&timer), sql);
+            queryId, string_data(db->dbPath), perf_microseconds(&timer), sql);
         return;
     }
     

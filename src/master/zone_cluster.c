@@ -53,6 +53,16 @@ void zone_cluster_inform_of_client_zoning_in(R(ZoneCluster*) zc, R(Client*) clie
     zone_cluster_ipc_send(zc, ServerOp_ClientZoning, sourceId, sizeof(zoning), &zoning);
 }
 
+int zone_cluster_has_free_space(R(ZoneCluster*) zc)
+{
+    // Use signed ints to avoid underflow when reserved > max
+    int maxZones    = zc->maxZones;
+    int reserved    = zc->reservedZones;
+    int count       = zc->zoneCount;
+    
+    return (count < (maxZones - reserved));
+}
+
 void zone_cluster_set_max_zones(R(ZoneCluster*) zc, uint16_t maxZones)
 {
     zc->maxZones = maxZones;

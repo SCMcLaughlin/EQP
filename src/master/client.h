@@ -6,6 +6,7 @@
 #include "zone_cluster.h"
 #include "source_id.h"
 #include "server_structs.h"
+#include "eqp_alloc.h"
 
 STRUCT_DECLARE(ClientMgr);
 

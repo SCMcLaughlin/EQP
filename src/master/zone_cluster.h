@@ -41,7 +41,7 @@ void            zone_cluster_inform_of_client_zoning_in(R(ZoneCluster*) zc, R(Cl
 #define         zone_cluster_port(zc) ((zc)->portHostByteOrder)
 #define         zone_cluster_id(zc) ((zc)->id)
 
-#define         zone_cluster_has_free_space(zc) ((zc)->zoneCount < (zc)->maxZones)
+int             zone_cluster_has_free_space(R(ZoneCluster*) zc);
 
 #define         zone_cluster_increment_reserved_zones(zc) ((zc)->reservedZones++)
 #define         zone_cluster_increment_zone_count(zc) ((zc)->zoneCount++)

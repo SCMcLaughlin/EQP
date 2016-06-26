@@ -39,24 +39,51 @@ void client_on_disconnect(R(void*) vclient, int isLinkdead)
     printf("DISCONNECT (%s)\n", isLinkdead ? "explicit" : "timeout");
 }
 
+static void client_load_skills_callback(R(Query*) query)
+{
+    R(Client*) client   = query_userdata_type(query, Client);
+    R(Skills*) skills   = &client->skills;
+    
+    while (query_select(query))
+    {
+        uint32_t skillId    = query_get_int(query, 1);
+        uint32_t value      = query_get_int(query, 2);
+        
+        skills_set_from_db(skills, skillId, value);
+    }
+    
+    client->loaded.skills = true;
+    
+    if (client->loaded.connection)
+        client_check_loading_finished(client);
+    
+    client_drop(client);
+}
+
 static void client_load_stats_callback(R(Query*) query)
 {
     R(Client*) client = query_userdata_type(query, Client);
+    R(Database*) db;
+    Query q;
     
     while (query_select(query))
     {
         
+        //stuff
+        //skills_init(&client->skills, class, level);
     }
     
     client->loaded.stats = true;
     
-    if (client->loaded.connection)
-    {
-        //send packet
-        client_check_loading_finished(client);
-    }
+    // Ref to this client carries over into the following query
     
-    client_drop(client);
+    // Skills
+    db = core_db(C(client_zone_cluster(client)));
+    query_init(&q);
+    query_set_userdata(&q, client);
+    db_prepare_literal(db, &q, "SELECT skillId, value FROM skills WHERE character_id = ?", client_load_skills_callback);
+    query_bind_int64(&q, 1, client_character_id(client));
+    db_schedule(db, &q);
 }
 
 static void client_load_inventory_callback(R(Query*) query)
@@ -82,34 +109,41 @@ static void client_load_inventory_callback(R(Query*) query)
     client->loaded.inventory = true;
     
     if (client->loaded.connection)
-    {
-        //send packet
         client_check_loading_finished(client);
-    }
     
     client_drop(client);
 }
 
-static void client_load_skills_callback(R(Query*) query)
+static void client_load_spellbook_callback(R(Query*) query)
 {
-    R(Client*) client   = query_userdata_type(query, Client);
-    R(Skills*) skills   = &client->skills;
+    R(Client*) client = query_userdata_type(query, Client);
     
     while (query_select(query))
     {
-        uint32_t skillId    = query_get_int(query, 1);
-        uint32_t value      = query_get_int(query, 2);
         
-        skills_set_from_db(skills, skillId, value);
     }
     
-    client->loaded.skills = true;
+    client->loaded.spellbook = true;
     
     if (client->loaded.connection)
-    {
-        //send packet
         client_check_loading_finished(client);
+    
+    client_drop(client);
+}
+
+static void client_load_memmed_spells_callback(R(Query*) query)
+{
+    R(Client*) client = query_userdata_type(query, Client);
+    
+    while (query_select(query))
+    {
+        
     }
+    
+    client->loaded.memmedSpells = true;
+    
+    if (client->loaded.connection)
+        client_check_loading_finished(client);
     
     client_drop(client);
 }
@@ -125,7 +159,7 @@ Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
     atomic_init(&client->refCount, 1);
     mob_init_client(&client->mob, zc, zone, zoning);
     inventory_init(B(zc), &client->inventory);
-    skills_init(&client->skills);
+    skills_preinit(&client->skills);
     
     client->isLocal     = zoning->isLocal;
     client->characterId = zoning->characterId;
@@ -139,8 +173,8 @@ Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
     query_set_userdata(&query, client);
     db_prepare_literal(db, &query,
         "SELECT "
-            "surname, level, class, race, gender, face, deity, x, y, z, current_hp, current_mana, current_endurance, experience, "
-            "base_str, base_sta, base_dex, base_agi, base_int, base_wis, base_cha, fk_guild_id, guild_rank "
+            "surname, level, class, race, gender, face, deity, x, y, z, heading, current_hp, current_mana, current_endurance, experience, "
+            "base_str, base_sta, base_dex, base_agi, base_int, base_wis, base_cha, fk_guild_id, guild_rank, harmtouch_timestamp "
         "FROM character WHERE character_id = ?", client_load_stats_callback);
     query_bind_int64(&query, 1, zoning->characterId);
     db_schedule(db, &query);
@@ -157,11 +191,23 @@ Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
     query_bind_int64(&query, 1, zoning->characterId);
     db_schedule(db, &query);
     
-    // Skills
+    // Spellbook
     client_grab(client);
     query_init(&query);
     query_set_userdata(&query, client);
-    db_prepare_literal(db, &query, "SELECT skillId, value FROM skills WHERE character_id = ?", client_load_skills_callback);
+    db_prepare_literal(db, &query, 
+        "SELECT slot_id, spell_id FROM spellbook WHERE character_id = ? ORDER BY slot_id ASC",
+        client_load_spellbook_callback);
+    query_bind_int64(&query, 1, zoning->characterId);
+    db_schedule(db, &query);
+    
+    // Memorized spells
+    client_grab(client);
+    query_init(&query);
+    query_set_userdata(&query, client);
+    db_prepare_literal(db, &query, 
+        "SELECT slot_id, spell_id, recast_timestamp_milliseconds FROM memmed_spells WHERE character_id = ?",
+        client_load_memmed_spells_callback);
     query_bind_int64(&query, 1, zoning->characterId);
     db_schedule(db, &query);
     

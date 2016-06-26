@@ -33,11 +33,13 @@ STRUCT_DEFINE(Client)
     {
         struct
         {
-            uint8_t connection  : 1;
-            uint8_t stats       : 1;
-            uint8_t inventory   : 1;
-            uint8_t skills      : 1;
-            uint8_t unused      : 4;
+            uint8_t connection      : 1;
+            uint8_t stats           : 1;
+            uint8_t inventory       : 1;
+            uint8_t skills          : 1;
+            uint8_t spellbook       : 1;
+            uint8_t memmedSpells    : 1;
+            uint8_t unused          : 2;
         };
         
         uint8_t total;
@@ -70,5 +72,9 @@ void    client_check_loading_finished(R(Client*) client);
 #define client_handler(cli) ((cli)->handler)
 #define client_name(cli) mob_name(&(cli)->mob)
 #define client_zone_cluster(cli) mob_zone_cluster(&(cli)->mob)
+
+#define client_character_id(cli) ((cli)->characterId)
+#define client_account_name(cli) ((cli)->accountName)
+#define client_account_id(cli) ((cli)->accountId)
 
 #endif//EQP_CLIENT_H

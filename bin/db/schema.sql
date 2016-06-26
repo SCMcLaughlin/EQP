@@ -71,10 +71,12 @@ CREATE TABLE character (
     x                   REAL    DEFAULT 0,
     y                   REAL    DEFAULT 0,
     z                   REAL    DEFAULT 0,
+    heading             REAL    DEFAULT 0,
     current_hp          INT     DEFAULT 10,
     current_mana        INT     DEFAULT 0,
     current_endurance   INT     DEFAULT 0,
     experience          INT     DEFAULT 0,
+    training_points     INT     DEFAULT 5,
     base_str            INT     DEFAULT 0,
     base_sta            INT     DEFAULT 0,
     base_dex            INT     DEFAULT 0,
@@ -84,6 +86,24 @@ CREATE TABLE character (
     base_cha            INT     DEFAULT 0,
     fk_guild_id         INT     DEFAULT 0,
     guild_rank          INT     DEFAULT 0,
+    harmtouch_timestamp INT     DEFAULT 0,
+    pp                  INT     DEFAULT 0,
+    gp                  INT     DEFAULT 0,
+    sp                  INT     DEFAULT 0,
+    cp                  INT     DEFAULT 0,
+    pp_cursor           INT     DEFAULT 0,
+    gp_cursor           INT     DEFAULT 0,
+    sp_cursor           INT     DEFAULT 0,
+    cp_cursor           INT     DEFAULT 0,
+    pp_bank             INT     DEFAULT 0,
+    gp_bank             INT     DEFAULT 0,
+    sp_bank             INT     DEFAULT 0,
+    cp_bank             INT     DEFAULT 0,
+    hunger              INT     DEFAULT 32000,
+    thirst              INT     DEFAULT 32000,
+    is_gm               BOOLEAN DEFAULT 0,
+    anon                INT     DEFAULT 0,
+    drunkeness          INT     DEFAULT 0,
     material0           INT     DEFAULT 0,
     material1           INT     DEFAULT 0,
     material2           INT     DEFAULT 0,
@@ -108,8 +128,8 @@ CREATE TABLE inventory (
     character_id    INT,
     slot_id         INT,
     aug_slot_id     INT DEFAULT 0,
-    stack_amount    INT DEFAULT 1,
-    charges         INT DEFAULT 0,
+    stack_amount    INT DEFAULT 0,
+    charges         INT DEFAULT 65535,
     item_id         INT
 );
 
@@ -124,6 +144,23 @@ CREATE TABLE skill (
     value           INT,
     
     PRIMARY KEY (character_id, skill_id)
+);
+
+CREATE TABLE spellbook (
+    character_id    INT,
+    slot_id         INT,
+    spell_id        INT,
+    
+    PRIMARY KEY (character_id, slot_id)
+);
+
+CREATE TABLE memmed_spells (
+    character_id                    INT,
+    slot_id                         INT,
+    spell_id                        INT,
+    recast_timestamp_milliseconds   INT,
+    
+    PRIMARY KEY (character_id, slot_id)
 );
 
 CREATE TABLE guild (

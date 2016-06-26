@@ -39,6 +39,7 @@ STRUCT_DEFINE(Mob)
     float       x;
     float       y;
     float       z;
+    float       heading;
     
     int64_t     currentHp;
     int64_t     currentMana;

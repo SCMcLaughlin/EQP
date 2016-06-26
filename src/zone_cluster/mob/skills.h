@@ -3,6 +3,7 @@
 #define EQP_SKILLS_H
 
 #include "define.h"
+#include "enums.h"
 
 ENUM_DEFINE(SkillId)
 {
@@ -116,11 +117,12 @@ ENUM_DEFINE(LanguageId)
 
 STRUCT_DEFINE(Skills)
 {
-    uint16_t    skill[Skill_COUNT];
-    uint8_t     language[Lang_COUNT];
+    uint8_t skill[Skill_COUNT];
+    uint8_t language[Lang_COUNT];
 };
 
-void    skills_init(R(Skills*) skills);
+void    skills_preinit(R(Skills*) skills);
+void    skills_init(R(Skills*) skills, uint32_t class, uint32_t level, uint32_t race);
 void    skills_set_from_db(R(Skills*) skills, uint32_t skillId, uint32_t value);
 
 #endif//EQP_SKILLS_H

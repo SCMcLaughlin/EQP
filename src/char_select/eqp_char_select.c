@@ -146,7 +146,7 @@ void ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet)
     
     switch (opcode)
     {
-    case ServerOp_ClientZoning:
+    case ServerOp_ZoneAddress:
         char_select_handle_op_client_zoning(charSelect, data, length);
         break;
     

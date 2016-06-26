@@ -108,7 +108,7 @@ STRUCT_DEFINE(CSTrilogy_ZoneAddress)
 {
     char        ipAddress[75];
     char        zoneShortName[53];
-    uint16_t    portHostByteOrder;
+    uint16_t    port;
 };
 
 STRUCT_DEFINE(CSTrilogy_TimeOfDay)

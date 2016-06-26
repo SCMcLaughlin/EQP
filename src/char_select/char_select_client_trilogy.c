@@ -664,15 +664,12 @@ void cs_client_trilogy_on_zone_in_success(R(CharSelectClient*) client, R(CharSel
     aligned_reinit(w, packet_trilogy_data(packet), packet_trilogy_length(packet));
     
     // ipAddress
-    //ip = zoneAddr->ipAddress;
-    //aligned_write_snprintf_full_advance(w, sizeof_field(CSTrilogy_ZoneAddress, ipAddress), "%u.%u.%u.%u",
-    //    (ip >> 0) & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
     aligned_write_snprintf_full_advance(w, sizeof_field(CSTrilogy_ZoneAddress, ipAddress), "%s", zoneAddr->ipAddress);
         
     // zoneShortName
     aligned_write_snprintf_full_advance(w, sizeof_field(CSTrilogy_ZoneAddress, zoneShortName), "%s", zoneAddr->shortName);
-    // portHostByteOrder
-    aligned_write_uint16(w, zoneAddr->portHostByteOrder);
+    // port
+    aligned_write_uint16(w, toNetworkUint16(zoneAddr->portHostByteOrder));
     
     cs_trilogy_schedule_packet(handler, packet);
 }

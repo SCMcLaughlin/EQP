@@ -6,7 +6,7 @@
 void mob_init_client(R(Mob*) mob, R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
 {
     mob->mobType        = MobType_Client;
-    mob->entityId       = -1;
+    mob->entityId       = 0;
     mob->zoneMobIndex   = -1;
     
     mob->name           = string_create_from_cstr(B(zc), zoning->characterName, strlen(zoning->characterName));

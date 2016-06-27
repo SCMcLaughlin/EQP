@@ -12,7 +12,10 @@
 #define TrilogyOp_InventoryRequest      0x205d
 #define TrilogyOp_ZoneInfoRequest       0x200a
 #define TrilogyOp_ZoneInfo              0x205b
-#define TrilogyOp_ZoneInUnknownA        0x2147
+#define TrilogyOp_ZoneInUnknown         0x2147
 #define TrilogyOp_EnterZone             0x20d8
+#define TrilogyOp_EnteredZoneUnknown    0x21c3
+
+#define TrilogyOp_SpawnAppearance       0x20f5
 
 #endif//EQP_OPCODES_TRILOGY_H

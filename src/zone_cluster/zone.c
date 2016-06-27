@@ -15,6 +15,7 @@ Zone* zone_create(R(ZC*) zc, int sourceId, int zoneId, int instId)
     
     zone->mobsByEntityId    = array_create_type(B(zc), MobByEntityId);
     zone->mobsByPosition    = array_create_type(B(zc), MobByPosition);
+    zone->clientList        = array_create_type(B(zc), ClientListing);
     
     for (i = 0; i < 4; i++)
     {
@@ -50,6 +51,40 @@ void zone_destroy(R(ZC*) zc, R(Zone*) zone)
     zc_lua_destroy_object(zc, &zone->luaObj);
     
     free(zone);
+}
+
+void zone_spawn_client(R(ZC*) zc, R(Zone*) zone, R(Client*) client)
+{
+    (void)zc;
+    (void)zone;
+    (void)client;
+}
+
+void zone_broadcast_packet(R(Zone*) zone, R(PacketBroadcast*) packetBroadcast, R(Client*) ignore)
+{
+    R(ClientListing*) array = array_data_type(zone->clientList, ClientListing);
+    uint32_t n              = array_count(zone->clientList);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        R(ClientListing*) listing = &array[i];
+        
+        if (listing->client == ignore)
+            continue;
+        
+        if (listing->expansionId == ExpansionId_Trilogy)
+        {
+            R(PacketTrilogy*) packet = packet_broadcast_get_trilogy(packetBroadcast);
+            
+            if (packet)
+                client_trilogy_schedule_packet_broadcast(listing->client, packet);
+        }
+        else
+        {
+            
+        }
+    }
 }
 
 /* LuaJIT API */

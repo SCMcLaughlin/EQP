@@ -199,9 +199,9 @@ BINCHARSELECT= $(DIRBIN)eqp-char-select
 DIRZC= src/zone_cluster/
 BZC= build/$(BUILDTYPE)/zone_cluster/
 _OZC= zone_cluster_main.o \
- zone_cluster.o zone_cluster_ipc.o zone.o lua_object.o
+ zone_cluster.o zone_cluster_ipc.o zone.o lua_object.o packet_broadcast.o
 _HZC= \
- zone_cluster.h zone_cluster_ipc.h zone.h lua_object.h
+ zone_cluster.h zone_cluster_ipc.h zone.h lua_object.h packet_broadcast.h
 OZC= $(patsubst %,$(BZC)%,$(_OZC))
 HZC= $(patsubst %,$(DIRZC)%,$(_HZC))
 

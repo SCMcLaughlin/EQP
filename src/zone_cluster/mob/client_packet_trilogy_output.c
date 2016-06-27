@@ -16,6 +16,19 @@ void client_trilogy_schedule_packet_broadcast(R(Client*) client, R(PacketTrilogy
     protocol_handler_trilogy_schedule_packet(&handler->trilogy, packet);
 }
 
+void client_trilogy_send_zero_length_packet(R(Client*) client, uint16_t opcode)
+{
+    R(PacketTrilogy*) packet = packet_trilogy_create(B(client_zone_cluster(client)), opcode, 0);
+    client_trilogy_schedule_packet_individual(client, packet);
+}
+
+void client_trilogy_send_zeroed_packet_var_length(R(Client*) client, uint16_t opcode, uint32_t length)
+{
+    R(PacketTrilogy*) packet = packet_trilogy_create(B(client_zone_cluster(client)), opcode, length);
+    memset(packet_trilogy_data(packet), 0, length);
+    client_trilogy_schedule_packet_individual(client, packet);
+}
+
 static void client_trilogy_player_profile_obfuscate(R(byte*) buffer, uint32_t len)
 {
     uint32_t* ptr   = (uint32_t*)buffer;
@@ -770,4 +783,31 @@ PacketTrilogy* client_trilogy_make_op_zone_info(R(ZC*) zc, R(Zone*) zone)
     // unknownD[32] is already zeroed, don't need to bother with it
 
     return packet;
+}
+
+PacketTrilogy* client_trilogy_make_op_spawn_appearance(R(ZC*) zc, uint16_t entityId, uint16_t type, uint32_t value)
+{
+    R(PacketTrilogy*) packet = packet_trilogy_create(B(zc), TrilogyOp_ZoneInfo, sizeof(Trilogy_ZoneInfo));
+    Aligned write;
+    R(Aligned*) w = &write;
+    
+    aligned_init(B(zc), w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+    
+    // spawnId
+    aligned_write_uint16(w, entityId);
+    // unknownA
+    aligned_write_uint16(w, 0);
+    // type
+    aligned_write_uint16(w, type);
+    // unknownB
+    aligned_write_uint16(w, 0);
+    // value
+    aligned_write_uint32(w, value);
+    
+    return packet;
+}
+
+PacketTrilogy* client_trilogy_make_op_spawn(R(ZC*) zc, R(Mob*) spawningMob)
+{
+    return NULL;
 }

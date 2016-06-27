@@ -8,8 +8,10 @@
 #include "eqp_alloc.h"
 #include "lua_object.h"
 #include "mob.h"
+#include "client.h"
 #include "zone_id.h"
 #include "structs.h"
+#include "packet_broadcast.h"
 
 STRUCT_DECLARE(ZC);
 
@@ -42,6 +44,12 @@ STRUCT_DEFINE(ZoneBySourceId)
     Zone*   zone;
 };
 
+STRUCT_DEFINE(ClientListing)
+{
+    int     expansionId;
+    Client* client;
+};
+
 Zone*   zone_create(R(ZC*) zc, int sourceId, int zoneId, int instId);
 void    zone_destroy(R(ZC*) zc, R(Zone*) zone);
 
@@ -51,6 +59,11 @@ void    zone_destroy(R(ZC*) zc, R(Zone*) zone);
 #define zone_min_z(zone) ((zone)->minZ)
 #define zone_min_clipping_distance(zone) ((zone)->minClippingDistance)
 #define zone_max_clipping_distance(zone) ((zone)->maxClippingDistance)
+
+void    zone_spawn_client(R(ZC*) zc, R(Zone*) zone, R(Client*) client);
+
+void    zone_broadcast_packet(R(Zone*) zone, R(PacketBroadcast*) packet, R(Client*) ignore);
+#define zone_broadcast_packet_to_all(zone, packet) zone_broadcast_packet((zone), (packet), NULL)
 
 /* LuaJIT API */
 EQP_API int         zone_get_source_id(R(Zone*) zone);

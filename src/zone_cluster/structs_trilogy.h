@@ -216,6 +216,15 @@ STRUCT_DEFINE(Trilogy_ZoneInfo)
     uint8_t     unknownE[32];
 };
 
+STRUCT_DEFINE(Trilogy_SpawnAppearance)
+{
+    uint16_t    entityId;
+    uint16_t    unknownA;
+    uint16_t    type;
+    uint16_t    unknownB;
+    uint32_t    value;
+};
+
 #pragma pack()
 
 #endif//EQP_STRUCTS_TRILOGY_H

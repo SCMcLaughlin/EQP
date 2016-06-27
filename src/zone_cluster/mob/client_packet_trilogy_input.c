@@ -61,6 +61,40 @@ static void client_trilogy_handle_op_zone_info_request(R(Client*) client)
     R(PacketTrilogy*) packet    = client_trilogy_make_op_zone_info(zc, zone);
     
     client_trilogy_schedule_packet_individual(client, packet);
+    
+    client_trilogy_send_zero_length_packet(client, TrilogyOp_EnterZone);
+    
+    //fixme: send spawns, doors, objects
+}
+
+static void client_trilogy_handle_op_enter_zone(R(Client*) client)
+{
+    PacketBroadcast broadcastSpawn;
+    R(PacketTrilogy*) packet;
+    R(Zone*) zone   = client_zone(client);
+    R(ZC*) zc       = client_zone_cluster(client);
+    
+    // Officially add the client to all the zone lists, so that we can get them their entityId
+    zone_spawn_client(zc, zone, client);
+    
+    // Inform the client of their entityId
+    //spawnappearance
+    
+    // Broadcast spawn packet, including to the client that is spawning
+    packet = client_trilogy_make_op_spawn(zc, &client->mob);
+    packet_broadcast_init(zc, &broadcastSpawn, packet_broadcast_encode_op_spawn, &client->mob);
+    packet_broadcast_set_packet_for_expansion(&broadcastSpawn, ExpansionId_Trilogy, packet);
+    zone_broadcast_packet_to_all(zone, &broadcastSpawn);
+    
+    // Send the client some things it expects
+    client_trilogy_send_zeroed_packet_var_length(client, TrilogyOp_EnteredZoneUnknown, 8);
+    client_trilogy_send_zero_length_packet(client, TrilogyOp_EnterZone);
+    
+    //send guildrank spawnappearance, if applicable
+    //send gm spawnappearance, if applicable
+    
+    //calc all the client's stats
+    //send hp and mana updates
 }
 
 void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a)
@@ -85,8 +119,12 @@ void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a
         client_trilogy_handle_op_zone_info_request(client);
         break;
     
+    case TrilogyOp_EnterZone:
+        client_trilogy_handle_op_enter_zone(client);
+        break;
+    
     // Echo packets
-    case TrilogyOp_ZoneInUnknownA:
+    case TrilogyOp_ZoneInUnknown:
         client_trilogy_echo_packet(client, opcode, a);
         break;
     

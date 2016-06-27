@@ -7,6 +7,7 @@
 #include "client.h"
 #include "opcodes_trilogy.h"
 #include "structs_trilogy.h"
+#include "packet_trilogy.h"
 #include "crc.h"
 #include "eqp_clock.h"
 #include "zone_id.h"

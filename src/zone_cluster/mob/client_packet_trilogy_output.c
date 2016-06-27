@@ -2,10 +2,55 @@
 #include "client_packet_trilogy_output.h"
 #include "zone_cluster.h"
 
+static void client_trilogy_schedule_packet_individual(R(Client*) client, R(PacketTrilogy*) packet)
+{
+    R(ProtocolHandler*) handler = client_handler(client);
+    packet_trilogy_fragmentize(packet);
+    protocol_handler_trilogy_schedule_packet(&handler->trilogy, packet);
+}
+
+static void client_trilogy_player_profile_obfuscate(R(byte*) buffer, uint32_t len)
+{
+    uint32_t* ptr   = (uint32_t*)buffer;
+    uint32_t cur    = 0x65e7;
+    uint32_t n      = len / sizeof(uint32_t);
+    uint32_t next;
+    uint32_t i;
+    
+    i       = len / 8;
+    next    = ptr[0];
+    ptr[0]  = ptr[i];
+    ptr[i]  = next;
+    
+    for (i = 0; i < n; i++)
+    {
+        next    = cur + ptr[i] - 0x37a9;
+        ptr[i]  = ((ptr[i] << 0x07) | (ptr[i] >> 0x19)) + 0x37a9;
+        ptr[i]  = ((ptr[i] << 0x0f) | (ptr[i] >> 0x11));
+        ptr[i]  = ptr[i] - cur;
+        cur     = next;
+    }
+}
+
 static void client_trilogy_send_player_profile_compress_and_obfuscate(R(Client*) client, R(Trilogy_PlayerProfile*) pp)
 {
-    (void)client;
-    (void)pp;
+    byte buffer[sizeof(Trilogy_PlayerProfile)];
+    unsigned long length    = sizeof(buffer);
+    R(ZC*) zc               = client_zone_cluster(client);
+    R(PacketTrilogy*) packet;
+    int rc;
+    
+    rc = compress2(buffer, &length, (const byte*)pp, sizeof(Trilogy_PlayerProfile), Z_BEST_COMPRESSION);
+    
+    if (rc != Z_OK)
+        exception_throw_format(B(zc), ErrorCompression, "[client_trilogy_send_player_profile_compress_and_obfuscate] ZLib compression failed, err code %i", rc);
+    
+    client_trilogy_player_profile_obfuscate(buffer, length);
+    
+    packet = packet_trilogy_create(B(zc), TrilogyOp_PlayerProfile, length);
+    memcpy(packet_trilogy_data(packet), buffer, length);
+    
+    client_trilogy_schedule_packet_individual(client, packet);
 }
 
 void client_trilogy_send_player_profile(R(Client*) client)

@@ -20,7 +20,8 @@ ENUM_DEFINE(ErrorCode)
     ErrorLua,
     ErrorIpc,
     ErrorThread,
-    ErrorNetwork
+    ErrorNetwork,
+    ErrorCompression
 };
 
 #endif//EQP_ERROR_CODES_H

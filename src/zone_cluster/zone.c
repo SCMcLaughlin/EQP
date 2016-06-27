@@ -13,7 +13,7 @@ Zone* zone_create(R(ZC*) zc, int sourceId, int zoneId, int instId)
     zone->zoneId        = zoneId;
     zone->instanceId    = instId;
     
-    zone->mobsByEntityId    = array_create_type(B(zc), MobByEntityId);
+    zone->mobsByEntityId    = array_create_type(B(zc), Mob*);
     zone->mobsByPosition    = array_create_type(B(zc), MobByPosition);
     zone->clientList        = array_create_type(B(zc), ClientListing);
     
@@ -53,11 +53,65 @@ void zone_destroy(R(ZC*) zc, R(Zone*) zone)
     free(zone);
 }
 
+static void zone_spawn_mob(R(ZC*) zc, R(Zone*) zone, R(Mob*) mob)
+{
+    MobByPosition pos;
+    R(Mob**) entityArray    = array_data_type(zone->mobsByEntityId, Mob*);
+    uint32_t n              = array_count(zone->mobsByEntityId);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        if (entityArray[i] == NULL)
+        {
+            entityArray[i] = mob;
+            mob_set_entity_id(mob, i + 1);
+            goto found_space_entity;
+        }
+    }
+    
+    // If we reach here, no gaps were found
+    array_push_back(B(zc), &zone->mobsByEntityId, (void*)&mob);
+    mob_set_entity_id(mob, n + 1);
+    
+found_space_entity:
+    
+    pos.x   = mob_x(mob);
+    pos.y   = mob_y(mob);
+    pos.z   = mob_z(mob);
+    pos.mob = mob;
+    
+    switch (mob_get_type(mob))
+    {
+    case MobType_Npc:
+        pos.aggroRadiusSquared = 0.0f; //fixme: handle this
+        break;
+    
+    case MobType_Client:
+        pos.aggroRadiusSquared = -1.0f;
+        break;
+    
+    case MobType_Pet:
+        pos.aggroRadiusSquared = -2.0f;
+        break;
+    }
+    
+    n = array_count(zone->mobsByPosition);
+    array_push_back(B(zc), &zone->mobsByPosition, &pos);
+    mob_set_zone_index(mob, n);
+}
+
 void zone_spawn_client(R(ZC*) zc, R(Zone*) zone, R(Client*) client)
 {
-    (void)zc;
-    (void)zone;
-    (void)client;
+    ClientListing listing;
+    
+    zone_spawn_mob(zc, zone, &client->mob);
+    
+    listing.expansionId = client_expansion(client);
+    listing.client      = client;
+    
+    client_set_zone_index(client, array_count(zone->clientList));
+    array_push_back(B(zc), &zone->clientList, &listing);
 }
 
 void zone_broadcast_packet(R(Zone*) zone, R(PacketBroadcast*) packetBroadcast, R(Client*) ignore)

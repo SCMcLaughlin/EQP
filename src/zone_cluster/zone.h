@@ -12,6 +12,7 @@
 #include "zone_id.h"
 #include "structs.h"
 #include "packet_broadcast.h"
+#include "client_packet_trilogy_output.h"
 
 STRUCT_DECLARE(ZC);
 
@@ -23,10 +24,11 @@ STRUCT_DEFINE(Zone)
     uint16_t    zoneId;
     uint16_t    instanceId;
     
-    Array*      mobsByEntityId; //fixme: use entityId = array index
+    Array*      mobsByEntityId; // entityId = array index + 1
     Array*      mobsByPosition;
     Array*      clientList;
     Array*      npcList;
+    Array*      npcsPendingSpawn; // Holds NPCs that have been scheduled to spawn this cycle -- ensures that npcList is re-entrant
     
     Loc         safeSpot;
     FogStats    fogStats[4];

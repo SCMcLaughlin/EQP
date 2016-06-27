@@ -93,10 +93,15 @@ void    client_drop(R(Client*) client);
 void    client_catch_up_with_loading_progress(R(Client*) client);
 void    client_check_loading_finished(R(Client*) client);
 
+#define client_set_zone_index(cli, index) ((cli)->zoneClientIndex = (index))
+#define client_zone_index(cli) ((cli)->zoneClientIndex)
+
 #define client_set_handler(cli, handler) ((cli)->handler = (handler))
 #define client_handler(cli) ((cli)->handler)
+#define client_expansion(cli) ((cli)->expansion)
 #define client_name(cli) mob_name(&(cli)->mob)
 #define client_name_cstr(cli) mob_name_cstr(&(cli)->mob)
+#define client_entity_id(cli) mob_entity_id(&(cli)->mob)
 #define client_level(cli) mob_level(&(cli)->mob)
 #define client_class(cli) mob_class(&(cli)->mob)
 #define client_base_race(cli) mob_base_race(&(cli)->mob)

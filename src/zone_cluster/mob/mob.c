@@ -36,6 +36,16 @@ const char* mob_name_cstr(R(Mob*) mob)
     return string_data(mob->name);
 }
 
+int mob_entity_id(R(Mob*) mob)
+{
+    return mob->entityId;
+}
+
+int mob_get_type(R(Mob*) mob)
+{
+    return mob->mobType;
+}
+
 uint8_t mob_level(R(Mob*) mob)
 {
     return mob->level;

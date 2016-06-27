@@ -78,7 +78,8 @@ static void client_trilogy_handle_op_enter_zone(R(Client*) client)
     zone_spawn_client(zc, zone, client);
     
     // Inform the client of their entityId
-    //spawnappearance
+    packet = client_trilogy_make_op_spawn_appearance(zc, 0, Trilogy_SpawnAppearance_SetEntityId, client_entity_id(client));
+    client_trilogy_schedule_packet_individual(client, packet);
     
     // Broadcast spawn packet, including to the client that is spawning
     packet = client_trilogy_make_op_spawn(zc, &client->mob);

@@ -60,11 +60,13 @@ STRUCT_DEFINE(Mob)
     ZC*         zoneCluster;
 };
 
+/*
 STRUCT_DEFINE(MobByEntityId)
 {
     int     entityId;
     Mob*    mob;
 };
+*/
 
 STRUCT_DEFINE(MobByPosition)
 {
@@ -85,8 +87,18 @@ ENUM_DEFINE(MobType)
 void    mob_init_client(R(Mob*) mob, R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning);
 void    mob_deinit(R(Mob*) mob);
 
+#define mob_set_entity_id(mob, id) ((mob)->entityId = (id))
+#define mob_set_zone_index(mob, index) ((mob)->zoneMobIndex = (index))
+#define mob_zone_index(mob) ((mob)->zoneMobIndex)
+
+#define mob_is_npc(mob) (mob_get_type((mob)) == MobType_Npc)
+#define mob_is_client(mob) (mob_get_type((mob)) == MobType_Client)
+#define mob_is_pet(mob) (mob_get_type((mob)) == MobType_Pet)
+
 #define             mob_name(mob) ((mob)->name)
 EQP_API const char* mob_name_cstr(R(Mob*) mob);
+EQP_API int         mob_entity_id(R(Mob*) mob);
+EQP_API int         mob_get_type(R(Mob*) mob);
 EQP_API uint8_t     mob_level(R(Mob*) mob);
 EQP_API uint8_t     mob_class(R(Mob*) mob);
 EQP_API uint16_t    mob_base_race(R(Mob*) mob);

@@ -219,6 +219,8 @@ Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
     query_bind_int64(&query, 1, zoning->characterId);
     db_schedule(db, &query);
     
+    // Bind points
+    
     return client;
 }
 

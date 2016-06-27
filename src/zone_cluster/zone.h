@@ -9,6 +9,7 @@
 #include "lua_object.h"
 #include "mob.h"
 #include "zone_id.h"
+#include "structs.h"
 
 STRUCT_DECLARE(ZC);
 
@@ -24,6 +25,15 @@ STRUCT_DEFINE(Zone)
     Array*      mobsByPosition;
     Array*      clientList;
     Array*      npcList;
+    
+    Loc         safeSpot;
+    FogStats    fogStats[4];
+    uint8_t     zoneType;
+    uint16_t    skyType;
+    float       gravity;
+    float       minZ;
+    float       minClippingDistance;
+    float       maxClippingDistance;
 };
 
 STRUCT_DEFINE(ZoneBySourceId)
@@ -34,6 +44,13 @@ STRUCT_DEFINE(ZoneBySourceId)
 
 Zone*   zone_create(R(ZC*) zc, int sourceId, int zoneId, int instId);
 void    zone_destroy(R(ZC*) zc, R(Zone*) zone);
+
+#define zone_type(zone) ((zone)->zoneType)
+#define zone_sky_type(zone) ((zone)->skyType)
+#define zone_gravity(zone) ((zone)->gravity)
+#define zone_min_z(zone) ((zone)->minZ)
+#define zone_min_clipping_distance(zone) ((zone)->minClippingDistance)
+#define zone_max_clipping_distance(zone) ((zone)->maxClippingDistance)
 
 /* LuaJIT API */
 EQP_API int         zone_get_source_id(R(Zone*) zone);

@@ -5,6 +5,7 @@
 Zone* zone_create(R(ZC*) zc, int sourceId, int zoneId, int instId)
 {
     Zone* zone = eqp_alloc_type(B(zc), Zone);
+    uint32_t i;
     
     memset(zone, 0, sizeof(Zone));
     
@@ -14,6 +15,18 @@ Zone* zone_create(R(ZC*) zc, int sourceId, int zoneId, int instId)
     
     zone->mobsByEntityId    = array_create_type(B(zc), MobByEntityId);
     zone->mobsByPosition    = array_create_type(B(zc), MobByPosition);
+    
+    for (i = 0; i < 4; i++)
+    {
+        zone->fogStats[i].minClippingDistance = 10.0f;
+        zone->fogStats[i].maxClippingDistance = 20000.0f;
+    }
+    
+    zone->zoneType              = 0xff;
+    zone->gravity               = 0.4f;
+    zone->minZ                  = -32000.0f;
+    zone->minClippingDistance   = 1000.0f;
+    zone->maxClippingDistance   = 20000.0f;
     
     zc_lua_create_zone(zc, zone);
     

@@ -10,7 +10,7 @@
 
 #pragma pack(1)
 
-STRUCT_DEFINE(Trilogy_ZoneEntry)
+STRUCT_DEFINE(Trilogy_ZoneEntryFromClient)
 {
     uint32_t    checksum;
     char        characterName[32];
@@ -139,6 +139,81 @@ STRUCT_DEFINE(Trilogy_PlayerProfile)
     // Seems to be another 30 spaces followed by FF as in groupMember; pet name, maybe?
     Trilogy_PPGroupMember   unknownX[60];   // Maybe a guild roster type thing..?
     uint8_t                 unknownY[20];
+};
+
+STRUCT_DEFINE(Trilogy_ZoneEntry)
+{
+    uint32_t    crc;
+    uint8_t     unknownA;
+    char        name[30];
+    char        zoneShortName[20];
+    uint8_t     unknownB;
+    float       y;
+    float       x;
+    float       z;
+    float       heading;
+    uint8_t     unknownC[76];
+    uint16_t    guildId;
+    uint8_t     unknownD[7];    // [6]: 2 makes the client insta-die on zoning in
+    uint8_t     class;
+    uint16_t    race;
+    uint8_t     gender;
+    uint8_t     level;
+    uint8_t     unknownE[2];
+    uint8_t     isPvP;
+    uint8_t     unknownF[2];
+    uint8_t     face;
+    uint8_t     helmMaterial;
+    uint8_t     unknownG[6];
+    uint8_t     secondaryWeaponModelId;
+    uint8_t     primaryWeaponModelId;
+    uint8_t     unknownH[3];
+    uint32_t    helmColor;
+    uint8_t     unknownI[32];
+    uint8_t     texture; // 0xff for standard client gear
+    uint8_t     unknownJ[19];
+    float       walkingSpeed;
+    float       runningSpeed;
+    uint8_t     unknownK[12];
+    uint8_t     anon;
+    uint8_t     unknownL[23];
+    char        surname[20];
+    uint8_t     unknownM[2];
+    uint16_t    deity;
+    uint8_t     unknownN[8];
+};
+
+STRUCT_DEFINE(Trilogy_Weather)
+{
+    int type;
+    int intensity;
+};
+
+STRUCT_DEFINE(Trilogy_ZoneInfo)
+{
+    char        characterName[30];
+    char        zoneShortName[20];
+    char        zoneLongName[180];
+    uint8_t     zoneType;                   // Default 0xff
+    uint8_t     fogRed[4];
+    uint8_t     fogGreen[4];
+    uint8_t     fogBlue[4];
+    uint8_t     unknownA;
+    float       fogMinClippingDistance[4];
+    float       fogMaxClippingDistance[4];
+    float       gravity;                    // Default 0.4f
+    uint8_t     unknownB[50];
+    uint16_t    skyType;
+    uint8_t     unknownC[8];
+    float       unknownD;                   // Default 0.75
+    float       safeSpotX;
+    float       safeSpotY;
+    float       safeSpotZ;
+    float       safeSpotHeading;            // Assumed
+    float       minZ;                       // If a client falls below this, they are sent to the safe spot; default -32000.0f
+    float       minClippingDistance;        // Default 1000.0f
+    float       maxClippingDistance;        // Default 20000.0f
+    uint8_t     unknownE[32];
 };
 
 #pragma pack()

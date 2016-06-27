@@ -12,4 +12,13 @@ STRUCT_DEFINE(Coin)
     uint32_t    cp;
 };
 
+STRUCT_DEFINE(BindPoint)
+{
+    int     zoneId;
+    float   x;
+    float   y;
+    float   z;
+    float   heading;
+};
+
 #endif//EQP_STRUCTS_H

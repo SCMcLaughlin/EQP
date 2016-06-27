@@ -43,7 +43,6 @@ ENUM_DEFINE(RaceId)
 
 ENUM_DEFINE(DeityId)
 {
-    Deity_Agnostic      = 140,
     Deity_Bertoxxulous  = 201,
     Deity_BrellSerilis,
     Deity_CazicThule,
@@ -59,7 +58,8 @@ ENUM_DEFINE(DeityId)
     Deity_SolusekRo,
     Deity_TheTribunal,
     Deity_Tunare,
-    Deity_Veeshan
+    Deity_Veeshan,
+    Deity_Agnostic      = 396
 };
 
 #endif//EQP_ENUMS_H

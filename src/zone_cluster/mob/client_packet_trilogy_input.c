@@ -1,5 +1,5 @@
 
-#include "client_packet_trilogy.h"
+#include "client_packet_trilogy_input.h"
 #include "zone_cluster.h"
 
 static void zc_trilogy_handle_op_zone_entry(R(Client*) clientStub, R(Aligned*) a)
@@ -19,22 +19,36 @@ static void zc_trilogy_handle_op_zone_entry(R(Client*) clientStub, R(Aligned*) a
     zc_client_match_with_expected(zc, clientStub, handler, (const char*)aligned_current(a));
 }
 
-void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a)
+static void client_stub_recv_packet_trilogy(R(Client*) client, uint16_t opcode, R(Aligned*) a)
 {
-    R(Client*) client = (Client*)vclient;
-    
-    printf("Opcode: 0x%04x, length: %u\n", opcode, aligned_remaining(a));
-    
     switch (opcode)
     {
     case TrilogyOp_ZoneEntry:
         zc_trilogy_handle_op_zone_entry(client, a);
         break;
     
-    /* Ignored opcodes */
     case TrilogyOp_SetDataRate:
         break;
     
+    default:
+        break;
+    }
+}
+
+void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a)
+{
+    R(Client*) client = (Client*)vclient;
+    
+    printf("Opcode: 0x%04x, length: %u\n", opcode, aligned_remaining(a));
+    
+    if (client->isStubClient)
+    {
+        client_stub_recv_packet_trilogy(client, opcode, a);
+        return;
+    }
+    
+    switch (opcode)
+    {
     default:
         break;
     }

@@ -59,6 +59,8 @@ uint8_t     aligned_peek_uint8(R(Aligned*) a);
 
 // Write
 #define     aligned_write_zero_all(a) (memset((a)->buffer, 0, (a)->length))
+#define     aligned_write_memset_no_advance(a, val, bytes) (memset(aligned_current((a)), (val), (bytes)))
+void        aligned_write_memset(R(Aligned*) a, int val, uint32_t len);
 void        aligned_write_uint8(R(Aligned*) a, uint8_t v);
 #define     aligned_write_byte(a, v) aligned_write_uint8((a), (v))
 #define     aligned_write_int8(a, v) (aligned_write_uint8((a), (uint8_t)(v)))
@@ -70,6 +72,7 @@ void        aligned_write_uint32(R(Aligned*) a, uint32_t v);
 #define     aligned_write_int(a, v) aligned_write_int32(a, v)
 void        aligned_write_uint64(R(Aligned*) a, uint64_t v);
 #define     aligned_write_int64(a, v) (aligned_write_uint64((a), (uint64_t)(v)))
+void        aligned_write_float(R(Aligned*) a, float v);
 void        aligned_write_buffer(R(Aligned*) a, R(const void*) data, uint32_t len);
 #define     aligned_write_string_null_terminated(a, str) aligned_write_buffer((a), string_data(str), (string_length(str) + 1))
 #define     aligned_write_literal_null_terminated(a, str) aligned_write_buffer((a), str, sizeof(str))

@@ -214,9 +214,11 @@ BINZC= $(DIRBIN)eqp-zone-cluster
 DIRZC_MOB= $(DIRZC)mob/
 BZC_MOB= $(BZC)mob/
 _OZC_MOB= \
- mob.o client.o client_packet_standard.o client_packet_trilogy.o inventory.o skills.o
+ mob.o client.o client_packet_standard.o inventory.o skills.o spellbook.o \
+ client_packet_trilogy_input.o client_packet_trilogy_output.o
 _HZC_MOB= \
- mob.h client.h client_packet_standard.h client_packet_trilogy.h inventory.h skills.h
+ mob.h client.h client_packet_standard.h inventory.h skills.h spellbook.h \
+ client_packet_trilogy_input.h client_packet_trilogy_output.h
 OZC_MOB= $(patsubst %,$(BZC_MOB)%,$(_OZC_MOB))
 HZC_MOB= $(patsubst %,$(DIRZC_MOB)%,$(_HZC_MOB))
 

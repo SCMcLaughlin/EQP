@@ -25,28 +25,91 @@ STRUCT_DEFINE(InventorySlot)
     uint16_t    augSlotId;  // Augs use the same slotId as the item they are inserted into, but a non-zero augSlotId
     int16_t     stackAmount;
     int16_t     charges;
+    bool        isBag;
     uint32_t    itemId;
     void*       item;
 };
 
 STRUCT_DEFINE(Inventory)
 {
-    int     mainHandIndex;
-    int     offHandIndex;
+    int     primaryIndex;
+    int     secondaryIndex;
     int     rangeIndex;
+    int     ammoIndex;
     Array*  slots;
     Array*  cursorQueue;
 };
 
 ENUM_DEFINE(InvSlot)
 {
+    InvSlot_Charm,
+    InvSlot_Ear1,
     InvSlot_Head,
-    InvSlot_Cursor = 30,
+    InvSlot_Face,
+    InvSlot_Ear2,
+    InvSlot_Neck,
+    InvSlot_Shoulders,
+    InvSlot_Arms,
+    InvSlot_Back,
+    InvSlot_Wrist1,
+    InvSlot_Wrist2,
+    InvSlot_Range,
+    InvSlot_Hands,
+    InvSlot_Primary,
+    InvSlot_Secondary,
+    InvSlot_Fingers1,
+    InvSlot_Fingers2,
+    InvSlot_Chest,
+    InvSlot_Legs,
+    InvSlot_Feet,
+    InvSlot_Waist,
+    InvSlot_Ammo,
+    InvSlot_MainInventory0,
+    InvSlot_MainInventory1,
+    InvSlot_MainInventory2,
+    InvSlot_MainInventory3,
+    InvSlot_MainInventory4,
+    InvSlot_MainInventory5,
+    InvSlot_MainInventory6,
+    InvSlot_MainInventory7,
+    InvSlot_Cursor,
+    
+    InvSlot_EquipForStatsBegin              = InvSlot_Charm,
+    InvSlot_EquipForStatsEnd                = InvSlot_Waist,
+    InvSlot_EquipMainAndCursorBegin         = InvSlot_Charm,
+    InvSlot_EquipMainAndCursorEnd           = InvSlot_Cursor,
+    InvSlot_EquipMainAndCursorNoCharmBegin  = InvSlot_Ear1,
+    InvSlot_EquipMainAndCursorNoCharmEnd    = InvSlot_Cursor,
+    InvSlot_MainInventoryBegin              = InvSlot_MainInventory0,
+    InvSlot_MainInventoryEnd                = InvSlot_MainInventory7,
+    InvSlot_BagSlotsBegin                   = 251,
+    InvSlot_BagSlotsEnd                     = 330,
+    InvSlot_BagsSlotsIncludingCursorBegin   = 251,
+    InvSlot_BagsSlotsIncludingCursorEnd     = 340,
+    InvSlot_BankBegin                       = 2000,
+    InvSlot_BankEnd                         = 2007,
+    InvSlot_BankExtendedBegin               = InvSlot_BankBegin,
+    InvSlot_BankExtendedEnd                 = 2015,
+    InvSlot_BankBagSlotsBegin               = 2031,
+    InvSlot_BankBagSlotsEnd                 = 2111,
+    InvSlot_BankExtendedBagSlotsBegin       = InvSlot_BankBagSlotsBegin,
+    InvSlot_BankExtendedBagSlotsEnd         = 2191,
+};
+
+STRUCT_DEFINE(InventoryIterator)
+{
+    uint32_t        index;
+    uint32_t        slotFrom;
+    uint32_t        slotTo;
+    InventorySlot*  slot;
 };
 
 void    inventory_init(R(Basic*) basic, R(Inventory*) inv);
 void    inventory_deinit(R(Inventory*) inv);
 
 void    inventory_add_from_database(R(Basic*) basic, R(Inventory*) inv, R(InventorySlot*) slot);
+
+void    inventory_iterator_init(R(InventoryIterator*) itr, uint32_t slotFrom, uint32_t slotTo);
+int     inventory_iterate_no_augs(R(Inventory*) inv, R(InventoryIterator*) itr);
 
 #endif//EQP_INVENTORY_H

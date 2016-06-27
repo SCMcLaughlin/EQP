@@ -99,7 +99,8 @@ static void client_load_inventory_callback(R(Query*) query)
         slot.augSlotId      = query_get_int(query, 2);
         slot.stackAmount    = query_get_int(query, 3);
         slot.charges        = query_get_int(query, 4);
-        slot.itemId         = query_get_int(query, 5);
+        slot.isBag          = query_get_int(query, 5);
+        slot.itemId         = query_get_int(query, 6);
         
         //fixme: create Item object with pointer from shared memory region...
         
@@ -116,11 +117,16 @@ static void client_load_inventory_callback(R(Query*) query)
 
 static void client_load_spellbook_callback(R(Query*) query)
 {
-    R(Client*) client = query_userdata_type(query, Client);
+    R(Client*) client   = query_userdata_type(query, Client);
+    R(Spellbook*) book  = &client->spellbook;
+    R(ZC*) zc           = client_zone_cluster(client);
     
     while (query_select(query))
     {
+        uint32_t slotId     = query_get_int(query, 1);
+        uint32_t spellId    = query_get_int(query, 2);
         
+        spellbook_add_from_database(zc, book, slotId, spellId);
     }
     
     client->loaded.spellbook = true;
@@ -173,8 +179,10 @@ Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
     query_set_userdata(&query, client);
     db_prepare_literal(db, &query,
         "SELECT "
-            "surname, level, class, race, gender, face, deity, x, y, z, heading, current_hp, current_mana, current_endurance, experience, "
-            "base_str, base_sta, base_dex, base_agi, base_int, base_wis, base_cha, fk_guild_id, guild_rank, harmtouch_timestamp "
+            "surname, level, class, race, gender, face, deity, x, y, z, heading, current_hp, current_mana, current_endurance, experience, training_points, "
+            "base_str, base_sta, base_dex, base_agi, base_int, base_wis, base_cha, fk_guild_id, guild_rank, harmtouch_timestamp, discipline_timestamp, "
+            "pp, gp, sp, cp, pp_cursor, gp_cursor, sp_cursor, cp_cursor, pp_bank, gp_bank, sp_bank, cp_bank, hunger, thirst, is_gm, anon, drunkeness, "
+            "creation_time "
         "FROM character WHERE character_id = ?", client_load_stats_callback);
     query_bind_int64(&query, 1, zoning->characterId);
     db_schedule(db, &query);
@@ -184,7 +192,7 @@ Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
     query_init(&query);
     query_set_userdata(&query, client);
     db_prepare_literal(db, &query, 
-        "SELECT slot_id, aug_slot_id, stack_amount, charges, item_id FROM inventory "
+        "SELECT slot_id, aug_slot_id, stack_amount, charges, is_bag, item_id FROM inventory "
         "WHERE character_id = ? "
         "ORDER BY slot_id ASC", // Putting lower slots first will be a decent micro-optimization in the average case
         client_load_inventory_callback);

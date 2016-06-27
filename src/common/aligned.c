@@ -164,6 +164,12 @@ uint8_t aligned_peek_uint8(R(Aligned*) a)
 }
 
 // Write
+void aligned_write_memset(R(Aligned*) a, int val, uint32_t len)
+{
+    uint32_t c = aligned_advance(a, len);
+    memset(a->buffer + c, val, len);
+}
+
 void aligned_write_uint8(R(Aligned*) a, uint8_t v)
 {
     uint32_t c = aligned_advance(a, sizeof(uint8_t));
@@ -203,6 +209,12 @@ void aligned_write_uint64(R(Aligned*) a, uint64_t v)
     buffer[c + 5] = (uint8_t)((v & 0x0000ff0000000000) >> 40);
     buffer[c + 6] = (uint8_t)((v & 0x00ff000000000000) >> 48);
     buffer[c + 7] = (uint8_t)((v & 0xff00000000000000) >> 56);
+}
+
+void aligned_write_float(R(Aligned*) a, float v)
+{
+    uint32_t u = *(uint32_t*)&v;
+    aligned_write_uint32(a, u);
 }
 
 void aligned_write_buffer(R(Aligned*) a, R(const void*) data, uint32_t len)

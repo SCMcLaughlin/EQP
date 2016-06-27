@@ -16,8 +16,6 @@
 #include "timer.h"
 #include "zone.h"
 #include "client.h"
-#include "client_packet_trilogy.h"
-#include "client_packet_standard.h"
 #include "udp_socket.h"
 #include "lua_sys.h"
 #include "lua_object.h"

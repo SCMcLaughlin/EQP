@@ -13,6 +13,7 @@
 #include "skills.h"
 #include "spellbook.h"
 #include "structs.h"
+#include "bit.h"
 
 #define EQP_CLIENT_ZONE_IN_EXPECTED_TIMEOUT TIMER_SECONDS(30)
 
@@ -30,7 +31,8 @@ STRUCT_DEFINE(Client)
     uint32_t    isStubClient        : 1;
     uint32_t    isLocal             : 1;
     uint32_t    isAutoSplitEnabled  : 1;
-    uint32_t    isPvP               : 1;
+    uint32_t    isPermanentlyPvP    : 1;
+    uint32_t    isCurrentlyPvP      : 1;
     uint32_t    isGM                : 1;
     uint32_t    isAfk               : 1;
     uint32_t    isLinkdead          : 1;
@@ -96,6 +98,7 @@ void    client_drop(R(Client*) client);
 
 void    client_catch_up_with_loading_progress(R(Client*) client);
 void    client_check_loading_finished(R(Client*) client);
+void    client_fill_in_missing_bind_points(R(Client*) client);
 
 #define client_set_zone_index(cli, index) ((cli)->zoneClientIndex = (index))
 #define client_zone_index(cli) ((cli)->zoneClientIndex)
@@ -154,6 +157,11 @@ void    client_check_loading_finished(R(Client*) client);
 #define client_account_name(cli) ((cli)->accountName)
 #define client_account_id(cli) ((cli)->accountId)
 
+#define client_texture(cli) mob_texture(&(cli)->mob)
+#define client_helm_texture(cli) mob_helm_texture(&(cli)->mob)
+#define client_primary_model_id(cli) mob_primary_model_id(&(cli)->mob)
+#define client_secondary_model_id(cli) mob_secondary_model_id(&(cli)->mob)
+
 EQP_API int         client_is_pvp(R(Client*) client);
 EQP_API int         client_is_gm(R(Client*) client);
 EQP_API int         client_is_afk(R(Client*) client);
@@ -161,5 +169,7 @@ EQP_API int         client_is_linkdead(R(Client*) client);
 EQP_API uint8_t     client_anon_setting(R(Client*) client);
 EQP_API uint8_t     client_guild_rank(R(Client*) client);
 EQP_API const char* client_surname_cstr(R(Client*) client);
+
+EQP_API void        client_set_bind_point(R(Client*) client, uint32_t bindId, int zoneId, float x, float y, float z, float heading);
 
 #endif//EQP_CLIENT_H

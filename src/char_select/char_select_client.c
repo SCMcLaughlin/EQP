@@ -71,7 +71,7 @@ static void char_select_client_insert_account_id_callback(R(Query*) query)
     char_select_client_drop(client);
     
     query_init(&q);
-    db_prepare_literal(db, &q, "INSERT INTO account (fk_name_id_pair) VALUES (?)", NULL);
+    db_prepare_literal(db, &q, "INSERT INTO account (name_id_pair) VALUES (?)", NULL);
     
     query_bind_int64(&q, 1, accountId);
     
@@ -189,7 +189,7 @@ void char_select_client_delete_character_by_name(R(CharSelectClient*) client, R(
     
     query_init(&query);
     query_set_userdata(&query, client);
-    db_prepare_literal(core_db(C(charSelect)), &query, "DELETE FROM character WHERE fk_name_id_pair = ? AND name = ?", char_select_client_delete_character_callback);
+    db_prepare_literal(core_db(C(charSelect)), &query, "DELETE FROM character WHERE name_id_pair = ? AND name = ?", char_select_client_delete_character_callback);
     
     //fixme: also need to delete anything related to this character...
     

@@ -228,7 +228,7 @@ void client_mgr_handle_zone_in_from_char_select(R(ClientMgr*) mgr, R(IpcPacket*)
     
     db_prepare_literal(db, &query, 
         "SELECT character_id, zone_id, instance_id FROM character "
-        "WHERE fk_name_id_pair = ? AND name = ?", client_mgr_from_char_select_callback);
+        "WHERE name_id_pair = ? AND name = ?", client_mgr_from_char_select_callback);
     
     query_bind_int64(&query, 1, (int64_t)zoning->accountId);
     query_bind_string(&query, 2, zoning->characterName, QUERY_CALC_LENGTH);

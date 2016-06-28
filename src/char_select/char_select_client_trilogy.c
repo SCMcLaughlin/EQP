@@ -187,7 +187,7 @@ void cs_client_trilogy_on_account_id(R(CharSelectClient*) client, uint32_t accou
             "material0, material1, material2, material3, material4, material5, material6, material7, material8, "
             "tint0, tint1, tint2, tint3, tint4, tint5, tint6 "
         "FROM character "
-        "WHERE fk_name_id_pair = ? "
+        "WHERE name_id_pair = ? "
         "ORDER BY character_id ASC LIMIT 10",
         cs_client_trilogy_characters_callback);
     
@@ -486,7 +486,7 @@ static void cs_trilogy_handle_op_create_character(R(CharSelectClient*) client, R
     query_set_userdata(&query, client);
     db_prepare_literal(db, &query,
         "INSERT OR IGNORE INTO character " // Why OR IGNORE? Just in case two people try to make a character with the same name at the same time...
-            "(fk_name_id_pair, name, gender, race, class, face, current_hp, base_str, base_sta, base_cha, base_dex, base_int, base_agi, base_wis, deity, zone_id, x, y, z) "
+            "(name_id_pair, name, gender, race, class, face, current_hp, base_str, base_sta, base_cha, base_dex, base_int, base_agi, base_wis, deity, zone_id, x, y, z) "
         "VALUES "
             "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         cs_client_trilogy_create_character_callback);

@@ -14,3 +14,18 @@ void spellbook_add_from_database(R(ZC*) zc, R(Spellbook*) spellbook, uint32_t sl
     
     array_push_back(B(zc), &spellbook->knownSpells, &slot);
 }
+
+void spellbook_add_memorized_from_database(R(ZC*) zc, R(Spellbook*) spellbook, uint32_t slotId, uint32_t spellId, uint64_t recastTimestamp)
+{
+    R(MemorizedSpell*) memmed;
+    (void)zc; //will be used to look up spell
+    
+    if (slotId >= 9)
+        return;
+    
+    memmed = &spellbook->memorized[slotId];
+    
+    memmed->spellId                 = spellId;
+    memmed->castingTimeMilliseconds = 0; //fixme: look up the spell's casting time, when spells exist...
+    memmed->recastTimestamp         = recastTimestamp;
+}

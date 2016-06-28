@@ -327,13 +327,13 @@ void client_trilogy_send_player_profile(R(Client*) client)
     aligned_advance(w, 96);
     
     // autoSplit
-    aligned_write_uint32(w, client->isAutoSplitEnabled ? 1 : 0);
+    aligned_write_uint32(w, client->isAutoSplitEnabled);
     // pvpEnabled
-    aligned_write_uint32(w, client->isPvP ? 1 : 0);
+    aligned_write_uint32(w, client_is_pvp(client));
     // unknownG[12]
     aligned_advance(w, sizeof(pp.unknownG));
     // isGM
-    aligned_write_uint32(w, client->isGM ? 1 : 0);
+    aligned_write_uint32(w, client_is_gm(client));
     // unknownH[20]
     aligned_advance(w, sizeof(pp.unknownH));
     // disciplinesReady
@@ -625,19 +625,19 @@ void client_trilogy_send_zone_entry(R(Client*) client)
     // unknownE
     aligned_advance(w, sizeof_field(Trilogy_ZoneEntry, unknownE));
     // isPvP
-    aligned_write_uint8(w, client->isPvP ? 1 : 0);
+    aligned_write_uint8(w, client_is_pvp(client));
     // unknownF
     aligned_advance(w, sizeof_field(Trilogy_ZoneEntry, unknownF));
     // face
     aligned_write_uint8(w, client_face(client));
     // helmMaterial
-    aligned_write_uint8(w, 0); //fixme: handle this
+    aligned_write_uint8(w, client_helm_texture(client)); //fixme: is this right
     // unknownG
     aligned_advance(w, sizeof_field(Trilogy_ZoneEntry, unknownG));
     // secondaryWeaponModelId
-    aligned_write_uint8(w, 0); //fixme: handle this
+    aligned_write_uint8(w, client_secondary_model_id(client));
     // primaryWeaponModelId
-    aligned_write_uint8(w, 0); //fixme: handle this
+    aligned_write_uint8(w, client_primary_model_id(client));
     // unknownH
     aligned_advance(w, sizeof_field(Trilogy_ZoneEntry, unknownH));
     // helmColor
@@ -645,7 +645,7 @@ void client_trilogy_send_zone_entry(R(Client*) client)
     // unknownI
     aligned_advance(w, sizeof_field(Trilogy_ZoneEntry, unknownI));
     // texture
-    aligned_write_uint8(w, 0xff);
+    aligned_write_uint8(w, client_texture(client));
     // unknownJ
     aligned_advance(w, sizeof_field(Trilogy_ZoneEntry, unknownJ));
     // walkingSpeed

@@ -170,6 +170,11 @@ int mob_base_str(R(Mob*) mob)
     return mob->baseStats.STR;
 }
 
+void mob_set_base_str(R(Mob*) mob, int value)
+{
+    mob->baseStats.STR = value;
+}
+
 int mob_cur_sta(R(Mob*) mob)
 {
     return mob->currentStats.STA;
@@ -178,6 +183,11 @@ int mob_cur_sta(R(Mob*) mob)
 int mob_base_sta(R(Mob*) mob)
 {
     return mob->baseStats.STA;
+}
+
+void mob_set_base_sta(R(Mob*) mob, int value)
+{
+    mob->baseStats.STA = value;
 }
 
 int mob_cur_dex(R(Mob*) mob)
@@ -190,6 +200,11 @@ int mob_base_dex(R(Mob*) mob)
     return mob->baseStats.DEX;
 }
 
+void mob_set_base_dex(R(Mob*) mob, int value)
+{
+    mob->baseStats.DEX = value;
+}
+
 int mob_cur_agi(R(Mob*) mob)
 {
     return mob->currentStats.AGI;
@@ -198,6 +213,11 @@ int mob_cur_agi(R(Mob*) mob)
 int mob_base_agi(R(Mob*) mob)
 {
     return mob->baseStats.AGI;
+}
+
+void mob_set_base_agi(R(Mob*) mob, int value)
+{
+    mob->baseStats.AGI = value;
 }
 
 int mob_cur_int(R(Mob*) mob)
@@ -210,6 +230,11 @@ int mob_base_int(R(Mob*) mob)
     return mob->baseStats.INT;
 }
 
+void mob_set_base_int(R(Mob*) mob, int value)
+{
+    mob->baseStats.INT = value;
+}
+
 int mob_cur_wis(R(Mob*) mob)
 {
     return mob->currentStats.WIS;
@@ -220,6 +245,11 @@ int mob_base_wis(R(Mob*) mob)
     return mob->baseStats.WIS;
 }
 
+void mob_set_base_wis(R(Mob*) mob, int value)
+{
+    mob->baseStats.WIS = value;
+}
+
 int mob_cur_cha(R(Mob*) mob)
 {
     return mob->currentStats.CHA;
@@ -228,6 +258,11 @@ int mob_cur_cha(R(Mob*) mob)
 int mob_base_cha(R(Mob*) mob)
 {
     return mob->baseStats.CHA;
+}
+
+void mob_set_base_cha(R(Mob*) mob, int value)
+{
+    mob->baseStats.CHA = value;
 }
 
 float mob_current_walking_speed(R(Mob*) mob)

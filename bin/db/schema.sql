@@ -30,9 +30,9 @@ CREATE TABLE account_name_id_pair (
     PRIMARY KEY (id, name)
 );
 
--- fk_name_id_pair is the rowid from a account_name_id_pair entry
+-- name_id_pair is the rowid from a account_name_id_pair entry
 CREATE TABLE account (
-    fk_name_id_pair             INT     PRIMARY KEY,
+    name_id_pair                INT     PRIMARY KEY,
     most_recent_character_name  TEXT,
     most_recent_ip_address      TEXT,
     status                      INT     DEFAULT 0,
@@ -45,7 +45,7 @@ CREATE TABLE account (
 
 CREATE TRIGGER trigger_account_creation_time AFTER INSERT ON account
 BEGIN
-    UPDATE account SET creation_time = datetime('now') WHERE fk_name_id_pair = new.fk_name_id_pair;
+    UPDATE account SET creation_time = datetime('now') WHERE name_id_pair = new.name_id_pair;
 END;
 
 -- character_id aliases the rowid, implicitly auto-increments.
@@ -57,7 +57,7 @@ END;
 -- only used for char select, anyway.
 CREATE TABLE character (
     character_id            INTEGER PRIMARY KEY,
-    fk_name_id_pair         INT,
+    name_id_pair            INT,
     name                    TEXT    UNIQUE,
     surname                 TEXT,
     level                   INT     DEFAULT 1,
@@ -84,7 +84,7 @@ CREATE TABLE character (
     base_int                INT     DEFAULT 0,
     base_wis                INT     DEFAULT 0,
     base_cha                INT     DEFAULT 0,
-    fk_guild_id             INT     DEFAULT 0,
+    guild_id                INT     DEFAULT 0,
     guild_rank              INT     DEFAULT 0,
     harmtouch_timestamp     INT     DEFAULT 0,
     discipline_timestamp    INT     DEFAULT 0,
@@ -124,7 +124,7 @@ CREATE TABLE character (
     tint6                   INT     DEFAULT 0
 );
 
-CREATE INDEX index_character_account_id_and_name ON character (fk_name_id_pair, name);
+CREATE INDEX index_character_account_id_and_name ON character (name_id_pair, name);
 
 CREATE TRIGGER trigger_character_creation_time AFTER INSERT ON character
 BEGIN

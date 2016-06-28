@@ -32,7 +32,11 @@ STRUCT_DEFINE(Client)
     uint32_t    isAutoSplitEnabled  : 1;
     uint32_t    isPvP               : 1;
     uint32_t    isGM                : 1;
-    uint32_t    bools_unused        : 27;
+    uint32_t    isAfk               : 1;
+    uint32_t    isLinkdead          : 1;
+    uint32_t    isSneaking          : 1;
+    uint32_t    isHiding            : 1;
+    uint32_t    bools_unused        : 24;
     
     union
     {
@@ -96,6 +100,8 @@ void    client_check_loading_finished(R(Client*) client);
 #define client_set_zone_index(cli, index) ((cli)->zoneClientIndex = (index))
 #define client_zone_index(cli) ((cli)->zoneClientIndex)
 
+#define client_guild_id(cli) ((cli)->guildId)
+
 #define client_set_handler(cli, handler) ((cli)->handler = (handler))
 #define client_handler(cli) ((cli)->handler)
 #define client_expansion(cli) ((cli)->expansion)
@@ -134,6 +140,12 @@ void    client_check_loading_finished(R(Client*) client);
 #define client_base_wis(cli) mob_base_wis(&(cli)->mob)
 #define client_cur_cha(cli) mob_cur_cha(&(cli)->mob)
 #define client_base_cha(cli) mob_base_cha(&(cli)->mob)
+#define client_current_walking_speed(cli) mob_current_walking_speed(&(cli)->mob)
+#define client_base_walking_speed(cli) mob_base_walking_speed(&(cli)->mob)
+#define client_current_running_speed(cli) mob_current_running_speed(&(cli)->mob)
+#define client_base_running_speed(cli) mob_base_running_speed(&(cli)->mob)
+#define client_current_size(cli) mob_current_size(&(cli)->mob)
+#define client_base_size(cli) mob_base_size(&(cli)->mob)
 #define client_spellbook_is_empty(cli) spellbook_is_empty(&(cli)->spellbook)
 #define client_zone(cli) mob_zone(&(cli)->mob)
 #define client_zone_cluster(cli) mob_zone_cluster(&(cli)->mob)
@@ -141,5 +153,13 @@ void    client_check_loading_finished(R(Client*) client);
 #define client_character_id(cli) ((cli)->characterId)
 #define client_account_name(cli) ((cli)->accountName)
 #define client_account_id(cli) ((cli)->accountId)
+
+EQP_API int         client_is_pvp(R(Client*) client);
+EQP_API int         client_is_gm(R(Client*) client);
+EQP_API int         client_is_afk(R(Client*) client);
+EQP_API int         client_is_linkdead(R(Client*) client);
+EQP_API uint8_t     client_anon_setting(R(Client*) client);
+EQP_API uint8_t     client_guild_rank(R(Client*) client);
+EQP_API const char* client_surname_cstr(R(Client*) client);
 
 #endif//EQP_CLIENT_H

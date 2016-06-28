@@ -17,5 +17,6 @@
 #define TrilogyOp_EnteredZoneUnknown    0x21c3
 
 #define TrilogyOp_SpawnAppearance       0x20f5
+#define TrilogyOp_Spawn                 0x2149
 
 #endif//EQP_OPCODES_TRILOGY_H

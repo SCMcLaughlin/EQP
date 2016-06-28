@@ -62,4 +62,26 @@ ENUM_DEFINE(DeityId)
     Deity_Agnostic      = 396
 };
 
+ENUM_DEFINE(BodyTypeId)
+{
+    BodyType_Humanoid       = 1,
+    BodyType_Lycanthrope    = 2,
+    BodyType_Undead         = 3,
+    BodyType_Giant          = 4,
+    BodyType_Construct      = 5,
+    BodyType_ExtraPlanar    = 6,
+    BodyType_Magical        = 7,
+    BodyType_SummonedUndead = 8,
+    BodyType_Untargetable   = 11,
+    BodyType_Vampire        = 12,
+    BodyType_Animal         = 21,
+    BodyType_Insect         = 22,
+    BodyType_Monster        = 23,
+    BodyType_Summoned       = 24,
+    BodyType_Plant          = 25,
+    BodyType_Dragon         = 26,
+    BodyType_Hidden         = 65,
+    BodyType_InvisibleMan   = 66,
+};
+
 #endif//EQP_ENUMS_H

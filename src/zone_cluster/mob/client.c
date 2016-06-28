@@ -271,3 +271,38 @@ void client_check_loading_finished(R(Client*) client)
     zc = client_zone_cluster(client);
     (void)zc;
 }
+
+int client_is_pvp(R(Client*) client)
+{
+    return client->isPvP;
+}
+
+int client_is_gm(R(Client*) client)
+{
+    return client->isGM;
+}
+
+int client_is_afk(R(Client*) client)
+{
+    return client->isAfk;
+}
+
+int client_is_linkdead(R(Client*) client)
+{
+    return client->isLinkdead;
+}
+
+uint8_t client_anon_setting(R(Client*) client)
+{
+    return client->anonSetting;
+}
+
+uint8_t client_guild_rank(R(Client*) client)
+{
+    return client->guildRank;
+}
+
+const char* client_surname_cstr(R(Client*) client)
+{
+    return (client->surname) ? string_data(client->surname) : "";
+}

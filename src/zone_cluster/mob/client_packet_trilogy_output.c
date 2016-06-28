@@ -649,9 +649,9 @@ void client_trilogy_send_zone_entry(R(Client*) client)
     // unknownJ
     aligned_advance(w, sizeof_field(Trilogy_ZoneEntry, unknownJ));
     // walkingSpeed
-    aligned_write_float(w, 0.46f); //fixme: handle this
+    aligned_write_float(w, client_base_walking_speed(client));
     // runningSpeed
-    aligned_write_float(w, 0.7f); //fixme: handle this
+    aligned_write_float(w, client_base_running_speed(client));
     // unknownK
     aligned_advance(w, sizeof_field(Trilogy_ZoneEntry, unknownK));
     // anon
@@ -807,7 +807,203 @@ PacketTrilogy* client_trilogy_make_op_spawn_appearance(R(ZC*) zc, uint16_t entit
     return packet;
 }
 
+static void client_trilogy_spawn_obfuscate(R(byte*) data, uint32_t length)
+{
+    uint32_t* ptr   = (uint32_t*)data;
+    uint32_t cur    = 0;
+    uint32_t n      = length / sizeof(uint32_t);
+    uint32_t i;
+    uint32_t next;
+    
+    for (i = 0; i < n; i++)
+    {
+        next    = cur + ptr[i] - 0x65e7;
+        ptr[i]  = ((ptr[i] << 0x09) | (ptr[i] >> 0x17)) + 0x65e7;
+        ptr[i]  = ((ptr[i] << 0x0d) | (ptr[i] >> 0x13));
+        ptr[i]  = ptr[i] - cur;
+        cur     = next;
+    }
+}
+
 PacketTrilogy* client_trilogy_make_op_spawn(R(ZC*) zc, R(Mob*) spawningMob)
 {
-    return NULL;
+    R(PacketTrilogy*) packet = packet_trilogy_create(B(zc), TrilogyOp_Spawn, sizeof(Trilogy_Spawn));
+    Aligned write;
+    R(Aligned*) w   = &write;
+    int mobType     = mob_get_type(spawningMob);
+    int temp;
+    
+    aligned_init(B(zc), w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+    
+    aligned_write_zero_all(w);
+    
+    // unknownA
+    aligned_advance(w, sizeof_field(Trilogy_Spawn, unknownA));
+    // size
+    aligned_write_float(w, mob_current_size(spawningMob));
+    // walkingSpeed
+    aligned_write_float(w, mob_current_walking_speed(spawningMob));
+    // runningSpeed
+    aligned_write_float(w, mob_current_running_speed(spawningMob));
+    
+    // tints
+    aligned_write_uint32(w, mob_get_tint(spawningMob, 0));
+    aligned_write_uint32(w, mob_get_tint(spawningMob, 1));
+    aligned_write_uint32(w, mob_get_tint(spawningMob, 2));
+    aligned_write_uint32(w, mob_get_tint(spawningMob, 3));
+    aligned_write_uint32(w, mob_get_tint(spawningMob, 4));
+    aligned_write_uint32(w, mob_get_tint(spawningMob, 5));
+    aligned_write_uint32(w, mob_get_tint(spawningMob, 6));
+    
+    // unknownB
+    aligned_advance(w, sizeof_field(Trilogy_Spawn, unknownB));
+    // heading
+    aligned_write_int8(w, spawningMob->headingRaw); //fixme: decide how to deal with headings
+    // headingDelta
+    aligned_advance(w, 1);
+    // y
+    aligned_write_int16(w, mob_y(spawningMob));
+    // x
+    aligned_write_int16(w, mob_x(spawningMob));
+    // z
+    aligned_write_int16(w, mob_z(spawningMob) * 10);
+    // delta bitfield
+    aligned_advance(w, sizeof(int));
+    // unknownC
+    aligned_advance(w, sizeof_field(Trilogy_Spawn, unknownC));
+    // entityId
+    aligned_write_uint16(w, mob_entity_id(spawningMob));
+    // bodyType
+    aligned_write_uint16(w, mob_body_type(spawningMob));
+    // ownerEntityId
+    aligned_write_uint16(w, mob_owner_entity_id(spawningMob));
+    // hpPercent
+    aligned_write_int16(w, mob_hp_ratio(spawningMob));
+    
+    // guildId
+    if (mobType == MobType_Client)
+    {
+        uint16_t guildId = client_guild_id((Client*)spawningMob);
+        aligned_write_uint16(w, guildId ? guildId : 0xffff);
+    }
+    else
+    {
+        aligned_write_uint16(w, 0xffff);
+    }
+    
+    // race
+    temp = mob_current_race(spawningMob);
+    aligned_write_uint8(w, (temp > 0xff) ? 1 : temp);
+    
+    switch (mobType)
+    {
+    case MobType_Npc:
+    case MobType_Pet:
+        temp = 1;
+        break;
+    
+    case MobType_Client:
+        temp = 0;
+        break;
+    
+    case MobType_NpcCorpse:
+        temp = 3;
+        break;
+    
+    case MobType_ClientCorpse:
+        temp = 2;
+        break;
+    }
+    
+    // mobType
+    aligned_write_uint8(w, temp);
+    // class
+    aligned_write_uint8(w, mob_class(spawningMob));
+    // gender
+    aligned_write_uint8(w, mob_current_gender(spawningMob));
+    // level
+    aligned_write_uint8(w, mob_level(spawningMob));
+    // isInvisible
+    aligned_write_uint8(w, mob_is_invisible(spawningMob));
+    // unknownD
+    aligned_advance(w, sizeof_field(Trilogy_Spawn, unknownD));
+    
+    // isPvP
+    if (mobType == MobType_Client)
+        aligned_write_uint8(w, client_is_pvp((Client*)spawningMob));
+    else
+        aligned_advance(w, sizeof(uint8_t));
+    
+    // uprightState
+    aligned_write_uint8(w, mob_upright_state(spawningMob));
+    // light
+    aligned_write_uint8(w, mob_light_level(spawningMob));
+    
+    if (mobType == MobType_Client)
+    {
+        // anon
+        aligned_write_uint8(w, client_anon_setting((Client*)spawningMob));
+        // isAfk
+        aligned_write_uint8(w, client_is_afk((Client*)spawningMob));
+        // unknownE
+        aligned_advance(w, sizeof_field(Trilogy_Spawn, unknownE));
+        // isLinkdead
+        aligned_write_uint8(w, client_is_linkdead((Client*)spawningMob));
+        // isGM
+        aligned_write_uint8(w, client_is_gm((Client*)spawningMob));
+    }
+    else
+    {
+        // anon, isAfk, unknownE, isLinkdead, isGM
+        aligned_advance(w, 5);
+    }
+    
+    // unknownF
+    aligned_advance(w, sizeof_field(Trilogy_Spawn, unknownF));
+    // texture
+    aligned_write_uint8(w, mob_texture(spawningMob));
+    // helmTexture
+    aligned_write_uint8(w, mob_helm_texture(spawningMob));
+    // unknownG
+    aligned_advance(w, sizeof_field(Trilogy_Spawn, unknownG));
+    
+    // materials
+    aligned_write_uint8(w, mob_get_material(spawningMob, 0));
+    aligned_write_uint8(w, mob_get_material(spawningMob, 1));
+    aligned_write_uint8(w, mob_get_material(spawningMob, 2));
+    aligned_write_uint8(w, mob_get_material(spawningMob, 3));
+    aligned_write_uint8(w, mob_get_material(spawningMob, 4));
+    aligned_write_uint8(w, mob_get_material(spawningMob, 5));
+    aligned_write_uint8(w, mob_get_material(spawningMob, 6));
+    aligned_write_uint8(w, mob_primary_model_id(spawningMob));
+    aligned_write_uint8(w, mob_secondary_model_id(spawningMob));
+    
+    // name
+    aligned_write_snprintf_full_advance(w, sizeof_field(Trilogy_Spawn, name), "%s", mob_client_friendly_name_cstr(spawningMob));
+    
+    
+    if (mobType == MobType_Client)
+    {
+        // surname
+        aligned_write_snprintf_full_advance(w, sizeof_field(Trilogy_Spawn, surname), "%s", client_surname_cstr((Client*)spawningMob));
+        // guildRank
+        aligned_write_uint8(w, client_guild_rank((Client*)spawningMob));
+    }
+    else
+    {
+        // surname, guildRank
+        aligned_advance(w, sizeof_field(Trilogy_Spawn, surname) + sizeof_field(Trilogy_Spawn, guildRank));
+    }
+    
+    // unknownH
+    aligned_advance(w, sizeof_field(Trilogy_Spawn, unknownH));
+    // deity
+    aligned_write_uint16(w, mob_deity(spawningMob));
+    
+    // unknownI is already zeroed, don't need to bother with it
+    
+    // Spawn packets are expected to be obfuscated
+    client_trilogy_spawn_obfuscate(packet_trilogy_data(packet), packet_trilogy_length(packet));
+    
+    return packet;
 }

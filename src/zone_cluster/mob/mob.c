@@ -9,6 +9,20 @@ void mob_init_client(R(Mob*) mob, R(ZC*) zc, R(Zone*) zone, R(Server_ClientZonin
     mob->entityId       = 0;
     mob->zoneMobIndex   = -1;
     
+    mob->uprightState   = Trilogy_UprightState_Standing; //fixme: make an expansion-agnostic enum for this?
+    mob->texture        = 0xff;
+    mob->helmTexture    = 0xff;
+    
+    mob->currentWalkingSpeed    = 0.46f;
+    mob->currentRunningSpeed    = 0.7f;
+    mob->baseWalkingSpeed       = 0.46f;
+    mob->baseRunningSpeed       = 0.7f;
+    
+    mob->currentSize    = 4.0f; // Correct these when our base race is set
+    mob->baseSize       = 4.0f;
+    
+    mob->bodyType       = BodyType_Humanoid;
+    
     mob->name           = string_create_from_cstr(B(zc), zoning->characterName, strlen(zoning->characterName));
     
     mob->zone           = zone;
@@ -34,6 +48,11 @@ void mob_deinit(R(Mob*) mob)
 const char* mob_name_cstr(R(Mob*) mob)
 {
     return string_data(mob->name);
+}
+
+const char* mob_client_friendly_name_cstr(R(Mob*) mob)
+{
+    return (mob->clientFriendlyName) ? string_data(mob->clientFriendlyName) : string_data(mob->name);
 }
 
 int mob_entity_id(R(Mob*) mob)
@@ -104,6 +123,11 @@ float mob_z(R(Mob*) mob)
 float mob_heading(R(Mob*) mob)
 {
     return mob->heading;
+}
+
+int8_t mob_hp_ratio(R(Mob*) mob)
+{
+    return (mob->currentHp * 100) / mob->maxHp;
 }
 
 int64_t mob_current_hp(R(Mob*) mob)
@@ -204,4 +228,87 @@ int mob_cur_cha(R(Mob*) mob)
 int mob_base_cha(R(Mob*) mob)
 {
     return mob->baseStats.CHA;
+}
+
+float mob_current_walking_speed(R(Mob*) mob)
+{
+    return mob->currentWalkingSpeed;
+}
+
+float mob_base_walking_speed(R(Mob*) mob)
+{
+    return mob->baseWalkingSpeed;
+}
+
+float mob_current_running_speed(R(Mob*) mob)
+{
+    return mob->currentRunningSpeed;
+}
+
+float mob_base_running_speed(R(Mob*) mob)
+{
+    return mob->baseRunningSpeed;
+}
+
+float mob_current_size(R(Mob*) mob)
+{
+    return mob->currentSize;
+}
+
+float mob_base_size(R(Mob*) mob)
+{
+    return mob->baseSize;
+}
+
+uint16_t mob_body_type(R(Mob*) mob)
+{
+    return mob->bodyType;
+}
+
+int mob_is_invisible(R(Mob*) mob)
+{
+    return (mob->invisVsBodyTypeBitfields & (1 << (BodyType_Humanoid - 1)));
+}
+
+int mob_is_invisible_vs_undead(R(Mob*) mob)
+{
+    return (mob->invisVsBodyTypeBitfields & (1 << (BodyType_Undead - 1)));
+}
+
+int mob_is_invisible_vs_animals(R(Mob*) mob)
+{
+    return (mob->invisVsBodyTypeBitfields & (1 << (BodyType_Animal - 1)));
+}
+
+int mob_is_invisible_to_mob(R(Mob*) self, R(Mob*) target)
+{
+    uint16_t bodyType   = mob_body_type(target);
+    int isInvis         = false;
+    
+    if (bodyType == 0 || bodyType >= 32)
+        isInvis = mob_is_invisible(self);
+    else
+        isInvis = (self->invisVsBodyTypeBitfields & (1 << (bodyType - 1)));
+    
+    return (isInvis && self->invisibilityLevel > target->seeInvisLevel);
+}
+
+uint8_t mob_upright_state(R(Mob*) mob)
+{
+    return mob->uprightState;
+}
+
+uint8_t mob_light_level(R(Mob*) mob)
+{
+    return mob->lightLevel;
+}
+
+uint8_t mob_texture(R(Mob*) mob)
+{
+    return mob->texture;
+}
+
+uint8_t mob_helm_texture(R(Mob*) mob)
+{
+    return mob->helmTexture;
 }

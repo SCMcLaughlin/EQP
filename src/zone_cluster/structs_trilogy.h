@@ -225,6 +225,58 @@ STRUCT_DEFINE(Trilogy_SpawnAppearance)
     uint32_t    value;
 };
 
+STRUCT_DEFINE(Trilogy_Spawn)
+{
+    uint32_t    unknownA;
+    float       size;
+    float       walkingSpeed;
+    float       runningSpeed;
+    uint32_t    tints[7];
+    uint8_t     unknownB[9];    // Equip-related ?
+    int8_t      heading;
+    int8_t      headingDelta;
+    int16_t     y;
+    int16_t     x;
+    int16_t     z;
+    int         yDelta  : 10;
+    int         unusedA : 1;
+    int         zDelta  : 10;
+    int         unusedB : 1;
+    int         xDelta  : 10;
+    uint8_t     unknownC;
+    uint16_t    entityId;
+    uint16_t    bodyType;
+    uint16_t    ownerEntityId;  // 0 = not a pet
+    int16_t     hpPercent;
+    uint16_t    guildId;
+    uint8_t     race;
+    uint8_t     mobType;        // 0 = client, 1 = npc, 2 = client corpse, 3 = npc corpse, 10 = self
+    uint8_t     class;
+    uint8_t     gender;
+    uint8_t     level;
+    uint8_t     isInvisible;
+    uint8_t     unknownD;
+    uint8_t     isPvP;
+    uint8_t     uprightState;   // Trilogy_UprightState_Standing and such
+    uint8_t     light;
+    uint8_t     anon;
+    uint8_t     isAfk;
+    uint8_t     unknownE;
+    uint8_t     isLinkdead;
+    uint8_t     isGM;
+    uint8_t     unknownF;
+    uint8_t     texture;
+    uint8_t     helmTexture;
+    uint8_t     unknownG;
+    uint8_t     materials[9];
+    char        name[30];
+    char        surname[20];
+    uint8_t     guildRank;
+    uint8_t     unknownH;
+    uint16_t    deity;  //fixme: may be uint8?
+    uint8_t     unknownI[10];
+};
+
 #pragma pack()
 
 #endif//EQP_STRUCTS_TRILOGY_H

@@ -143,6 +143,7 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     uint32_t i;
     uint32_t ip;
     bool isLocal;
+    char address[INET_ADDRSTRLEN];
     
     if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
         return;
@@ -152,6 +153,8 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     list    = login_server_list(login);
     count   = server_list_count(list);
     ip      = protocol_handler_ip_address(handler)->sin_addr.s_addr;
+    
+    snprintf(address, sizeof(address), "%u.%u.%u.%u", (ip >> 0) & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
     
     // Figure out how long the packet will be
     data    = server_list_data(list);
@@ -165,7 +168,19 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
         if (!server_listing_name(server))
             continue;
         
-        if (isLocal && server_listing_is_local(server))
+        /*
+            There are two different 'local address' cases to handle:
+            
+            1) Login, char-select and client are all local to each other; or
+            2) Char-select and client are local to each other, but both are remote to login
+            
+            In the first case, both char-select and client will have been flagged as local (to the login server) and the
+            client's address will not match the remote address for char-select.
+            
+            In the second case, neither char-select and client will have been flagged as local, but the client's address will
+            (presumably, and typically) be the same as char-select's remote address.
+        */
+        if ((isLocal && server_listing_is_local(server)) || string_compare_cstr(server_listing_remote_address(server), address))
             length += string_length(server_listing_local_address(server)) + 1;
         else
             length += server_listing_remote_length(server);
@@ -218,7 +233,7 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
         // server name
         aligned_write_string_null_terminated(w, server_listing_name(server));
         // ip address
-        if (isLocal && server_listing_is_local(server))
+        if ((isLocal && server_listing_is_local(server)) || string_compare_cstr(server_listing_remote_address(server), address))
             aligned_write_string_null_terminated(w, server_listing_local_address(server));
         else
             aligned_write_string_null_terminated(w, server_listing_remote_address(server));

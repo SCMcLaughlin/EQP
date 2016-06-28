@@ -13,6 +13,11 @@ void mob_init_client(R(Mob*) mob, R(ZC*) zc, R(Zone*) zone, R(Server_ClientZonin
     mob->texture        = 0xff;
     mob->helmTexture    = 0xff;
     
+    // Temporary, just to make sure we don't try to divide by zero anywhere...
+    mob->maxHp          = 100;
+    mob->maxMana        = 100;
+    mob->maxEndurance   = 100;
+    
     mob->currentWalkingSpeed    = 0.46f;
     mob->currentRunningSpeed    = 0.7f;
     mob->baseWalkingSpeed       = 0.46f;

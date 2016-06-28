@@ -12,10 +12,11 @@ static Client* client_create_unidentified_stub(R(ProtocolHandler*) handler, int 
     
     protocol_handler_grab(handler);
     
-    client->handler         = handler;
-    client->expansion       = expansion;
+    client->handler             = handler;
+    client->expansion           = expansion;
     atomic_init(&client->refCount, 1);
-    client->isStubClient    = true;
+    client->isStubClient        = true;
+    client->creationTimestamp   = clock_milliseconds();
     
     return client;
 }
@@ -36,7 +37,7 @@ void client_on_disconnect(R(void*) vclient, int isLinkdead)
     
     client_drop(client);
     
-    printf("DISCONNECT (%s)\n", isLinkdead ? "explicit" : "timeout");
+    printf("DISCONNECT (%s)\n", isLinkdead ? "timeout" : "explicit");
 }
 
 static void client_load_skills_callback(R(Query*) query)
@@ -184,7 +185,7 @@ static void client_load_stats_callback(R(Query*) query)
     db = core_db(C(zc));
     query_init(&q);
     query_set_userdata(&q, client);
-    db_prepare_literal(db, &q, "SELECT skillId, value FROM skills WHERE character_id = ?", client_load_skills_callback);
+    db_prepare_literal(db, &q, "SELECT skill_id, value FROM skill WHERE character_id = ?", client_load_skills_callback);
     query_bind_int64(&q, 1, client_character_id(client));
     db_schedule(db, &q);
 }
@@ -379,7 +380,9 @@ void client_drop(R(Client*) client)
     mob_deinit(&client->mob);
     
 stub:
-    protocol_handler_drop(client_handler(client));
+    if (client_handler(client))
+        protocol_handler_drop(client_handler(client));
+    
     free(client);
 }
 

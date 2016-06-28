@@ -8,7 +8,7 @@ static void client_trilogy_handle_op_zone_entry(R(Client*) clientStub, R(Aligned
     R(ProtocolHandler*) handler;
     R(ZC*) zc;
     
-    if (aligned_remaining(a) < sizeof(Trilogy_ZoneEntry))
+    if (aligned_remaining(a) < sizeof(Trilogy_ZoneEntryFromClient))
         return;
     
     handler = client_handler(clientStub);
@@ -22,6 +22,12 @@ static void client_trilogy_handle_op_zone_entry(R(Client*) clientStub, R(Aligned
 
 static void client_stub_recv_packet_trilogy(R(Client*) client, uint16_t opcode, R(Aligned*) a)
 {
+    if ((clock_milliseconds() - client->creationTimestamp) >= EQP_CLIENT_ZONE_IN_NO_AUTH_TIMEOUT)
+    {
+        protocol_handler_send_disconnect(client_handler(client));
+        return;
+    }
+    
     switch (opcode)
     {
     case TrilogyOp_ZoneEntry:

@@ -140,7 +140,7 @@ static void zc_expected_client_timeout_callback(R(Timer*) timer)
     R(Client*) client   = timer_userdata_type(timer, Client);
     R(ZC*) zc           = client_zone_cluster(client);
     R(String*) name     = client_name(client);
-    
+
     if (hash_table_get_by_str(zc->expectedClientsByName, name))
     {
         hash_table_remove_by_str(zc->expectedClientsByName, name);
@@ -166,7 +166,7 @@ void zc_client_expected_to_zone_in(R(ZC*) zc, int sourceId, R(IpcPacket*) packet
         return;
     
     client = client_create(zc, zone, zoning);
-    
+
     /*
         This timer is not explicitly stored anywhere: it is safe for its callback to execute
         when the client is not timing out, since they will be taken out of the expectedClient
@@ -191,6 +191,9 @@ void zc_client_match_with_expected(R(ZC*) zc, R(Client*) clientStub, R(ProtocolH
         hash_table_remove_by_cstr(zc->expectedClientsByName, name, len);
         
         client_set_handler(client, handler);
+        client->expansion = clientStub->expansion;
+        protocol_handler_set_client_object(handler, client);
+        
         client_catch_up_with_loading_progress(client);
     }
     else

@@ -76,6 +76,14 @@ IpAddress* protocol_handler_ip_address(R(ProtocolHandler*) handler)
     return ip;
 }
 
+void protocol_handler_set_client_object(R(ProtocolHandler*) handler, R(void*) clientObject)
+{
+    //if (handler->isTrilogy == 0)
+    //    protocol_handler_standard_set_client_object(&handler->standard, clientObject);
+    //else
+        protocol_handler_trilogy_set_client_object(&handler->trilogy, clientObject);
+}
+
 void protocol_handler_recv(R(ProtocolHandler*) handler, R(byte*) data, int len)
 {
     if (handler->isTrilogy == 0)
@@ -123,4 +131,12 @@ void protocol_handler_schedule_packet_opt(R(ProtocolHandler*) handler, R(void*) 
         protocol_handler_standard_schedule_packet_opt(&handler->standard, (Packet*)packet, noAckRequest);
     else*/
         protocol_handler_trilogy_schedule_packet_opt(&handler->trilogy, (PacketTrilogy*)packet, noAckRequest);
+}
+
+void protocol_handler_send_disconnect(R(ProtocolHandler*) handler)
+{
+    /*if (handler->isTrilogy == 0)
+        protocol_handler_standard_send_disconnect(&handler->standard);
+    else*/
+        protocol_handler_trilogy_send_disconnect(&handler->trilogy);
 }

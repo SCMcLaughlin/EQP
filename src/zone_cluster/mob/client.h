@@ -14,9 +14,11 @@
 #include "spellbook.h"
 #include "structs.h"
 #include "bit.h"
+#include "timer.h"
 
 #define EQP_CLIENT_ZONE_IN_EXPECTED_TIMEOUT TIMER_SECONDS(30)
-#define EQP_CLIENT_ZONE_IN_NO_AUTH_TIMEOUT TIMER_SECONDS(30)
+#define EQP_CLIENT_ZONE_IN_NO_AUTH_TIMEOUT  TIMER_SECONDS(30)
+#define EQP_CLIENT_KEEP_ALIVE_DELAY_MS      500
 
 STRUCT_DECLARE(ZC);
 STRUCT_DECLARE(Zone);
@@ -91,6 +93,8 @@ STRUCT_DEFINE(Client)
     String*     accountName;
     uint32_t    accountId;
     uint32_t    ipAddress;
+    
+    Timer       timerKeepAlive;
 };
 
 Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning);

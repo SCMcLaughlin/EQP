@@ -309,6 +309,8 @@ Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
     client->accountId   = zoning->accountId;
     client->ipAddress   = zoning->ipAddress;
     
+    timer_init(&client->timerKeepAlive, zc_timer_pool(zc), EQP_CLIENT_KEEP_ALIVE_DELAY_MS, NULL, NULL, false);
+    
     // Character stats
     client_grab(client);
     query_init(&query);
@@ -376,6 +378,8 @@ void client_drop(R(Client*) client)
     if (client->isStubClient)
         goto stub;
     
+    timer_deinit(&client->timerKeepAlive);
+    
     inventory_deinit(&client->inventory);
     mob_deinit(&client->mob);
     
@@ -417,6 +421,11 @@ void client_check_loading_finished(R(Client*) client)
 
         packet = client_trilogy_make_op_weather(zc, 0, 0); //fixme: get weather from zone
         client_trilogy_schedule_packet_individual(client, packet);
+        
+        // Start keepalive packet flow
+        timer_set_callback(&client->timerKeepAlive, client_trilogy_send_keep_alive);
+        timer_set_userdata(&client->timerKeepAlive, client_handler(client));
+        timer_start(&client->timerKeepAlive);
     }
     else
     {

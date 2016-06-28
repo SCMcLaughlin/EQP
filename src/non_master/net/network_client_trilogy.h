@@ -29,8 +29,8 @@ STRUCT_DEFINE(NetworkClientTrilogy)
     Array*          outputPackets;
     
     uint16_t        nextAckResponse;
-    uint16_t        nextAckRequestExpected; //fixme: rename these to better reflect what they do
-    uint16_t        nextAckRequestCheck;
+    uint16_t        nextAckRequestExpected; //fixme: rename these to better reflect what they do; basically: expected is the beginning
+    uint16_t        nextAckRequestCheck;    //of the received packet frontier, check is the end, and response = check, but is set to 0 when the ack response has been sent
     uint16_t        nextSeqToSend;
     uint16_t        lastAckReceived;
     
@@ -58,5 +58,6 @@ void        network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client);
 #define     network_client_trilogy_update_index(cli, i) network_client_update_udp_client_index(&(cli)->base, i)
 #define     network_client_trilogy_flag_connection_as_dead(cli) network_client_flag_connection_as_dead(&(cli)->base)
 #define     network_client_trilogy_increment_packets_received(cli) network_client_increment_packets_received(&(cli)->base)
+#define     network_client_trilogy_send_keep_alive_ack(cli) network_client_trilogy_send_pure_ack((cli), (cli)->nextAckRequestCheck)
 
 #endif//EQP_NETWORK_CLIENT_TRILOGY_H

@@ -26,6 +26,7 @@ void    timer_destroy(R(Timer*) timer);
 
 #define timer_set_period_milliseconds(timer, ms) ((timer)->periodMilliseconds = (ms))
 #define timer_set_callback(timer, cb) ((timer)->callback = (cb))
+#define timer_set_userdata(timer, data) ((timer)->userdata = (data))
 
 #define timer_period_milliseconds(timer) ((timer)->periodMilliseconds)
 #define timer_userdata(timer) ((timer)->userdata)

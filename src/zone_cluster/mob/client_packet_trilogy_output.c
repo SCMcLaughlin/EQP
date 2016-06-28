@@ -29,6 +29,12 @@ void client_trilogy_send_zeroed_packet_var_length(R(Client*) client, uint16_t op
     client_trilogy_schedule_packet_individual(client, packet);
 }
 
+void client_trilogy_send_keep_alive(R(Timer*) timer)
+{
+    R(ProtocolHandler*) handler = timer_userdata_type(timer, ProtocolHandler);
+    protocol_handler_trilogy_send_keep_alive_ack(&handler->trilogy);
+}
+
 static void client_trilogy_player_profile_obfuscate(R(byte*) buffer, uint32_t len)
 {
     uint32_t* ptr   = (uint32_t*)buffer;

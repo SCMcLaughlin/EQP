@@ -43,6 +43,8 @@ void char_select_client_set_auth(R(CharSelectClient*) client, R(CharSelectAuth*)
 {
     client->auth = *auth;
     
+    client->auth.isLocal = char_select_is_ip_address_local(protocol_handler_ip_address(char_select_client_handler(client))->sin_addr.s_addr);
+    
     if (client->expansion == ExpansionId_Trilogy)
         cs_client_trilogy_on_auth(client);
     //else

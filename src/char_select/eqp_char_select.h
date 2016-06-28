@@ -69,6 +69,8 @@ void        char_select_send_client_zone_in_request(R(CharSelect*) charSelect, R
 void        char_select_get_starting_zone_and_loc(R(CharSelect*) charSelect, uint16_t race, uint8_t class, uint8_t gender, bool isTrilogy,
                 R(int*) zoneId, R(float*) x, R(float*) y, R(float*) z);
 
+int         char_select_is_ip_address_local(uint32_t ip);
+
 #define char_select_server_status(cs) ((cs)->serverStatus)
 #define char_select_player_count(cs) ((cs)->serverPlayerCount)
 #define char_select_timer_pool(cs) (&(cs)->timerPool)

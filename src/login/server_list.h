@@ -35,6 +35,7 @@ STRUCT_DEFINE(ServerListing)
     String*         shortName;
     String*         remoteIpAddress;
     String*         localIpAddress;
+    bool            isLocal;
 };
 
 STRUCT_DEFINE(ServerList)
@@ -50,7 +51,7 @@ uint32_t    server_list_add(R(ServerList*) list, R(ServerListing*) server);
 void        server_list_remove_by_index(R(ServerList*) list, uint32_t index);
 void        server_list_update_by_index(R(ServerList*) list, uint32_t index, int playerCount, int status);
 
-void        server_list_send_client_login_request_by_ip_address(R(Login*) login, R(LoginClient*) client, R(const char*) ipAddress, uint32_t accountId);
+void        server_list_send_client_login_request_by_ip_address(R(Login*) login, R(const char*) ipAddress, uint32_t accountId);
 
 #define     server_list_count(list) array_count((list)->array)
 #define     server_list_data(list) array_data_type((list)->array, ServerListing)
@@ -63,5 +64,6 @@ void        server_list_send_client_login_request_by_ip_address(R(Login*) login,
 #define     server_listing_local_address(server) ((server)->localIpAddress)
 #define     server_listing_name_length(server) ((server)->nameLength)
 #define     server_listing_remote_length(server) ((server)->remoteAddressLength)
+#define     server_listing_is_local(server) ((server)->isLocal)
 
 #endif//EQP_SERVER_LIST_H

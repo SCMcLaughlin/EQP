@@ -16,6 +16,7 @@ LoginClient* login_client_create(R(ProtocolHandler*) handler, int expansion, int
     atomic_init(&client->refCount, 1);
     client->accountName = NULL;
     client->accountId   = 0;
+    client->isLocal     = login_is_ip_address_local(protocol_handler_ip_address(handler)->sin_addr.s_addr);
     
     protocol_handler_grab(handler);
     

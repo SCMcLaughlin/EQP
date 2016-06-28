@@ -129,34 +129,6 @@ static void login_trilogy_handle_op_banner(R(LoginClient*) client, R(ProtocolHan
     login_trilogy_schedule_packet(handler, packet);
 }
 
-//#define TEST_SERVERS
-#ifdef TEST_SERVERS
-#define SERVER_NAME "EQP Test%u"
-#define SERVER_IP "127.0.0.1"
-#define NUM 50
-static uint32_t temp_add_test_servers(R(Basic*) basic, R(ServerList*) list)
-{
-    uint32_t i;
-    ServerListing server;
-    
-    for (i = 0; i < NUM; i++)
-    {
-        server.status       = (i%10 == 0) ? ((i%20 == 0) ? ServerStatus_Locked : ServerStatus_Down) : ServerStatus_Up;
-        server.rank         = (i%2 == 0) ? ServerRank_Preferred : ServerRank_Standard;
-        server.playerCount  = i;
-        
-        server.longName = string_create(basic);
-        string_set_from_format(basic, &server.longName, SERVER_NAME, i*i);
-        server.localIpAddress = string_create_from_cstr(basic, SERVER_IP, sizeof(SERVER_IP) - 1);
-        server.remoteIpAddress = string_create_from_cstr(basic, SERVER_IP, sizeof(SERVER_IP) - 1);
-        
-        server_list_add(list, &server);
-    }
-    
-    return NUM;
-}
-#endif
-
 static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(ProtocolHandler*) handler)
 {
     R(Login*) login;
@@ -170,24 +142,16 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     uint32_t n;
     uint32_t i;
     uint32_t ip;
-    char localAddress[INET_ADDRSTRLEN];
+    bool isLocal;
     
     if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
         return;
     
+    isLocal = login_client_is_local(client);
     login   = (Login*)protocol_handler_basic(handler);
     list    = login_server_list(login);
     count   = server_list_count(list);
     ip      = protocol_handler_ip_address(handler)->sin_addr.s_addr;
-    
-    snprintf(localAddress, sizeof(localAddress), "%u.%u.%u.%u", (ip >> 0) & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff);
-    
-#ifdef TEST_SERVERS
-    ////////
-    if (count == 0)
-        count = temp_add_test_servers(B(login), list);
-    ////////
-#endif
     
     // Figure out how long the packet will be
     data    = server_list_data(list);
@@ -201,7 +165,7 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
         if (!server_listing_name(server))
             continue;
         
-        if (string_compare_cstr(server_listing_local_address(server), localAddress) == 0)
+        if (isLocal && server_listing_is_local(server))
             length += string_length(server_listing_local_address(server)) + 1;
         else
             length += server_listing_remote_length(server);
@@ -254,7 +218,7 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
         // server name
         aligned_write_string_null_terminated(w, server_listing_name(server));
         // ip address
-        if (string_compare_cstr(server_listing_local_address(server), localAddress) == 0)
+        if (isLocal && server_listing_is_local(server))
             aligned_write_string_null_terminated(w, server_listing_local_address(server));
         else
             aligned_write_string_null_terminated(w, server_listing_remote_address(server));
@@ -289,7 +253,7 @@ static void login_trilogy_handle_op_server_status_request(R(LoginClient*) client
     if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
         return;
     
-    server_list_send_client_login_request_by_ip_address((Login*)protocol_handler_basic(handler), client, ipAddress, login_client_account_id(client));
+    server_list_send_client_login_request_by_ip_address((Login*)protocol_handler_basic(handler), ipAddress, login_client_account_id(client));
 }
 
 void login_client_trilogy_handle_login_response(R(LoginClient*) client, int response)

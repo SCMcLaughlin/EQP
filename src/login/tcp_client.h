@@ -23,6 +23,7 @@ STRUCT_DEFINE(TcpClient)
     int         loginServerIndex;
     IpAddress   address;
     byte*       recvBuf;
+    bool        isLocal;
 };
 
 void    tcp_client_init(R(Basic*) basic, R(TcpClient*) client, int fd, R(IpAddress*) addr);

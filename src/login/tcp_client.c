@@ -15,6 +15,7 @@ void tcp_client_init(R(Basic*) basic, R(TcpClient*) client, int fd, R(IpAddress*
     client->loginServerIndex    = -1;
     client->address             = *addr;
     client->recvBuf             = eqp_alloc_type_bytes(basic, EQP_TCP_CLIENT_BUFFER_SIZE, byte);
+    client->isLocal             = login_is_ip_address_local(addr->sin_addr.s_addr);
 }
 
 void tcp_client_deinit(R(TcpClient*) client)
@@ -131,6 +132,8 @@ static void tcp_client_handle_op_new_login_server(R(Login*) login, R(TcpClient*)
     server.status           = ServerStatus_Locked;
     server.rank             = ServerRank_Standard;
     server.playerCount      = 0;
+    
+    server.isLocal          = client->isLocal;
     
     client->loginServerIndex = server_list_add(login_server_list(login), &server);
 }

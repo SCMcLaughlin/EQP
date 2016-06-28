@@ -36,6 +36,8 @@ void    login_init(R(Login*) login, R(const char*) ipcPath, R(const char*) maste
 void    login_deinit(R(Login*) login);
 void    login_main_loop(R(Login*) login);
 
+int     login_is_ip_address_local(uint32_t ip);
+
 #define login_get_crypto(login) ((login)->crypto)
 #define login_server_list(login) (&(login)->serverList)
 #define login_client_list(login) (&(login)->clientList)

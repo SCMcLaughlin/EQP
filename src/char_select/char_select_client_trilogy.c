@@ -598,7 +598,6 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
 
 static void cs_trilogy_handle_op_enter(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
 {
-    printf("Enter %u\n", aligned_remaining(a));
     if (!char_select_client_is_authed(client) || aligned_remaining(a) < 2)
         return;
     

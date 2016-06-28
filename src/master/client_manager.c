@@ -125,9 +125,9 @@ static void client_mgr_add_client_from_char_select(R(ClientMgr*) mgr, R(Client*)
     R(ZoneCluster*) zc;
     
     if ((motdLen + length) > sizeof(buf))
-        motdLen = sizeof(buf) - length;
+        motdLen = sizeof(buf) - length - 1;
     
-    length += motdLen;
+    length += motdLen + 1;
     
     // Retrieve the zone cluster we are sending the client to (starting the zone and/or the zone cluster if needed)
     
@@ -143,7 +143,7 @@ static void client_mgr_add_client_from_char_select(R(ClientMgr*) mgr, R(Client*)
     snprintf(zoneAddr->shortName, sizeof(zoneAddr->shortName), "%s", zone_short_name_by_id(client_zone_id(client)));
     zoneAddr->eqTimeBaseUnixSeconds = mgr->eqTimeBaseUnixSeconds;
     zoneAddr->motdLength            = motdLen;
-    snprintf(zoneAddr->messageOfTheDay, motdLen, "%s", string_data(mgr->messageOfTheDay));
+    snprintf(zoneAddr->messageOfTheDay, motdLen + 1, "%s", string_data(mgr->messageOfTheDay));
     
     client_mgr_ipc_char_select(mgr, ServerOp_ZoneAddress, length, buf);
     

@@ -95,7 +95,7 @@ int login_is_ip_address_local(uint32_t ip)
     
     // Is it on the 172.16.0.0 to 172.31.255.255 subnet (12-bit mask)?
     check = make_ip(172, 16, 0, 0);
-    if ((ip & 0x00000fff) == check)
+    if ((ip & 0x0000f0ff) == check)
         goto ret_true;
 
     return false;

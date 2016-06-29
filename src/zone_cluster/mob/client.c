@@ -320,7 +320,7 @@ Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
             "surname, level, class, race, gender, face, deity, x, y, z, heading, current_hp, current_mana, current_endurance, experience, training_points, "
             "base_str, base_sta, base_dex, base_agi, base_int, base_wis, base_cha, guild_id, guild_rank, harmtouch_timestamp, discipline_timestamp, "
             "pp, gp, sp, cp, pp_cursor, gp_cursor, sp_cursor, cp_cursor, pp_bank, gp_bank, sp_bank, cp_bank, hunger, thirst, is_gm, anon, drunkeness, "
-            "creation_time "
+            "strftime('%s', creation_time) "
         "FROM character WHERE character_id = ?", client_load_stats_callback);
     query_bind_int64(&query, 1, zoning->characterId);
     db_schedule(db, &query);

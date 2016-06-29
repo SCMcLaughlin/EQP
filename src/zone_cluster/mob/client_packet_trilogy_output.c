@@ -987,7 +987,6 @@ PacketTrilogy* client_trilogy_make_op_spawn(R(ZC*) zc, R(Mob*) spawningMob)
     // name
     aligned_write_snprintf_full_advance(w, sizeof_field(Trilogy_Spawn, name), "%s", mob_client_friendly_name_cstr(spawningMob));
     
-    
     if (mobType == MobType_Client)
     {
         // surname

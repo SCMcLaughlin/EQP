@@ -94,7 +94,7 @@ STRUCT_DEFINE(Client)
     uint32_t    accountId;
     uint32_t    ipAddress;
     
-    Timer       timerKeepAlive;
+    Timer       timerKeepAlive; //fixme: would make more sense to have one timer in ZC that iterates over all active clients for keep alive?
 };
 
 Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning);

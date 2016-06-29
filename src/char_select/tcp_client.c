@@ -9,7 +9,7 @@
 #define LOGIN_VERSION               "0.8.0"
 #define SERVER_TYPE_WORLD           0
 
-void tcp_client_init(CharSelect* charSelect, TcpClient* client, LoginServerConfig* config)
+void tcp_client_init(CharSelect* charSelect, TcpClient* client, LoginServerConfig* config, int locked)
 {
     client->socketFd    = INVALID_SOCKET;
     client->buffered    = 0;
@@ -17,6 +17,7 @@ void tcp_client_init(CharSelect* charSelect, TcpClient* client, LoginServerConfi
     client->recvBuf     = eqp_alloc_type_bytes(B(charSelect), EQP_TCP_CLIENT_BUFFER_SIZE, byte);
     client->config      = config;
     client->charSelect  = charSelect;
+    client->isLocked    = locked;
     client->timer       = eqp_timer_create(B(charSelect), char_select_timer_pool(charSelect), RECONNECT_MILLISECONDS, NULL, config, false);
 }
 
@@ -346,27 +347,64 @@ static void tcp_client_handle_op_client_login_request(CharSelect* charSelect, Tc
     tcp_client_send(charSelect, client, &send, sizeof(Tcp_ClientLoginResponseSend));
 }
 
-static void tcp_client_handle_op_client_login_auth(CharSelect* charSelect, Aligned* a)
+static void tcp_client_account_status_callback(Query* query)
 {
-    CharSelectAuth auth;
+    CharSelectAuth* auth    = query_userdata_type(query, CharSelectAuth);
+    uint64_t suspendedUntil = 0;
+    int status              = 0;
+    
+    while (query_select(query))
+    {
+        status          = query_get_int(query, 1);
+        suspendedUntil  = query_get_int64(query, 2);
+    }
+    
+    auth->accountStatus = status;
+    
+    if (suspendedUntil < clock_milliseconds() && status >= 0 && (auth->isLocal || !auth->isLocked || status >= 50))
+        char_select_handle_client_auth(auth->charSelect, auth);
+    
+    free(auth);
+}
+
+static void tcp_client_handle_op_client_login_auth(TcpClient* client, CharSelect* charSelect, Aligned* a)
+{
+    Database* db            = core_db(C(charSelect));
+    CharSelectAuth* auth    = eqp_alloc_type(B(charSelect), CharSelectAuth);
+    Query query;
+    
+    auth->accountStatus = 0;
+    auth->isLocked      = client->isLocked;
+    auth->charSelect    = charSelect;
     
     // accountId
-    auth.accountId = aligned_read_uint32(a);
+    auth->accountId = aligned_read_uint32(a);
     // accountName
-    aligned_read_buffer(a, auth.accountName, sizeof_field(Tcp_ClientLoginAuth, accountName));
+    aligned_read_buffer(a, auth->accountName, sizeof_field(Tcp_ClientLoginAuth, accountName));
     // sessionKey
-    aligned_read_buffer(a, auth.sessionKey, sizeof_field(Tcp_ClientLoginAuth, sessionKey));
+    aligned_read_buffer(a, auth->sessionKey, sizeof_field(Tcp_ClientLoginAuth, sessionKey));
     // loginAdmin, serverAdmin, ip...
     aligned_advance(a, sizeof(uint8_t) + sizeof(int16_t) + sizeof(uint32_t));
     // isLocal
-    auth.isLocal = aligned_read_uint8(a);
+    auth->isLocal = aligned_read_uint8(a);
     
-    //fixme:
     // Now that we have both the account id and name, we should check for bans etc here
     // (Not ideal, since the login server protocol and client expect rejections to happen
     // in the step before this, i.e. tcp_client_handle_op_client_login_request() above).
     
-    char_select_handle_client_auth(charSelect, &auth);
+    query_init(&query);
+    query_set_userdata(&query, auth);
+    
+    db_prepare_literal(db, &query,
+        "SELECT status, suspended_until FROM account "
+        "WHERE name_id_pair = "
+            "(SELECT rowid FROM account_name_id_pair WHERE id = ? AND name = ?)",
+        tcp_client_account_status_callback);
+        
+    query_bind_int64(&query, 1, auth->accountId);
+    query_bind_string(&query, 2, auth->accountName, QUERY_CALC_LENGTH);
+    
+    db_schedule(db, &query);
 }
 
 void tcp_client_handle_packet(TcpClient* client)
@@ -390,7 +428,7 @@ void tcp_client_handle_packet(TcpClient* client)
         break;
     
     case TcpOp_ClientLoginAuth:
-        tcp_client_handle_op_client_login_auth(charSelect, a);
+        tcp_client_handle_op_client_login_auth(client, charSelect, a);
         break;
 
     default:

@@ -79,6 +79,9 @@ void udp_socket_recv(UdpSocket* sock)
         uint32_t ip, i, n;
         uint16_t port;
         int len;
+        
+        char buf[EQP_IPC_PACKET_MAX_SIZE];
+        int tmp;
 
         len = recvfrom(fd, (char*)buffer, EQP_UDP_SOCKET_BUFFER_SIZE, 0, (struct sockaddr*)&addr, &addrLen);
         
@@ -90,8 +93,9 @@ void udp_socket_recv(UdpSocket* sock)
             return;
         }
         
-        printf("Recv raw (%i):\n", len);
-        for (i = 0; i < (uint32_t)len; i++) printf("%02x ", buffer[i]); printf("\n");
+        tmp = snprintf(buf, sizeof(buf), "[Recv] (%i):\n", len);
+        for (i = 0; i < (uint32_t)len; i++) tmp += snprintf(buf + tmp, sizeof(buf) - tmp, "%02x ", buffer[i]);
+        log_format(sock->basic, LogNetwork, "%s", buf);
         
         // Do we already know about this client?
         client  = NULL;

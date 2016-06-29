@@ -113,7 +113,7 @@ void client_recv_packet_trilogy(void* vclient, uint16_t opcode, Aligned* a)
 {
     Client* client = (Client*)vclient;
     
-    printf("Opcode: 0x%04x, length: %u\n", opcode, aligned_remaining(a));
+    log_format(protocol_handler_basic(client_handler(client)), LogNetwork, "Opcode: 0x%04x, length: %u", opcode, aligned_remaining(a));
     
     if (client->isStubClient)
     {

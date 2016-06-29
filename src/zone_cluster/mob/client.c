@@ -376,15 +376,21 @@ Client* client_create(ZC* zc, Zone* zone, Server_ClientZoning* zoning)
 
 void client_drop(Client* client)
 {
+    ZC* zc;
+    
     if (atomic_fetch_sub(&client->refCount, 1) > 1)
         return;
     
     if (client->isStubClient)
         goto stub;
     
+    zc = client_zone_cluster(client);
+    
     spellbook_deinit(&client->spellbook);
     inventory_deinit(&client->inventory);
     mob_deinit(&client->mob);
+    
+    zc_lua_destroy_object(zc, (LuaObject*)client);
     
 stub:
     if (client_handler(client))

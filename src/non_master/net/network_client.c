@@ -25,9 +25,12 @@ void network_client_deinit(NetworkClient* client)
 
 int network_client_send_no_increment(NetworkClient* client, const void* data, uint32_t len)
 {
+    char buf[EQP_IPC_PACKET_MAX_SIZE];
+    int tmp;
     uint32_t i;
-    printf("Send raw (%u):\n", len);
-    for (i = 0; i < len; i++) printf("%02x ", ((byte*)data)[i]); printf("\n");
+    tmp = snprintf(buf, sizeof(buf), "[Send] (%u):\n", len);
+    for (i = 0; i < len; i++) tmp += snprintf(buf + tmp, sizeof(buf) - tmp, "%02x ", ((byte*)data)[i]);
+    log_format(client->basic, LogNetwork, "%s", buf);
     return sendto(client->socketFd, (const char*)data, len, 0, (struct sockaddr*)&client->address, sizeof(IpAddress));
 }
 

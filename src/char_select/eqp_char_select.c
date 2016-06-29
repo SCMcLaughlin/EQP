@@ -201,7 +201,8 @@ void char_select_start_login_server_connections(CharSelect* charSelect)
     for (i = 1; i <= n; i++)
     {
         TcpClient* client;
-        LoginServerConfig* server = eqp_alloc_type(B(charSelect), LoginServerConfig);
+        LoginServerConfig* server   = eqp_alloc_type(B(charSelect), LoginServerConfig);
+        int locked                  = true;
         
         lua_pushinteger(L, i);
         lua_gettable(L, -2);
@@ -217,10 +218,15 @@ void char_select_start_login_server_connections(CharSelect* charSelect)
         server->remoteIp    = lua_sys_field_to_string(B(charSelect), L, -1, "remoteaddress");
         server->localIp     = lua_sys_field_to_string(B(charSelect), L, -1, "localaddress");
         
+        lua_getfield(L, -1, "locked");
+        if (!lua_isnil(L, -1))
+            locked = lua_toboolean(L, -1);
+        lua_pop(L, 1);
+        
         // Push new TcpClient object
         client = array_push_back_type(B(charSelect), &charSelect->loginServerConnections, TcpClient);
         
-        tcp_client_init(charSelect, client, server);
+        tcp_client_init(charSelect, client, server, locked);
         tcp_client_start_connect_cycle(client, true);
         
         lua_pop(L, 1);

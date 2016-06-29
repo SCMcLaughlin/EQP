@@ -678,7 +678,7 @@ void client_recv_packet_trilogy(void* vclient, uint16_t opcode, Aligned* a)
     CharSelectClient* client    = (CharSelectClient*)vclient;
     ProtocolHandler* handler    = char_select_client_handler(client);
 
-    printf("Received packet opcode 0x%04x, length %u:\n", opcode, aligned_remaining(a));
+    log_format(protocol_handler_basic(handler), LogNetwork, "Received packet opcode 0x%04x, length %u", opcode, aligned_remaining(a));
     
     switch (opcode)
     {

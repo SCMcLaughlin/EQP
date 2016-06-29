@@ -48,6 +48,12 @@ void zone_destroy(ZC* zc, Zone* zone)
         zone->mobsByPosition = NULL;
     }
     
+    if (zone->clientList)
+    {
+        array_destroy(zone->clientList);
+        zone->clientList = NULL;
+    }
+    
     zc_lua_destroy_object(zc, &zone->luaObj);
     
     free(zone);

@@ -65,6 +65,18 @@ void zc_deinit(ZC* zc)
         hash_table_destroy(zc->expectedClientsByName);
         zc->expectedClientsByName = NULL;
     }
+    
+    if (zc->connectedClients)
+    {
+        array_destroy(zc->connectedClients);
+        zc->connectedClients = NULL;
+    }
+    
+    if (zc->connectedClientsByName)
+    {
+        hash_table_destroy(zc->connectedClientsByName);
+        zc->connectedClientsByName = NULL;
+    }
 }
 
 void zc_main_loop(ZC* zc)

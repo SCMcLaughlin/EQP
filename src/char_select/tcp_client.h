@@ -10,6 +10,8 @@
 #include "exception.h"
 #include "eqp_clock.h"
 #include "eqp_string.h"
+#include "database.h"
+#include "query.h"
 
 #define EQP_TCP_CLIENT_BUFFER_SIZE 1024
 #define EQP_TCP_CLIENT_REMOTE_TIMEOUT_MILLISECONDS 60000
@@ -39,10 +41,11 @@ STRUCT_DEFINE(TcpClient)
     LoginServerConfig*  config;
     CharSelect*         charSelect;
     uint64_t            lastRemoteTime;
+    int                 isLocked;
     Timer*              timer;  // For reconnection when not connected, or status updates when connected
 };
 
-void    tcp_client_init(CharSelect* charSelect, TcpClient* client, LoginServerConfig* config);
+void    tcp_client_init(CharSelect* charSelect, TcpClient* client, LoginServerConfig* config, int locked);
 void    tcp_client_deinit(TcpClient* client);
 
 void    tcp_client_start_connect_cycle(TcpClient* client, int immediate);

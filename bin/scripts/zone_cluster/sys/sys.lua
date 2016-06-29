@@ -16,9 +16,10 @@
 require "zone_cluster/zc_include"
 require "LuaObject_cdefs"
 
-local ffi   = require "ffi"
-local class = require "class"
-local ZC    = require "ZoneCluster"
+local ffi       = require "ffi"
+local class     = require "class"
+local ZC        = require "ZoneCluster"
+local Client    = require "Client"
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
@@ -94,26 +95,40 @@ function sys.createZone(ptr)
 end
 
 function sys.createClient(zone, ptr)
-    return 0
+    return pushObj(Client._wrap(zone, ptr))
 end
 
 function sys.createNPC(zone, ptr)
     return 0
 end
 
-function sys.eventCall(eventName, zone, obj, ...)
-    local func = obj[eventName]
+local function doEventCall(from, eventName, zone, obj, ...)
+    local func = from[eventName]
     
     if not func then return end
     
-    local env = obj:getPersonalEnvironment()
+    local env = from:getPersonalEnvironment()
     setfenv(func, env)
     
-    local s, err = xpcall(func, traceback, zone, obj, ...)
+    local s, errOrRet = xpcall(func, traceback, zone, obj, ...)
     
     if not s then
         --fixme: print error to zone
-        zone:log(err) --fixme: add identifying information before trace
+        zone:log(errOrRet) --fixme: add identifying information before trace
+    else
+        return errOrRet
+    end
+end
+
+function sys.eventCall(eventName, zone, obj, ...)
+    --[[
+        The zone gets first crack at any event called in this way; if the zone's version
+        of the event returns true, it will prevent the object's version of the event
+        from being called.
+    --]]
+    
+    if not doEventCall(zone, eventName, zone, obj, ...) then
+        doEventCall(obj, eventName, zone, obj, ...)
     end
 end
 

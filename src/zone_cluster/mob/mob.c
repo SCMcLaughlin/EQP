@@ -279,6 +279,12 @@ float mob_base_walking_speed(Mob* mob)
     return mob->baseWalkingSpeed;
 }
 
+void mob_set_base_walking_speed(Mob* mob, float value)
+{
+    mob->currentWalkingSpeed    = value;
+    mob->baseWalkingSpeed       = value;
+}
+
 float mob_current_running_speed(Mob* mob)
 {
     return mob->currentRunningSpeed;
@@ -287,6 +293,12 @@ float mob_current_running_speed(Mob* mob)
 float mob_base_running_speed(Mob* mob)
 {
     return mob->baseRunningSpeed;
+}
+
+void mob_set_base_running_speed(Mob* mob, float value)
+{
+    mob->currentRunningSpeed    = value;
+    mob->baseRunningSpeed       = value;
 }
 
 float mob_current_size(Mob* mob)

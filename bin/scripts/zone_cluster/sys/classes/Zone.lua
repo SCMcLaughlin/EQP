@@ -16,6 +16,7 @@ local loadfile      = loadfile
 local setfenv       = setfenv
 local setmetatable  = setmetatable
 local package       = package
+local toLuaString   = ffi.string
 --------------------------------------------------------------------------------
 
 local Zone = class("Zone", LuaObject)
@@ -61,6 +62,10 @@ end
 -- Lookup optimization
 Zone.ptr = LuaObject.ptr
 
+function Zone.getClassName()
+    return "Zone"
+end
+
 function Zone:log(str, ...)
     ZC:logFor(self:getSourceId(), str, ...)
 end
@@ -78,11 +83,11 @@ function Zone:getInstanceId()
 end
 
 function Zone:getShortName()
-    return ffi.string(C.zone_get_short_name(self:ptr()))
+    return toLuaString(C.zone_get_short_name(self:ptr()))
 end
 
 function Zone:getLongName()
-    return ffi.string(C.zone_get_long_name(self:ptr()))
+    return toLuaString(C.zone_get_long_name(self:ptr()))
 end
 
 return Zone

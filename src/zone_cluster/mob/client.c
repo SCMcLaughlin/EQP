@@ -422,7 +422,7 @@ void client_check_loading_finished(Client* client)
     zc_lua_create_client(zc, zone, client);
     zc_lua_event(zc, zone, client, "event_pre_spawn");
     
-    if (client->expansion == ExpansionId_Trilogy)
+    if (client_is_trilogy(client))
     {
         PacketTrilogy* packet;
         
@@ -487,6 +487,84 @@ void client_on_unhandled_packet_opcode(Client* client, uint16_t opcode, Aligned*
     zc_lua_event_epilog(zc, L, 1);
 }
 
+int64_t client_calc_base_hp_trilogy(Client* client)
+{
+    int mult;
+    int lvl = client_level(client);
+    int sta = client_cur_sta(client);
+    
+    switch (client_class(client))
+    {
+    case Class_Cleric:
+    case Class_Druid:
+    case Class_Shaman:
+        mult = 15;
+        break;
+    
+    case Class_Necromancer:
+    case Class_Wizard:
+    case Class_Magician:
+    case Class_Enchanter:
+        mult = 12;
+        break;
+    
+    case Class_Monk:
+    case Class_Bard:
+    case Class_Rogue:
+    case Class_Beastlord:
+        if (lvl < 51)
+            mult = 18;
+        else if (lvl < 58)
+            mult = 19;
+        else
+            mult = 20;
+        break;
+        
+    case Class_Ranger:
+        if (lvl < 58)
+            mult = 20;
+        else
+            mult = 21;
+        break;
+        
+    case Class_Warrior:
+        if (lvl < 20)
+            mult = 22;
+        else if (lvl < 30)
+            mult = 23;
+        else if (lvl < 40)
+            mult = 25;
+        else if (lvl < 53)
+            mult = 27;
+        else if (lvl < 57)
+            mult = 28;
+        else
+            mult = 30;
+        break;
+        
+    case Class_Paladin:
+    case Class_ShadowKnight:
+    default:
+        if (lvl < 35)
+            mult = 21;
+        else if (lvl < 45)
+            mult = 22;
+        else if (lvl < 51)
+            mult = 23;
+        else if (lvl < 56)
+            mult = 24;
+        else if (lvl < 60)
+            mult = 25;
+        else
+            mult = 26;
+        break;
+    }
+    
+    mult *= lvl;
+    
+    return 5 + mult + ((mult * sta) / 300);
+}
+
 int client_expansion(Client* client)
 {
     return client->expansion;
@@ -525,6 +603,21 @@ uint8_t client_guild_rank(Client* client)
 const char* client_surname_cstr(Client* client)
 {
     return (client->surname) ? string_data(client->surname) : "";
+}
+
+void client_send_custom_message(Client* client, uint32_t chatChannel, const char* str, uint32_t len)
+{
+    ZC* zc = client_zone_cluster(client);
+    
+    if (client_is_trilogy(client))
+    {
+        PacketTrilogy* packet = client_trilogy_make_op_custom_message(zc, chatChannel, str, len);
+        client_trilogy_schedule_packet_individual(client, packet);
+    }
+    else
+    {
+        
+    }
 }
 
 void client_set_bind_point(Client* client, uint32_t bindId, int zoneId, float x, float y, float z, float heading)

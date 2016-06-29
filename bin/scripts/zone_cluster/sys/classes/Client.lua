@@ -20,6 +20,7 @@ local setmetatable  = setmetatable
 local package       = package
 local traceback     = debug.traceback
 local toLuaString   = ffi.string
+local format        = string.format
 --------------------------------------------------------------------------------
 
 local Client = class("Client", Mob)
@@ -113,6 +114,11 @@ end
 
 function Client:getSurname()
     return toLuaString(C.client_surname_cstr(self:ptr()))
+end
+
+function Client:sendMessage(channel, str, ...)
+    str = format(str, ...)
+    C.client_send_custom_message(self:ptr(), channel, str, #str)
 end
 
 return Client

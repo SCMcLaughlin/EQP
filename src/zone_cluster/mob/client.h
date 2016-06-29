@@ -105,11 +105,14 @@ void    client_fill_in_missing_bind_points(Client* client);
 
 void    client_on_unhandled_packet_opcode(Client* client, uint16_t opcode, Aligned* a);
 
+int64_t client_calc_base_hp_trilogy(Client* client);
+
 #define client_set_zone_index(cli, index) ((cli)->zoneClientIndex = (index))
 #define client_zone_index(cli) ((cli)->zoneClientIndex)
 #define client_set_linkdead(cli) ((cli)->isLinkdead = true)
 
 #define client_guild_id(cli) ((cli)->guildId)
+#define client_is_trilogy(cli) ((cli)->expansion == ExpansionId_Trilogy)
 
 #define client_set_handler(cli, h) ((cli)->handler = (h))
 #define client_handler(cli) ((cli)->handler)
@@ -175,6 +178,8 @@ EQP_API int         client_is_linkdead(Client* client);
 EQP_API uint8_t     client_anon_setting(Client* client);
 EQP_API uint8_t     client_guild_rank(Client* client);
 EQP_API const char* client_surname_cstr(Client* client);
+
+EQP_API void        client_send_custom_message(Client* client, uint32_t chatChannel, const char* str, uint32_t len);
 
 EQP_API void        client_set_bind_point(Client* client, uint32_t bindId, int zoneId, float x, float y, float z, float heading);
 

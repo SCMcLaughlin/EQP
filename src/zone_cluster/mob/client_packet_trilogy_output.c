@@ -1011,3 +1011,38 @@ PacketTrilogy* client_trilogy_make_op_spawn(ZC* zc, Mob* spawningMob)
     
     return packet;
 }
+
+PacketTrilogy* client_trilogy_make_op_custom_message(ZC* zc, uint32_t chatChannel, const char* str, uint32_t len)
+{
+    PacketTrilogy* packet;
+    Aligned w;
+    
+    len++; // Include null terminator
+    
+    packet = packet_trilogy_create(B(zc), TrilogyOp_CustomMessage, sizeof(Trilogy_CustomMessage) + len);
+    aligned_init(B(zc), &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+    
+    // chatChannel
+    aligned_write_uint32(&w, chatChannel);
+    // message
+    aligned_write_buffer(&w, str, len);
+    
+    return packet;
+}
+
+PacketTrilogy* client_trilogy_make_op_custom_message_format(ZC* zc, uint32_t chatChannel, const char* fmt, va_list args)
+{
+    char buf[4096];
+    int len;
+    
+    len = vsnprintf(buf, sizeof(buf), fmt, args);
+    
+    if (len < 0)
+        exception_throw_literal(B(zc), ErrorFormatString, "[client_trilogy_make_op_custom_message_format] vsnprintf() failed");
+    
+    // snprintf returns the size it *attempted* to write, not the actual amount written (though if everything is good, these values are equal)
+    if (len >= (int)sizeof(buf))
+        len = sizeof(buf) - 1;
+    
+    return client_trilogy_make_op_custom_message(zc, chatChannel, buf, len);
+}

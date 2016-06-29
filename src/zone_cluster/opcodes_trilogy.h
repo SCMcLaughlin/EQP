@@ -18,5 +18,6 @@
 
 #define TrilogyOp_SpawnAppearance       0x20f5
 #define TrilogyOp_Spawn                 0x2149
+#define TrilogyOp_CustomMessage         0x2180
 
 #endif//EQP_OPCODES_TRILOGY_H

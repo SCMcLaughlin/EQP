@@ -25,5 +25,7 @@ PacketTrilogy*  client_trilogy_make_op_weather(ZC* zc, int weatherType, int inte
 PacketTrilogy*  client_trilogy_make_op_zone_info(ZC* zc, Zone* zone);
 PacketTrilogy*  client_trilogy_make_op_spawn_appearance(ZC* zc, uint16_t entityId, uint16_t type, uint32_t value);
 PacketTrilogy*  client_trilogy_make_op_spawn(ZC* zc, Mob* spawningMob);
+PacketTrilogy*  client_trilogy_make_op_custom_message(ZC* zc, uint32_t chatChannel, const char* str, uint32_t len);
+PacketTrilogy*  client_trilogy_make_op_custom_message_format(ZC* zc, uint32_t chatChannel, const char* fmt, va_list args);
 
 #endif//EQP_CLIENT_PACKET_TRILOGY_OUTPUT_H

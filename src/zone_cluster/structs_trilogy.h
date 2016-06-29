@@ -277,6 +277,12 @@ STRUCT_DEFINE(Trilogy_Spawn)
     uint8_t     unknownI[10];
 };
 
+STRUCT_DEFINE(Trilogy_CustomMessage)
+{
+    uint32_t    chatChannel;
+    char        message[0];
+};
+
 #pragma pack()
 
 #endif//EQP_STRUCTS_TRILOGY_H

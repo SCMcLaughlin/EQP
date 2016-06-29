@@ -18,6 +18,7 @@ STRUCT_DEFINE(Client)
     uint16_t        zoneId;
     uint16_t        instanceId;
     bool            isLocal;
+    bool            isFromCharSelect;
     ZoneCluster*    zoneCluster;
     ClientMgr*      clientMgr;
     char            name[32];
@@ -45,6 +46,7 @@ Client* client_create(Basic* basic, ClientMgr* mgr, Server_ClientZoning* zoning)
 #define client_set_instance_id(cli, id) ((cli)->instanceId = (id))
 #define client_instance_id(cli) ((cli)->instanceId)
 #define client_is_local(cli) ((cli)->isLocal)
+#define client_is_from_char_select(cli) ((cli)->isFromCharSelect)
 #define client_set_zone_cluster(cli, zc) ((cli)->zoneCluster = (zc))
 #define client_zone_cluster(cli) ((cli)->zoneCluster)
 #define client_name(cli) ((cli)->name)

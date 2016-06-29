@@ -36,6 +36,9 @@ void client_on_disconnect(void* vclient, int isLinkdead)
     Client* client  = (Client*)vclient;
     ZC* zc          = client_zone_cluster(client);
     
+    if (isLinkdead)
+        zc_lua_event(zc, client_zone(client), client, "event_linkdead");
+    
     zc_remove_connected_client(zc, client, isLinkdead);
     client_drop(client);
     
@@ -305,11 +308,12 @@ Client* client_create(ZC* zc, Zone* zone, Server_ClientZoning* zoning)
     inventory_init(B(zc), &client->inventory);
     skills_preinit(&client->skills);
     
-    client->isLocal     = zoning->isLocal;
-    client->characterId = zoning->characterId;
-    client->accountName = string_create_from_cstr(B(zc), zoning->accountName, strlen(zoning->accountName));
-    client->accountId   = zoning->accountId;
-    client->ipAddress   = zoning->ipAddress;
+    client->isLocal             = zoning->isLocal;
+    client->isFromCharSelect    = zoning->isFromCharSelect;
+    client->characterId         = zoning->characterId;
+    client->accountName         = string_create_from_cstr(B(zc), zoning->accountName, strlen(zoning->accountName));
+    client->accountId           = zoning->accountId;
+    client->ipAddress           = zoning->ipAddress;
     
     // Character stats
     client_grab(client);

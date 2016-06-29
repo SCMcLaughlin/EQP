@@ -43,10 +43,11 @@ void zone_cluster_inform_of_client_zoning_in(ZoneCluster* zc, Client* client, in
 {
     Server_ClientZoning zoning;
     
-    zoning.accountId    = client_account_id(client);
-    zoning.ipAddress    = client_ip_address(client);
-    zoning.characterId  = client_character_id(client);
-    zoning.isLocal      = client_is_local(client);
+    zoning.accountId        = client_account_id(client);
+    zoning.ipAddress        = client_ip_address(client);
+    zoning.characterId      = client_character_id(client);
+    zoning.isLocal          = client_is_local(client);
+    zoning.isFromCharSelect = client_is_from_char_select(client);
     snprintf(zoning.accountName, sizeof(zoning.accountName), "%s", client_account_name(client));
     snprintf(zoning.characterName, sizeof(zoning.characterName), "%s", client_name(client));
     

@@ -103,6 +103,9 @@ static void client_trilogy_handle_op_enter_zone(Client* client)
     //calc all the client's stats
     //send hp and mana updates
     
+    if (client_is_from_char_select(client))
+        zc_lua_event(zc, zone, client, "event_connect");
+    
     zc_lua_event(zc, zone, client, "event_spawn");
 }
 

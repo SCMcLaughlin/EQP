@@ -422,10 +422,11 @@ void char_select_send_client_zone_in_request(CharSelect* charSelect, CharSelectC
     CharSelectClientAttemptingZoneIn record;
     Server_ClientZoning zoning;
     
-    zoning.accountId    = char_select_client_account_id(client);
-    zoning.ipAddress    = protocol_handler_ip_address(handler)->sin_addr.s_addr;
-    zoning.characterId  = 0;
-    zoning.isLocal      = char_select_client_is_local(client);
+    zoning.accountId        = char_select_client_account_id(client);
+    zoning.ipAddress        = protocol_handler_ip_address(handler)->sin_addr.s_addr;
+    zoning.characterId      = 0;
+    zoning.isLocal          = char_select_client_is_local(client);
+    zoning.isFromCharSelect = true;
     snprintf(zoning.accountName, sizeof(zoning.accountName), "%s", char_select_client_account_name(client));
     snprintf(zoning.characterName, sizeof(zoning.characterName), "%s", charName);
     

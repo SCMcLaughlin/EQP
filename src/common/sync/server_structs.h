@@ -10,6 +10,7 @@ STRUCT_DEFINE(Server_ClientZoning)
     uint32_t    ipAddress;
     int64_t     characterId;
     bool        isLocal;
+    bool        isFromCharSelect;
     char        accountName[64];
     char        characterName[32];
 };

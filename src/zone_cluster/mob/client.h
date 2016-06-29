@@ -32,6 +32,7 @@ STRUCT_DEFINE(Client)
     
     uint32_t    isStubClient        : 1;
     uint32_t    isLocal             : 1;
+    uint32_t    isFromCharSelect    : 1;
     uint32_t    isAutoSplitEnabled  : 1;
     uint32_t    isPermanentlyPvP    : 1;
     uint32_t    isCurrentlyPvP      : 1;
@@ -40,7 +41,7 @@ STRUCT_DEFINE(Client)
     uint32_t    isLinkdead          : 1;
     uint32_t    isSneaking          : 1;
     uint32_t    isHiding            : 1;
-    uint32_t    bools_unused        : 24;
+    uint32_t    bools_unused        : 23;
     
     union
     {
@@ -113,6 +114,8 @@ int64_t client_calc_base_hp_trilogy(Client* client);
 
 #define client_guild_id(cli) ((cli)->guildId)
 #define client_is_trilogy(cli) ((cli)->expansion == ExpansionId_Trilogy)
+
+#define client_is_from_char_select(cli) ((cli)->isFromCharSelect)
 
 #define client_set_handler(cli, h) ((cli)->handler = (h))
 #define client_handler(cli) ((cli)->handler)

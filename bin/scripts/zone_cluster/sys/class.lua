@@ -44,8 +44,7 @@ function class.wrap(sharedEnv, ptr)
     -- For sanity's sake remember:
     -- each object/env is its own metatable, and its __index points to the next env in the hierarchy
     
-    local personalEnv   = {}
-    personalEnv.__index = sharedEnv
+    local personalEnv = {__index = sharedEnv}
     
     setmetatable(personalEnv, personalEnv)
     

@@ -51,11 +51,11 @@ function Mob:getClassName()
     return getClassNameById(self:getClassId())
 end
 
-function Mob:getBaseRace()
+function Mob:getBaseRaceId()
     return C.mob_base_race(self:ptr())
 end
 
-function Mob:getRace()
+function Mob:getRaceId()
     return C.mob_current_race(self:ptr())
 end
 
@@ -67,11 +67,11 @@ function Mob:getRaceName()
     return getRaceNameById(self:getRace())
 end
 
-function Mob:getBaseGender()
+function Mob:getBaseGenderId()
     return C.mob_base_gender(self:ptr())
 end
 
-function Mob:getGender()
+function Mob:getGenderId()
     return C.mob_current_gender(self:ptr())
 end
 

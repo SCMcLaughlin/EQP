@@ -12,47 +12,57 @@ local ZC        = require "ZC"
 --------------------------------------------------------------------------------
 -- Caches
 --------------------------------------------------------------------------------
+local xpcall        = xpcall
 local loadfile      = loadfile
 local setfenv       = setfenv
 local setmetatable  = setmetatable
 local package       = package
 local toLuaString   = ffi.string
+local traceback     = debug.traceback
 --------------------------------------------------------------------------------
 
 local Zone = class("Zone", LuaObject)
 
-local globalScriptEnv
+local globalScriptEnv = {__index = Zone}
+setmetatable(globalScriptEnv, globalScriptEnv)
 
 local function runGlobalScript()
-    globalScriptEnv = {
-        __index = Zone,
-    }
-    
-    setmetatable(globalScriptEnv, globalScriptEnv)
-    
     -- Run global zone init script
-    local script = loadfile("scripts/zone_cluster/init/global_zone_init.lua")
+    local script = loadfile("scripts/zone_cluster/global/global_zone.lua")
     if script then
         setfenv(script, globalScriptEnv)
-        script()
+        local s, err = xpcall(script, traceback)
+        if not s then
+            ZC:log(err)
+            -- Loading a script is all-or-nothing
+            globalScriptEnv = {__index = Zone}
+            setmetatable(globalScriptEnv, globalScriptEnv)
+        end
     end
     
     runGlobalScript = nil
 end
 
 function Zone._wrap(ptr)
-    if not globalScriptEnv then runGlobalScript() end
-    
+    if runGlobalScript then runGlobalScript() end
+
     local zone  = class.wrap(globalScriptEnv, ffi.cast("Zone*", ptr))
     local env   = zone:getPersonalEnvironment()
     local name  = zone:getShortName()
     
     -- Run zone-specific init script
-    local script = loadfile("scripts/zone_cluster/zones/".. name .."/zone_init.lua")
+    local script = loadfile("scripts/zone_cluster/zones/".. name .."/zone.lua")
     if script then
         package.loaded["zone"] = zone
         setfenv(script, env)
-        script()
+        local s, err = xpcall(script, traceback)
+        if not s then
+            zone:log(err)
+            -- Loading a script is all-or-nothing
+            for k in pairs(env) do
+                env[k] = nil
+            end
+        end
         package.loaded["zone"] = nil
     end
     

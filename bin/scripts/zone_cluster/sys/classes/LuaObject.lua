@@ -28,6 +28,10 @@ end
 
 LuaObject.exists = LuaObject.isValid
 
+function LuaObject.getClassName()
+    return "LuaObject"
+end
+
 function LuaObject:getObjectIndex()
     return C.zc_lua_object_get_index(self:ptr())
 end

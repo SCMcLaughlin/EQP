@@ -19,7 +19,6 @@ require "LuaObject_cdefs"
 local ffi       = require "ffi"
 local class     = require "class"
 local ZC        = require "ZoneCluster"
-local Client    = require "Client"
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
@@ -95,6 +94,8 @@ function sys.createZone(ptr)
 end
 
 function sys.createClient(zone, ptr)
+    -- Avoid requiring "ZC" before it has been set
+    local Client = require "Client"
     return pushObj(Client._wrap(zone, ptr))
 end
 

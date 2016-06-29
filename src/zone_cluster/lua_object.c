@@ -5,7 +5,7 @@
 
 #define SYS_INDEX       2
 #define SYS_SCRIPT      "scripts/zone_cluster/sys/sys.lua"
-#define ZC_INIT_SCRIPT  "scripts/zone_cluster/init/zone_cluster_init.lua"
+#define ZC_INIT_SCRIPT  "scripts/zone_cluster/global/zone_cluster.lua"
 
 static void zc_lua_push_sys_func(ZC* zc, lua_State* L, const char* funcName)
 {

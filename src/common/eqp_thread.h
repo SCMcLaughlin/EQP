@@ -16,7 +16,7 @@ STRUCT_DECLARE(Thread);
 
 #define T(obj) ((Thread*)(obj))
 
-typedef void(*ThreadProc)(R(Thread*));
+typedef void(*ThreadProc)(Thread*);
 
 STRUCT_DEFINE(Thread)
 {
@@ -28,9 +28,9 @@ STRUCT_DEFINE(Thread)
     Semaphore       semaphore;
 };
 
-void    thread_start_and_detach(R(Basic*) basic, R(Thread*) thread, ThreadProc func);
-void    thread_send_stop_signal(R(Basic*) basic, R(Thread*) thread);
-void    thread_wait_until_stopped(R(Thread*) thread);
+void    thread_start_and_detach(Basic* basic, Thread* thread, ThreadProc func);
+void    thread_send_stop_signal(Basic* basic, Thread* thread);
+void    thread_wait_until_stopped(Thread* thread);
 
 #define thread_wait(thread) semaphore_wait(B(thread), &(thread)->semaphore)
 #define thread_trigger(basic, thread) semaphore_trigger(basic, &(thread)->semaphore)

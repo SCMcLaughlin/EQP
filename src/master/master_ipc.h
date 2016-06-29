@@ -30,10 +30,10 @@ STRUCT_DEFINE(MasterIpcThread)
     ClientMgr   clientMgr;
 };
 
-void    master_ipc_thread_init(R(Master*) M, R(MasterIpcThread*) ipcThread);
+void    master_ipc_thread_init(Master* M, MasterIpcThread* ipcThread);
 #define master_ipc_thread_master(thread) ((thread)->master)
 #define master_ipc_thread_ipc_buffer(thread) ((thread)->ipcMaster)
-void    master_ipc_thread_main_loop(R(Thread*) thread);
+void    master_ipc_thread_main_loop(Thread* thread);
 #define master_ipc_thread_start(basic, thread) thread_start_and_detach((basic), T(thread), master_ipc_thread_main_loop)
 #define master_ipc_thread_shutdown_received(thread) atomic_mutex_try_lock(&(thread)->mutexShutdown)
 

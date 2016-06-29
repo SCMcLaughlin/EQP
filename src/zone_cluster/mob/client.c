@@ -3,10 +3,10 @@
 #include "zone.h"
 #include "zone_cluster.h"
 
-static Client* client_create_unidentified_stub(R(ProtocolHandler*) handler, int expansion)
+static Client* client_create_unidentified_stub(ProtocolHandler* handler, int expansion)
 {
-    R(Basic*) basic     = protocol_handler_basic(handler);
-    R(Client*) client   = eqp_alloc_type(basic, Client);
+    Basic* basic    = protocol_handler_basic(handler);
+    Client* client  = eqp_alloc_type(basic, Client);
     
     memset(client, 0, sizeof(Client));
     
@@ -21,29 +21,31 @@ static Client* client_create_unidentified_stub(R(ProtocolHandler*) handler, int 
     return client;
 }
 
-void* client_create_from_new_connection_standard(R(ProtocolHandler*) handler)
+void* client_create_from_new_connection_standard(ProtocolHandler* handler)
 {
     return client_create_unidentified_stub(handler, ExpansionId_Unknown);
 }
 
-void* client_create_from_new_connection_trilogy(R(ProtocolHandler*) handler)
+void* client_create_from_new_connection_trilogy(ProtocolHandler* handler)
 {
     return client_create_unidentified_stub(handler, ExpansionId_Trilogy);
 }
 
-void client_on_disconnect(R(void*) vclient, int isLinkdead)
+void client_on_disconnect(void* vclient, int isLinkdead)
 {
-    R(Client*) client = (Client*)vclient;
+    Client* client  = (Client*)vclient;
+    ZC* zc          = client_zone_cluster(client);
     
+    zc_remove_connected_client(zc, client, isLinkdead);
     client_drop(client);
     
     printf("DISCONNECT (%s)\n", isLinkdead ? "timeout" : "explicit");
 }
 
-static void client_load_skills_callback(R(Query*) query)
+static void client_load_skills_callback(Query* query)
 {
-    R(Client*) client   = query_userdata_type(query, Client);
-    R(Skills*) skills   = &client->skills;
+    Client* client = query_userdata_type(query, Client);
+    Skills* skills = &client->skills;
     
     while (query_select(query))
     {
@@ -61,12 +63,12 @@ static void client_load_skills_callback(R(Query*) query)
     client_drop(client);
 }
 
-static void client_load_stats_callback(R(Query*) query)
+static void client_load_stats_callback(Query* query)
 {
-    R(Client*) client   = query_userdata_type(query, Client);
-    R(Mob*) mob         = &client->mob;
-    R(ZC*) zc           = client_zone_cluster(client);
-    R(Database*) db;
+    Client* client  = query_userdata_type(query, Client);
+    Mob* mob        = &client->mob;
+    ZC* zc          = client_zone_cluster(client);
+    Database* db;
     Query q;
     
     while (query_select(query))
@@ -77,8 +79,8 @@ static void client_load_stats_callback(R(Query*) query)
         if (!query_is_null(query, 1))
         {
             uint32_t len;
-            R(const char*) surname  = query_get_string(query, 1, &len);
-            client->surname         = string_create_from_cstr(B(zc), surname, len);
+            const char* surname = query_get_string(query, 1, &len);
+            client->surname     = string_create_from_cstr(B(zc), surname, len);
         }
         
         // level
@@ -190,11 +192,11 @@ static void client_load_stats_callback(R(Query*) query)
     db_schedule(db, &q);
 }
 
-static void client_load_inventory_callback(R(Query*) query)
+static void client_load_inventory_callback(Query* query)
 {
-    R(Client*) client   = query_userdata_type(query, Client);
-    R(Basic*) basic     = B(client_zone_cluster(client));
-    R(Inventory*) inv   = &client->inventory;
+    Client* client  = query_userdata_type(query, Client);
+    Basic* basic    = B(client_zone_cluster(client));
+    Inventory* inv  = &client->inventory;
     InventorySlot slot;
     
     while (query_select(query))
@@ -219,11 +221,11 @@ static void client_load_inventory_callback(R(Query*) query)
     client_drop(client);
 }
 
-static void client_load_spellbook_callback(R(Query*) query)
+static void client_load_spellbook_callback(Query* query)
 {
-    R(Client*) client   = query_userdata_type(query, Client);
-    R(Spellbook*) book  = &client->spellbook;
-    R(ZC*) zc           = client_zone_cluster(client);
+    Client* client  = query_userdata_type(query, Client);
+    Spellbook* book = &client->spellbook;
+    ZC* zc          = client_zone_cluster(client);
     
     while (query_select(query))
     {
@@ -241,11 +243,11 @@ static void client_load_spellbook_callback(R(Query*) query)
     client_drop(client);
 }
 
-static void client_load_memmed_spells_callback(R(Query*) query)
+static void client_load_memmed_spells_callback(Query* query)
 {
-    R(Client*) client   = query_userdata_type(query, Client);
-    R(Spellbook*) book  = &client->spellbook;
-    R(ZC*) zc           = client_zone_cluster(client);
+    Client* client  = query_userdata_type(query, Client);
+    Spellbook* book = &client->spellbook;
+    ZC* zc          = client_zone_cluster(client);
     
     while (query_select(query))
     {
@@ -264,9 +266,9 @@ static void client_load_memmed_spells_callback(R(Query*) query)
     client_drop(client);
 }
 
-static void client_load_bind_points_callback(R(Query*) query)
+static void client_load_bind_points_callback(Query* query)
 {
-    R(Client*) client = query_userdata_type(query, Client);
+    Client* client = query_userdata_type(query, Client);
     
     while (query_select(query))
     {
@@ -290,9 +292,9 @@ static void client_load_bind_points_callback(R(Query*) query)
     client_drop(client);
 }
 
-Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
+Client* client_create(ZC* zc, Zone* zone, Server_ClientZoning* zoning)
 {
-    R(Database*) db = core_db(C(zc));
+    Database* db    = core_db(C(zc));
     Client* client  = eqp_alloc_type(B(zc), Client);
     Query query;
     
@@ -308,8 +310,6 @@ Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
     client->accountName = string_create_from_cstr(B(zc), zoning->accountName, strlen(zoning->accountName));
     client->accountId   = zoning->accountId;
     client->ipAddress   = zoning->ipAddress;
-    
-    timer_init(&client->timerKeepAlive, zc_timer_pool(zc), EQP_CLIENT_KEEP_ALIVE_DELAY_MS, NULL, NULL, false);
     
     // Character stats
     client_grab(client);
@@ -370,7 +370,7 @@ Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning)
     return client;
 }
 
-void client_drop(R(Client*) client)
+void client_drop(Client* client)
 {
     if (atomic_fetch_sub(&client->refCount, 1) > 1)
         return;
@@ -378,8 +378,7 @@ void client_drop(R(Client*) client)
     if (client->isStubClient)
         goto stub;
     
-    timer_deinit(&client->timerKeepAlive);
-    
+    spellbook_deinit(&client->spellbook);
     inventory_deinit(&client->inventory);
     mob_deinit(&client->mob);
     
@@ -390,7 +389,7 @@ stub:
     free(client);
 }
 
-void client_catch_up_with_loading_progress(R(Client*) client)
+void client_catch_up_with_loading_progress(Client* client)
 {
     // This is called when the client is matched with its UDP connection;
     // stuff has already been loading for this client in the background,
@@ -401,31 +400,29 @@ void client_catch_up_with_loading_progress(R(Client*) client)
     client_check_loading_finished(client);
 }
 
-void client_check_loading_finished(R(Client*) client)
+void client_check_loading_finished(Client* client)
 {
-    R(ZC*) zc;
+    ZC* zc;
+    Zone* zone;
     
     if (client->loaded.total != 0xff)
         return;
     
-    zc = client_zone_cluster(client);
+    zc      = client_zone_cluster(client);
+    zone    = client_zone(client);
     
-    //fixme: add lua event_determine_base_stats or some such here
+    zc_lua_create_client(zc, zone, client);
+    zc_lua_event(zc, zone, client, "event_pre_spawn");
     
     if (client->expansion == ExpansionId_Trilogy)
     {
-        R(PacketTrilogy*) packet;
+        PacketTrilogy* packet;
         
         client_trilogy_send_player_profile(client);
         client_trilogy_send_zone_entry(client);
 
         packet = client_trilogy_make_op_weather(zc, 0, 0); //fixme: get weather from zone
         client_trilogy_schedule_packet_individual(client, packet);
-        
-        // Start keepalive packet flow
-        timer_set_callback(&client->timerKeepAlive, client_trilogy_send_keep_alive);
-        timer_set_userdata(&client->timerKeepAlive, client_handler(client));
-        timer_start(&client->timerKeepAlive);
     }
     else
     {
@@ -433,7 +430,7 @@ void client_check_loading_finished(R(Client*) client)
     }
 }
 
-void client_fill_in_missing_bind_points(R(Client*) client)
+void client_fill_in_missing_bind_points(Client* client)
 {
     BindPoint* copyFrom = NULL;
     BindPoint qeynos;
@@ -465,44 +462,44 @@ found:
     }
 }
 
-int client_is_pvp(R(Client*) client)
+int client_is_pvp(Client* client)
 {
     return client->isCurrentlyPvP;
 }
 
-int client_is_gm(R(Client*) client)
+int client_is_gm(Client* client)
 {
     return client->isGM;
 }
 
-int client_is_afk(R(Client*) client)
+int client_is_afk(Client* client)
 {
     return client->isAfk;
 }
 
-int client_is_linkdead(R(Client*) client)
+int client_is_linkdead(Client* client)
 {
     return client->isLinkdead;
 }
 
-uint8_t client_anon_setting(R(Client*) client)
+uint8_t client_anon_setting(Client* client)
 {
     return client->anonSetting;
 }
 
-uint8_t client_guild_rank(R(Client*) client)
+uint8_t client_guild_rank(Client* client)
 {
     return client->guildRank;
 }
 
-const char* client_surname_cstr(R(Client*) client)
+const char* client_surname_cstr(Client* client)
 {
     return (client->surname) ? string_data(client->surname) : "";
 }
 
-void client_set_bind_point(R(Client*) client, uint32_t bindId, int zoneId, float x, float y, float z, float heading)
+void client_set_bind_point(Client* client, uint32_t bindId, int zoneId, float x, float y, float z, float heading)
 {
-    R(BindPoint*) bind;
+    BindPoint* bind;
     
     if (bindId >= 5)
         return;

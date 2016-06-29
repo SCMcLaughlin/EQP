@@ -8,7 +8,7 @@ STRUCT_DEFINE(ConsoleCommand)
     byte        data[0];
 };
 
-void console_init(R(Console*) console)
+void console_init(Console* console)
 {
     basic_init(B(console), EQP_SOURCE_ID_CONSOLE, NULL);
     
@@ -18,7 +18,7 @@ void console_init(R(Console*) console)
     ipc_buffer_shm_create_init(B(console), &console->ipcRecv, &console->shmCreatorConsole, &console->shmViewerConsole, EQP_CONSOLE_SHM_PATH);
 }
 
-void console_deinit(R(Console*) console)
+void console_deinit(Console* console)
 {
     basic_deinit(B(console));
     
@@ -26,13 +26,13 @@ void console_deinit(R(Console*) console)
     share_mem_destroy(&console->shmCreatorConsole, &console->shmViewerConsole);
 }
 
-static int console_command_is_start(int argc, R(const char**) argv)
+static int console_command_is_start(int argc, const char** argv)
 {
     int i;
     
     for (i = 1; i < argc; i++)
     {
-        R(const char*) arg = argv[i];
+        const char* arg = argv[i];
         
         if (*arg == '-')
             continue;
@@ -43,13 +43,13 @@ static int console_command_is_start(int argc, R(const char**) argv)
     return false;
 }
 
-static int console_command_has_force_option(int argc, R(const char**) argv)
+static int console_command_has_force_option(int argc, const char** argv)
 {
     int i;
     
     for (i = 1; i < argc; i++)
     {
-        R(const char*) arg = argv[i];
+        const char* arg = argv[i];
         
         if (*arg != '-')
             continue;
@@ -72,7 +72,7 @@ static int console_command_has_force_option(int argc, R(const char**) argv)
 #define CONSOLE_MASTER_SHM          "eqp-master-"
 #define CONSOLE_ANY_SHM             "eqp-"
 
-static void console_launch_master_process(R(Basic*) basic)
+static void console_launch_master_process(Basic* basic)
 {
     pid_t pid = fork();
     
@@ -94,7 +94,7 @@ static void console_launch_master_process(R(Basic*) basic)
     }
 }
 
-static void console_master_ipc_open(R(Console*) console, R(const char*) name)
+static void console_master_ipc_open(Console* console, const char* name)
 {
     char path[512];
     snprintf(path, sizeof(path), "shm/%s", name);
@@ -103,7 +103,7 @@ static void console_master_ipc_open(R(Console*) console, R(const char*) name)
     console->ipcSend = shm_viewer_memory_type(&console->shmViewerMaster, IpcBuffer);
 }
 
-static int console_find_master_ipc(R(Console*) console)
+static int console_find_master_ipc(Console* console)
 {
 #ifdef EQP_WINDOWS
     
@@ -134,7 +134,7 @@ static int console_find_master_ipc(R(Console*) console)
 #endif
 }
 
-static void console_force_start_master(R(Console*) console)
+static void console_force_start_master(Console* console)
 {
 #ifdef EQP_WINDOWS
     
@@ -165,7 +165,7 @@ static void console_force_start_master(R(Console*) console)
     console_launch_master_process(B(console));
 }
 
-static void console_add_arg(R(Console*) console, R(byte*) data, R(const char*) arg, uint32_t* length)
+static void console_add_arg(Console* console, byte* data, const char* arg, uint32_t* length)
 {
     uint32_t len = strlen(arg);
     uint32_t pos = *length;
@@ -180,7 +180,7 @@ static void console_add_arg(R(Console*) console, R(byte*) data, R(const char*) a
     memcpy(data + pos + sizeof(uint32_t), arg, len);
 }
 
-static void console_do_send(R(Console*) console, int argc, R(const char**) argv)
+static void console_do_send(Console* console, int argc, const char** argv)
 {
     byte data[EQP_IPC_PACKET_MAX_SIZE];
     uint32_t length     = sizeof(ConsoleCommand);
@@ -195,7 +195,7 @@ static void console_do_send(R(Console*) console, int argc, R(const char**) argv)
     // Arguments
     for (i = 1; i < argc; i++)
     {
-        R(const char*) arg = argv[i];
+        const char* arg = argv[i];
         
         if (*arg == '-')
             continue;
@@ -207,7 +207,7 @@ static void console_do_send(R(Console*) console, int argc, R(const char**) argv)
     // Options
     for (i = 1; i < argc; i++)
     {
-        R(const char*) opt = argv[i];
+        const char* opt = argv[i];
         
         if (*opt != '-')
             continue;
@@ -221,7 +221,7 @@ static void console_do_send(R(Console*) console, int argc, R(const char**) argv)
     ipc_buffer_write(B(console), console->ipcSend, ServerOp_ConsoleCommand, EQP_SOURCE_ID_CONSOLE, length, data);
 }
 
-static int console_wait_start(R(Console*) console)
+static int console_wait_start(Console* console)
 {
     clock_sleep_milliseconds(1000);
     
@@ -234,7 +234,7 @@ static int console_wait_start(R(Console*) console)
     return true;
 }
 
-int console_send(R(Console*) console, int argc, R(const char**) argv)
+int console_send(Console* console, int argc, const char** argv)
 {
     int isStart = console_command_is_start(argc, argv);
     
@@ -268,7 +268,7 @@ do_send:
     return true;
 }
 
-static void console_write_packet(R(IpcPacket*) packet)
+static void console_write_packet(IpcPacket* packet)
 {
     uint32_t i;
     uint32_t n = ipc_packet_length(packet);
@@ -286,7 +286,7 @@ static void console_write_packet(R(IpcPacket*) packet)
     fputc('\n', stdout);
 }
 
-void console_recv(R(Console*) console)
+void console_recv(Console* console)
 {
     uint32_t time   = clock_milliseconds();
     int run         = true;

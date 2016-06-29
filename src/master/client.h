@@ -32,7 +32,7 @@ STRUCT_DEFINE(ClientByIds)
     Client*     client;
 };
 
-Client* client_create(R(Basic*) basic, R(ClientMgr*) mgr, R(Server_ClientZoning*) zoning);
+Client* client_create(Basic* basic, ClientMgr* mgr, Server_ClientZoning* zoning);
 #define client_destroy(cli) free(cli)
 
 #define client_set_character_id(cli, id) ((cli)->characterId = (id))

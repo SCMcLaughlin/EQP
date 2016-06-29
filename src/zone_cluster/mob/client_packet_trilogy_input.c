@@ -3,10 +3,10 @@
 #include "client_packet_trilogy_output.h"
 #include "zone_cluster.h"
 
-static void client_trilogy_handle_op_zone_entry(R(Client*) clientStub, R(Aligned*) a)
+static void client_trilogy_handle_op_zone_entry(Client* clientStub, Aligned* a)
 {
-    R(ProtocolHandler*) handler;
-    R(ZC*) zc;
+    ProtocolHandler* handler;
+    ZC* zc;
     
     if (aligned_remaining(a) < sizeof(Trilogy_ZoneEntryFromClient))
         return;
@@ -20,7 +20,7 @@ static void client_trilogy_handle_op_zone_entry(R(Client*) clientStub, R(Aligned
     zc_client_match_with_expected(zc, clientStub, handler, (const char*)aligned_current(a));
 }
 
-static void client_stub_recv_packet_trilogy(R(Client*) client, uint16_t opcode, R(Aligned*) a)
+static void client_stub_recv_packet_trilogy(Client* client, uint16_t opcode, Aligned* a)
 {
     if ((clock_milliseconds() - client->creationTimestamp) >= EQP_CLIENT_ZONE_IN_NO_AUTH_TIMEOUT)
     {
@@ -42,11 +42,11 @@ static void client_stub_recv_packet_trilogy(R(Client*) client, uint16_t opcode, 
     }
 }
 
-static void client_trilogy_echo_packet(R(Client*) client, uint16_t opcode, R(Aligned*) a)
+static void client_trilogy_echo_packet(Client* client, uint16_t opcode, Aligned* a)
 {
-    uint32_t length             = aligned_remaining(a);
-    R(ZC*) zc                   = client_zone_cluster(client);
-    R(PacketTrilogy*) packet    = packet_trilogy_create(B(zc), opcode, length);
+    uint32_t length         = aligned_remaining(a);
+    ZC* zc                  = client_zone_cluster(client);
+    PacketTrilogy* packet   = packet_trilogy_create(B(zc), opcode, length);
     
     if (length)
         memcpy(packet_trilogy_data(packet), aligned_current(a), length);
@@ -54,17 +54,17 @@ static void client_trilogy_echo_packet(R(Client*) client, uint16_t opcode, R(Ali
     client_trilogy_schedule_packet_individual(client, packet);
 }
 
-static void client_trilogy_handle_op_inventory_request(R(Client*) client)
+static void client_trilogy_handle_op_inventory_request(Client* client)
 {
     (void)client;
     //fixme: send items
 }
 
-static void client_trilogy_handle_op_zone_info_request(R(Client*) client)
+static void client_trilogy_handle_op_zone_info_request(Client* client)
 {
-    R(Zone*) zone               = client_zone(client);
-    R(ZC*) zc                   = client_zone_cluster(client);
-    R(PacketTrilogy*) packet    = client_trilogy_make_op_zone_info(zc, zone);
+    Zone* zone              = client_zone(client);
+    ZC* zc                  = client_zone_cluster(client);
+    PacketTrilogy* packet   = client_trilogy_make_op_zone_info(zc, zone);
     
     client_trilogy_schedule_packet_individual(client, packet);
     
@@ -73,15 +73,15 @@ static void client_trilogy_handle_op_zone_info_request(R(Client*) client)
     //fixme: send spawns, doors, objects
 }
 
-static void client_trilogy_handle_op_enter_zone(R(Client*) client)
+static void client_trilogy_handle_op_enter_zone(Client* client)
 {
     PacketBroadcast broadcastSpawn;
-    R(PacketTrilogy*) packet;
-    R(Zone*) zone   = client_zone(client);
-    R(ZC*) zc       = client_zone_cluster(client);
+    PacketTrilogy* packet;
+    Zone* zone  = client_zone(client);
+    ZC* zc      = client_zone_cluster(client);
     
     // Officially add the client to all the zone lists, so that we can get them their entityId
-    zone_spawn_client(zc, zone, client);
+    zc_add_connected_client(zc, client);
     
     // Inform the client of their entityId
     packet = client_trilogy_make_op_spawn_appearance(zc, 0, Trilogy_SpawnAppearance_SetEntityId, client_entity_id(client));
@@ -104,9 +104,9 @@ static void client_trilogy_handle_op_enter_zone(R(Client*) client)
     //send hp and mana updates
 }
 
-void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a)
+void client_recv_packet_trilogy(void* vclient, uint16_t opcode, Aligned* a)
 {
-    R(Client*) client = (Client*)vclient;
+    Client* client = (Client*)vclient;
     
     printf("Opcode: 0x%04x, length: %u\n", opcode, aligned_remaining(a));
     

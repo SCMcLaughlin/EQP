@@ -1,7 +1,7 @@
 
 #include "eqp_login.h"
 
-void login_init(R(Login*) login, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath)
+void login_init(Login* login, const char* ipcPath, const char* masterIpcPath, const char* logWriterIpcPath)
 {
     server_list_init(B(login), &login->serverList);
     client_list_init(B(login), &login->clientList);
@@ -19,7 +19,7 @@ void login_init(R(Login*) login, R(const char*) ipcPath, R(const char*) masterIp
     login->crypto = login_crypto_create(B(login));
 }
 
-void login_deinit(R(Login*) login)
+void login_deinit(Login* login)
 {
     core_deinit(C(login));
     ipc_set_deinit(&login->ipcSet);
@@ -36,7 +36,7 @@ void login_deinit(R(Login*) login)
     tcp_server_deinit(&login->tcpServer);
 }
 
-void ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet)
+void ipc_set_handle_packet(Basic* basic, IpcPacket* packet)
 {
     // We need to define this function -- but Login doesn't actually 
     // care about any IPC packets beyond the shutdown signal.
@@ -44,11 +44,11 @@ void ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet)
     (void)packet;
 }
 
-void login_main_loop(R(Login*) login)
+void login_main_loop(Login* login)
 {
-    R(UdpSocket*) socket        = login->socket;
-    R(TcpServer*) server        = &login->tcpServer;
-    R(IpcSet*) ipcSet           = &login->ipcSet;
+    UdpSocket* socket   = login->socket;
+    TcpServer* server   = &login->tcpServer;
+    IpcSet* ipcSet      = &login->ipcSet;
     
     for (;;)
     {

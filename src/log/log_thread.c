@@ -7,7 +7,7 @@ STRUCT_DEFINE(LogThreadFile)
     FILE*   fp;
 };
 
-void log_thread_init(R(Basic*) basic, R(LogThread*) logThread)
+void log_thread_init(Basic* basic, LogThread* logThread)
 {
     atomic_mutex_init(&logThread->inQueueMutex);
     
@@ -16,7 +16,7 @@ void log_thread_init(R(Basic*) basic, R(LogThread*) logThread)
     logThread->logFiles     = array_create_type(basic, LogThreadFile);
 }
 
-void log_thread_deinit(R(LogThread*) logThread)
+void log_thread_deinit(LogThread* logThread)
 {
     if (logThread->inQueue)
     {
@@ -50,7 +50,7 @@ static void log_thread_close_file(FILE* fp)
     fclose(fp);
 }
 
-static void log_thread_close_all(R(LogThread*) logThread)
+static void log_thread_close_all(LogThread* logThread)
 {
     uint32_t i;
     uint32_t n              = array_count(logThread->logFiles);
@@ -68,7 +68,7 @@ static void log_thread_close_all(R(LogThread*) logThread)
     }
 }
 
-static uint32_t log_thread_read_input_queue(R(LogThread*) logThread)
+static uint32_t log_thread_read_input_queue(LogThread* logThread)
 {
     uint32_t i;
     uint32_t n;
@@ -94,7 +94,7 @@ static uint32_t log_thread_read_input_queue(R(LogThread*) logThread)
     return n;
 }
 
-static LogThreadFile* log_thread_get_file(R(LogThread*) logThread, int sourceId, uint32_t* index)
+static LogThreadFile* log_thread_get_file(LogThread* logThread, int sourceId, uint32_t* index)
 {
     uint32_t i;
     uint32_t n              = array_count(logThread->logFiles);
@@ -115,10 +115,10 @@ static LogThreadFile* log_thread_get_file(R(LogThread*) logThread, int sourceId,
     return NULL;
 }
 
-static void log_thread_write(R(LogThread*) logThread, R(IpcPacket*) packet)
+static void log_thread_write(LogThread* logThread, IpcPacket* packet)
 {
     uint32_t length = ipc_packet_length(packet);
-    R(byte*) data   = ipc_packet_data(packet);
+    byte* data      = ipc_packet_data(packet);
     
     if (length > 0 && data != NULL)
     {
@@ -135,7 +135,7 @@ static void log_thread_write(R(LogThread*) logThread, R(IpcPacket*) packet)
     }
 }
 
-static FILE* log_thread_determine_filename_and_open(R(LogThread*) logThread, int sourceId)
+static FILE* log_thread_determine_filename_and_open(LogThread* logThread, int sourceId)
 {
     char filename[256];
     FILE* fp;
@@ -199,7 +199,7 @@ static FILE* log_thread_determine_filename_and_open(R(LogThread*) logThread, int
     return fp;
 }
 
-static void log_thread_open(R(LogThread*) logThread, R(IpcPacket*) packet)
+static void log_thread_open(LogThread* logThread, IpcPacket* packet)
 {
     int sourceId        = ipc_packet_source_id(packet);
     LogThreadFile* old  = log_thread_get_file(logThread, sourceId, NULL); // Is it already open?
@@ -235,7 +235,7 @@ static void log_thread_open(R(LogThread*) logThread, R(IpcPacket*) packet)
     }
 }
 
-static void log_thread_close(R(LogThread*) logThread, R(IpcPacket*) packet)
+static void log_thread_close(LogThread* logThread, IpcPacket* packet)
 {
     uint32_t index;
     LogThreadFile* file = log_thread_get_file(logThread, ipc_packet_source_id(packet), &index);
@@ -252,7 +252,7 @@ static void log_thread_close(R(LogThread*) logThread, R(IpcPacket*) packet)
     }
 }
 
-static void log_thread_process_write_queue(R(LogThread*) logThread)
+static void log_thread_process_write_queue(LogThread* logThread)
 {
     uint32_t i;
     uint32_t n          = array_count(logThread->writeQueue);
@@ -286,9 +286,9 @@ static void log_thread_process_write_queue(R(LogThread*) logThread)
     array_clear(logThread->writeQueue);
 }
 
-void log_thread_main_loop(R(Thread*) thread)
+void log_thread_main_loop(Thread* thread)
 {
-    R(LogThread*) logThread = (LogThread*)thread;
+    LogThread* logThread = (LogThread*)thread;
     
     for (;;)
     {
@@ -309,7 +309,7 @@ void log_thread_main_loop(R(Thread*) thread)
     log_thread_close_all(logThread);
 }
 
-void log_thread_post_message(R(Basic*) basic, R(LogThread*) logThread, R(IpcPacket*) packet)
+void log_thread_post_message(Basic* basic, LogThread* logThread, IpcPacket* packet)
 {
     atomic_mutex_lock(&logThread->inQueueMutex);
     array_push_back(basic, &logThread->inQueue, packet);

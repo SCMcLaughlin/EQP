@@ -3,7 +3,7 @@
 #include "eqp_basic.h"
 #include "share_mem.h"
 
-void ipc_buffer_init(R(Basic*) basic, R(IpcBuffer*) ipc)
+void ipc_buffer_init(Basic* basic, IpcBuffer* ipc)
 {
     uint32_t i;
     uint32_t n          = EQP_IPC_BUFFER_NUM_PACKETS - 1;
@@ -32,14 +32,14 @@ void ipc_buffer_init(R(Basic*) basic, R(IpcBuffer*) ipc)
     semaphore_init(basic, &ipc->semaphore);
 }
 
-void ipc_buffer_shm_create_init(R(Basic*) basic, R(IpcBuffer**) ipc, R(ShmCreator*) creator, R(ShmViewer*) viewer, R(const char*) path)
+void ipc_buffer_shm_create_init(Basic* basic, IpcBuffer** ipc, ShmCreator* creator, ShmViewer* viewer, const char* path)
 {
     share_mem_create(basic, creator, viewer, path, sizeof(IpcBuffer));
     *ipc = shm_viewer_memory_type(viewer, IpcBuffer);
     ipc_buffer_init(basic, *ipc);
 }
 
-static void ipc_buffer_do_write(R(Basic*) basic, R(IpcBuffer*) ipc, R(IpcBlock*) block, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data)
+static void ipc_buffer_do_write(Basic* basic, IpcBuffer* ipc, IpcBlock* block, ServerOp opcode, int sourceId, uint32_t length, const void* data)
 {
     int written = 1;
     
@@ -73,14 +73,14 @@ static void ipc_buffer_do_write(R(Basic*) basic, R(IpcBuffer*) ipc, R(IpcBlock*)
     semaphore_trigger(basic, &ipc->semaphore);
 }
 
-int ipc_buffer_write(R(Basic*) basic, R(IpcBuffer*) ipc, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data)
+int ipc_buffer_write(Basic* basic, IpcBuffer* ipc, ServerOp opcode, int sourceId, uint32_t length, const void* data)
 {
     uint64_t timestamp = clock_milliseconds();
     
     for (;;)
     {
-        uint32_t index      = atomic_load(&ipc->writeEnd);
-        R(IpcBlock*) block  = &ipc->blocks[index];
+        uint32_t index  = atomic_load(&ipc->writeEnd);
+        IpcBlock* block = &ipc->blocks[index];
         
         if (block->nextIndex == atomic_load(&ipc->readStart))
         {
@@ -98,7 +98,7 @@ int ipc_buffer_write(R(Basic*) basic, R(IpcBuffer*) ipc, ServerOp opcode, int so
     }
 }
 
-static void ipc_buffer_do_read(R(Basic*) basic, R(IpcBuffer*) ipc, R(IpcPacket*) packet, R(IpcBlock*) block)
+static void ipc_buffer_do_read(Basic* basic, IpcBuffer* ipc, IpcPacket* packet, IpcBlock* block)
 {
     int read = 1;
     
@@ -122,12 +122,12 @@ static void ipc_buffer_do_read(R(Basic*) basic, R(IpcBuffer*) ipc, R(IpcPacket*)
     }
 }
 
-int ipc_buffer_read(R(Basic*) basic, R(IpcBuffer*) ipc, R(IpcPacket*) packet)
+int ipc_buffer_read(Basic* basic, IpcBuffer* ipc, IpcPacket* packet)
 {
     for (;;)
     {
-        uint32_t index      = atomic_load(&ipc->readEnd);
-        R(IpcBlock*) block  = &ipc->blocks[index];
+        uint32_t index  = atomic_load(&ipc->readEnd);
+        IpcBlock* block = &ipc->blocks[index];
         
         if (index == atomic_load(&ipc->writeStart))
             return false;
@@ -140,7 +140,7 @@ int ipc_buffer_read(R(Basic*) basic, R(IpcBuffer*) ipc, R(IpcPacket*) packet)
     }
 }
 
-void ipc_packet_init(R(Basic*) basic, R(IpcPacket*) packet, ServerOp opcode, int sourceId, uint32_t length, R(void*) vdata)
+void ipc_packet_init(Basic* basic, IpcPacket* packet, ServerOp opcode, int sourceId, uint32_t length, void* vdata)
 {
     packet->opcode      = opcode;
     packet->sourceId    = sourceId;
@@ -158,7 +158,7 @@ void ipc_packet_init(R(Basic*) basic, R(IpcPacket*) packet, ServerOp opcode, int
     }
 }
 
-void ipc_packet_deinit(R(IpcPacket*) packet)
+void ipc_packet_deinit(IpcPacket* packet)
 {
     if (packet->data)
     {

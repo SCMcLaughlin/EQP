@@ -37,16 +37,16 @@ STRUCT_DEFINE(NetworkClientTrilogy)
     uint32_t        sendFromIndex;
 };
 
-void        network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkClientTrilogy*) client, uint32_t index);
-void        network_client_trilogy_deinit(R(NetworkClientTrilogy*) client);
+void        network_client_trilogy_init(UdpSocket* sock, UdpClient* udpClient, NetworkClientTrilogy* client, uint32_t index);
+void        network_client_trilogy_deinit(NetworkClientTrilogy* client);
 
-void        network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) client, uint16_t ack);
-void        network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) client, uint16_t ack, int isFirstPacket);
+void        network_client_trilogy_recv_ack_response(NetworkClientTrilogy* client, uint16_t ack);
+void        network_client_trilogy_recv_ack_request(NetworkClientTrilogy* client, uint16_t ack, int isFirstPacket);
 
-void        network_client_trilogy_schedule_packet(R(NetworkClientTrilogy*) client, R(OutputPacketTrilogy*) packet);
-void        network_client_trilogy_send_pure_ack(R(NetworkClientTrilogy*) client, uint16_t ackResponse);
-void        network_client_trilogy_send_disconnect(R(NetworkClientTrilogy*) client);
-void        network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client);
+void        network_client_trilogy_schedule_packet(NetworkClientTrilogy* client, OutputPacketTrilogy* packet);
+void        network_client_trilogy_send_pure_ack(NetworkClientTrilogy* client, uint16_t ackResponse);
+void        network_client_trilogy_send_disconnect(NetworkClientTrilogy* client);
+void        network_client_trilogy_send_queued(NetworkClientTrilogy* client);
 
 #define     network_client_trilogy_next_ack_response(cli) ((cli)->nextAckResponse)
 #define     network_client_trilogy_set_next_ack_response(cli, ack) ((cli)->nextAckResponse = (ack))

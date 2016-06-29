@@ -51,23 +51,23 @@ STRUCT_DEFINE(CharSelect)
     Array*      clientsAttemptingToZoneIn;
 };
 
-void        char_select_init(R(CharSelect*) charSelect, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath);
-void        char_select_deinit(R(CharSelect*) charSelect);
-void        char_select_main_loop(R(CharSelect*) charSelect);
+void        char_select_init(CharSelect* charSelect, const char* ipcPath, const char* masterIpcPath, const char* logWriterIpcPath);
+void        char_select_deinit(CharSelect* charSelect);
+void        char_select_main_loop(CharSelect* charSelect);
 
-void        char_select_start_login_server_connections(R(CharSelect*) charSelect);
-void        char_select_tcp_recv(R(CharSelect*) charSelect);
-TcpClient*  char_select_get_tcp_client(R(CharSelect*) charSelect, uint32_t index);
+void        char_select_start_login_server_connections(CharSelect* charSelect);
+void        char_select_tcp_recv(CharSelect* charSelect);
+TcpClient*  char_select_get_tcp_client(CharSelect* charSelect, uint32_t index);
 
-void        char_select_unclaimed_auths_timer_callback(R(Timer*) timer);
-void        char_select_handle_client_auth(R(CharSelect*) charSelect, R(CharSelectAuth*) auth);
-void        char_select_handle_unauthed_client(R(CharSelect*) charSelect, R(CharSelectClient*) client);
-void        char_select_remove_client_from_unauthed_list(R(CharSelect*) charSelect, R(CharSelectClient*) client);
+void        char_select_unclaimed_auths_timer_callback(Timer* timer);
+void        char_select_handle_client_auth(CharSelect* charSelect, CharSelectAuth* auth);
+void        char_select_handle_unauthed_client(CharSelect* charSelect, CharSelectClient* client);
+void        char_select_remove_client_from_unauthed_list(CharSelect* charSelect, CharSelectClient* client);
 
-void        char_select_send_client_zone_in_request(R(CharSelect*) charSelect, R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(const char*) charName);
+void        char_select_send_client_zone_in_request(CharSelect* charSelect, CharSelectClient* client, ProtocolHandler* handler, const char* charName);
 
-void        char_select_get_starting_zone_and_loc(R(CharSelect*) charSelect, uint16_t race, uint8_t class, uint8_t gender, bool isTrilogy,
-                R(int*) zoneId, R(float*) x, R(float*) y, R(float*) z);
+void        char_select_get_starting_zone_and_loc(CharSelect* charSelect, uint16_t race, uint8_t class, uint8_t gender, bool isTrilogy,
+                int* zoneId, float* x, float* y, float* z);
 
 int         char_select_is_ip_address_local(uint32_t ip);
 

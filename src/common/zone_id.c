@@ -1,7 +1,7 @@
 
 #include "zone_id.h"
 
-ZoneShortNameMap* zone_short_name_map_create(R(Basic*) basic)
+ZoneShortNameMap* zone_short_name_map_create(Basic* basic)
 {
     ZoneShortNameMap* map = hash_table_create_type(basic, int);
     int zoneId;
@@ -497,9 +497,9 @@ ZoneShortNameMap* zone_short_name_map_create(R(Basic*) basic)
     return map;
 }
 
-int zone_id_by_short_name(R(ZoneShortNameMap*) map, R(const char*) shortName, uint32_t len)
+int zone_id_by_short_name(ZoneShortNameMap* map, const char* shortName, uint32_t len)
 {
-    R(int*) zoneId = hash_table_get_type_by_cstr(map, shortName, len, int);
+    int* zoneId = hash_table_get_type_by_cstr(map, shortName, len, int);
     return zoneId ? *zoneId : 0;
 }
 

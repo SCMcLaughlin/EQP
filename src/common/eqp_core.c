@@ -1,7 +1,7 @@
 
 #include "eqp_core.h"
 
-void core_init(R(Core*) core, int sourceId, R(IpcBuffer*) logIpc)
+void core_init(Core* core, int sourceId, IpcBuffer* logIpc)
 {
     // Init the Basic object first
     basic_init(B(core), sourceId, logIpc);
@@ -14,7 +14,7 @@ void core_init(R(Core*) core, int sourceId, R(IpcBuffer*) logIpc)
     db_thread_start(B(core), &core->dbThread);
 }
 
-void core_deinit(R(Core*) core)
+void core_deinit(Core* core)
 {
     // Stop the DB thread and wait
     thread_send_stop_signal(B(core), T(&core->dbThread));

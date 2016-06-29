@@ -22,17 +22,17 @@ STRUCT_DEFINE(TimerPool)
     Array*      triggered;
 };
 
-void    timer_pool_init(R(Basic*) basic, R(TimerPool*) pool);
-void    timer_pool_deinit(R(TimerPool*) pool);
+void    timer_pool_init(Basic* basic, TimerPool* pool);
+void    timer_pool_deinit(TimerPool* pool);
 
-void    timer_pool_execute_callbacks(R(TimerPool*) pool);
+void    timer_pool_execute_callbacks(TimerPool* pool);
 
 // The below functions are for internal use (by Timer functions) only
 
-void    timer_pool_internal_start_timer(R(TimerPool*) pool, R(Timer*) timer);
-void    timer_pool_internal_restart_timer(R(TimerPool*) pool, R(Timer*) timer);
-void    timer_pool_internal_delay_timer(R(TimerPool*) pool, R(Timer*) timer, uint32_t milliseconds);
-void    timer_pool_internal_force_timer_trigger_next_cycle(R(TimerPool*) pool, R(Timer*) timer);
-void    timer_pool_internal_mark_timer_as_dead(R(TimerPool*) pool, uint32_t index);
+void    timer_pool_internal_start_timer(TimerPool* pool, Timer* timer);
+void    timer_pool_internal_restart_timer(TimerPool* pool, Timer* timer);
+void    timer_pool_internal_delay_timer(TimerPool* pool, Timer* timer, uint32_t milliseconds);
+void    timer_pool_internal_force_timer_trigger_next_cycle(TimerPool* pool, Timer* timer);
+void    timer_pool_internal_mark_timer_as_dead(TimerPool* pool, uint32_t index);
 
 #endif//EQP_TIMER_POOL_H

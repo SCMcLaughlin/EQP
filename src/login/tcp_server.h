@@ -19,15 +19,15 @@ STRUCT_DEFINE(TcpServer)
     Array*  clients;
 };
 
-void    tcp_server_init(R(Login*) login, R(TcpServer*) server);
-void    tcp_server_deinit(R(TcpServer*) server);
+void    tcp_server_init(Login* login, TcpServer* server);
+void    tcp_server_deinit(TcpServer* server);
 
-void    tcp_server_open(R(TcpServer*) server, uint16_t port);
-void    tcp_server_close(R(TcpServer*) server);
-void    tcp_server_accept_new_connections(R(TcpServer*) server);
-void    tcp_server_recv(R(TcpServer*) server);
-void    tcp_server_close_client(R(TcpServer*) server, R(TcpClient*) client);
+void    tcp_server_open(TcpServer* server, uint16_t port);
+void    tcp_server_close(TcpServer* server);
+void    tcp_server_accept_new_connections(TcpServer* server);
+void    tcp_server_recv(TcpServer* server);
+void    tcp_server_close_client(TcpServer* server, TcpClient* client);
 
-void    tcp_server_send_client_login_request(R(TcpServer*) server, int loginServerIndex, uint32_t accountId);
+void    tcp_server_send_client_login_request(TcpServer* server, int loginServerIndex, uint32_t accountId);
 
 #endif//EQP_TCP_SERVER_H

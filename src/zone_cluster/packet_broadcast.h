@@ -9,7 +9,7 @@
 STRUCT_DECLARE(PacketBroadcast);
 STRUCT_DECLARE(ZC);
 
-typedef void (*BroadcastEncoder)(R(PacketBroadcast*) packet, int expansionId);
+typedef void (*BroadcastEncoder)(PacketBroadcast* packet, int expansionId);
 
 STRUCT_DEFINE(PacketBroadcast)
 {
@@ -20,12 +20,12 @@ STRUCT_DEFINE(PacketBroadcast)
     ZC*                 zc;
 };
 
-void            packet_broadcast_init(R(ZC*) zc, R(PacketBroadcast*) packet, BroadcastEncoder encoder, R(const void*) source);
+void            packet_broadcast_init(ZC* zc, PacketBroadcast* packet, BroadcastEncoder encoder, const void* source);
 
-void            packet_broadcast_set_packet_for_expansion(R(PacketBroadcast*) packetBroadcast, int expansionId, R(void*) packet);
-PacketTrilogy*  packet_broadcast_get_trilogy(R(PacketBroadcast*) packet);
+void            packet_broadcast_set_packet_for_expansion(PacketBroadcast* packetBroadcast, int expansionId, void* packet);
+PacketTrilogy*  packet_broadcast_get_trilogy(PacketBroadcast* packet);
 
 /* Encoding dispatchers */
-void    packet_broadcast_encode_op_spawn(R(PacketBroadcast*) packet, int expansionId);
+void    packet_broadcast_encode_op_spawn(PacketBroadcast* packet, int expansionId);
 
 #endif//EQP_PACKET_BROADCAST_H

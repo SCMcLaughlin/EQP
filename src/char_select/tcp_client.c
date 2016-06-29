@@ -9,7 +9,7 @@
 #define LOGIN_VERSION               "0.8.0"
 #define SERVER_TYPE_WORLD           0
 
-void tcp_client_init(R(CharSelect*) charSelect, R(TcpClient*) client, R(LoginServerConfig*) config)
+void tcp_client_init(CharSelect* charSelect, TcpClient* client, LoginServerConfig* config)
 {
     client->socketFd    = INVALID_SOCKET;
     client->buffered    = 0;
@@ -20,7 +20,7 @@ void tcp_client_init(R(CharSelect*) charSelect, R(TcpClient*) client, R(LoginSer
     client->timer       = eqp_timer_create(B(charSelect), char_select_timer_pool(charSelect), RECONNECT_MILLISECONDS, NULL, config, false);
 }
 
-void tcp_client_deinit(R(TcpClient*) client)
+void tcp_client_deinit(TcpClient* client)
 {
     if (client->socketFd != INVALID_SOCKET)
     {
@@ -36,7 +36,7 @@ void tcp_client_deinit(R(TcpClient*) client)
     
     if (client->config)
     {
-        R(LoginServerConfig*) c = client->config;
+        LoginServerConfig* c = client->config;
         
         if (c->longName)
             string_destroy(c->longName);
@@ -67,14 +67,14 @@ void tcp_client_deinit(R(TcpClient*) client)
     }
 }
 
-void tcp_client_restart_connection(R(TcpClient*) client)
+void tcp_client_restart_connection(TcpClient* client)
 {
     closesocket(client->socketFd);
     client->socketFd = INVALID_SOCKET;
     tcp_client_start_connect_cycle(client, false);
 }
 
-static void tcp_client_send(R(CharSelect*) charSelect, R(TcpClient*) client, R(const void*) data, int size)
+static void tcp_client_send(CharSelect* charSelect, TcpClient* client, const void* data, int size)
 {
     int fd      = client->socketFd;
     int sent    = 0;
@@ -106,13 +106,13 @@ static void tcp_client_send(R(CharSelect*) charSelect, R(TcpClient*) client, R(c
     }
 }
 
-static void tcp_client_status_update_callback(R(Timer*) timer)
+static void tcp_client_status_update_callback(Timer* timer)
 {
-    R(LoginServerConfig*) config    = timer_userdata_type(timer, LoginServerConfig);
-    R(CharSelect*) charSelect       = config->charSelect;
-    R(TcpClient*) client            = char_select_get_tcp_client(charSelect, config->index);
+    LoginServerConfig* config   = timer_userdata_type(timer, LoginServerConfig);
+    CharSelect* charSelect      = config->charSelect;
+    TcpClient* client           = char_select_get_tcp_client(charSelect, config->index);
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w = &write;
     Tcp_LoginServerStatusSend send;
     
     // Check for timeout
@@ -138,7 +138,7 @@ static void tcp_client_status_update_callback(R(Timer*) timer)
     tcp_client_send(charSelect, client, &send, sizeof(Tcp_LoginServerStatusSend));
 }
 
-static void tcp_client_get_local_address(R(TcpClient*) client, R(Aligned*) w, uint32_t len)
+static void tcp_client_get_local_address(TcpClient* client, Aligned* w, uint32_t len)
 {
     IpAddress addr;
     socklen_t addrlen = sizeof(IpAddress);
@@ -156,7 +156,7 @@ static void tcp_client_get_local_address(R(TcpClient*) client, R(Aligned*) w, ui
     }
 }
 
-static void tcp_client_write_string_not_null(R(Aligned*) w, uint32_t len, R(String*) str)
+static void tcp_client_write_string_not_null(Aligned* w, uint32_t len, String* str)
 {
     if (string_length(str) > 0)
         aligned_write_snprintf_full_advance(w, len, "%s", string_data(str));
@@ -164,12 +164,12 @@ static void tcp_client_write_string_not_null(R(Aligned*) w, uint32_t len, R(Stri
         aligned_advance(w, len);
 }
 
-static void tcp_client_do_connect(R(CharSelect*) charSelect, R(TcpClient*) client, R(Timer*) timer, struct addrinfo* result)
+static void tcp_client_do_connect(CharSelect* charSelect, TcpClient* client, Timer* timer, struct addrinfo* result)
 {
-    R(LoginServerConfig*) config = client->config;
+    LoginServerConfig* config = client->config;
     Tcp_NewLoginServerSend send;
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w = &write;
     struct addrinfo hint;
     int opt = 1;
 #ifdef EQP_WINDOWS
@@ -258,13 +258,13 @@ static void tcp_client_do_connect(R(CharSelect*) charSelect, R(TcpClient*) clien
     timer_execute_callback(timer);
 }
 
-static void tcp_client_reconnect_callback(R(Timer*) timer)
+static void tcp_client_reconnect_callback(Timer* timer)
 {
     ExceptionScope exScope;
-    R(LoginServerConfig*) volatile config   = timer_userdata_type(timer, LoginServerConfig);
-    R(CharSelect*) volatile charSelect      = config->charSelect;
-    R(TcpClient*) volatile client           = char_select_get_tcp_client(charSelect, config->index);
-    struct addrinfo* volatile result        = NULL;
+    LoginServerConfig* volatile config  = timer_userdata_type(timer, LoginServerConfig);
+    CharSelect* volatile charSelect     = config->charSelect;
+    TcpClient* volatile client          = char_select_get_tcp_client(charSelect, config->index);
+    struct addrinfo* volatile result    = NULL;
     
     switch (exception_try(B(charSelect), &exScope))
     {
@@ -302,9 +302,9 @@ static void tcp_client_reconnect_callback(R(Timer*) timer)
     exception_end_try_with_finally(B(charSelect));
 }
 
-void tcp_client_start_connect_cycle(R(TcpClient*) client, int immediate)
+void tcp_client_start_connect_cycle(TcpClient* client, int immediate)
 {
-    R(Timer*) timer = client->timer;
+    Timer* timer = client->timer;
     
     timer_set_period_milliseconds(timer, RECONNECT_MILLISECONDS);
     timer_set_callback(timer, tcp_client_reconnect_callback);
@@ -314,11 +314,11 @@ void tcp_client_start_connect_cycle(R(TcpClient*) client, int immediate)
         timer_execute_callback(timer);
 }
 
-static void tcp_client_handle_op_client_login_request(R(CharSelect*) charSelect, R(TcpClient*) client, R(Aligned*) a)
+static void tcp_client_handle_op_client_login_request(CharSelect* charSelect, TcpClient* client, Aligned* a)
 {
     Tcp_ClientLoginResponseSend send;
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w = &write;
     uint32_t accountId;
     uint32_t serverId;
     
@@ -346,7 +346,7 @@ static void tcp_client_handle_op_client_login_request(R(CharSelect*) charSelect,
     tcp_client_send(charSelect, client, &send, sizeof(Tcp_ClientLoginResponseSend));
 }
 
-static void tcp_client_handle_op_client_login_auth(R(CharSelect*) charSelect, R(Aligned*) a)
+static void tcp_client_handle_op_client_login_auth(CharSelect* charSelect, Aligned* a)
 {
     CharSelectAuth auth;
     
@@ -369,11 +369,11 @@ static void tcp_client_handle_op_client_login_auth(R(CharSelect*) charSelect, R(
     char_select_handle_client_auth(charSelect, &auth);
 }
 
-void tcp_client_handle_packet(R(TcpClient*) client)
+void tcp_client_handle_packet(TcpClient* client)
 {
-    R(CharSelect*) charSelect = client->charSelect;
+    CharSelect* charSelect = client->charSelect;
     Aligned aligned;
-    R(Aligned*) a = &aligned;
+    Aligned* a = &aligned;
     uint16_t opcode;
     
     client->lastRemoteTime = clock_milliseconds();

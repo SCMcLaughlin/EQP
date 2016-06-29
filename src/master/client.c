@@ -2,9 +2,9 @@
 #include "client.h"
 #include "client_manager.h"
 
-Client* client_create(R(Basic*) basic, R(ClientMgr*) mgr, R(Server_ClientZoning*) zoning)
+Client* client_create(Basic* basic, ClientMgr* mgr, Server_ClientZoning* zoning)
 {
-    R(Client*) client = eqp_alloc_type(basic, Client);
+    Client* client = eqp_alloc_type(basic, Client);
     
     client->characterId = 0;
     client->accountId   = zoning->accountId;

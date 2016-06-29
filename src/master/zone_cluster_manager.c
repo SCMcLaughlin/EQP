@@ -4,7 +4,7 @@
 
 #define ZONE_CLUSTER_CONFIG "scripts/master/zone_cluster_config_loader.lua"
 
-void zc_mgr_init(R(MasterIpcThread*) ipcThread, R(ZoneClusterMgr*) mgr, R(lua_State*) L)
+void zc_mgr_init(MasterIpcThread* ipcThread, ZoneClusterMgr* mgr, lua_State* L)
 {
     mgr->maxZonesPerCluster     = EQP_ZONE_CLUSTER_DEFAULT_ZONES_PER_PROCESS;
     mgr->nextZoneClusterPort    = EQP_ZONE_CLUSTER_PORT_RANGE_START;
@@ -28,7 +28,7 @@ void zc_mgr_init(R(MasterIpcThread*) ipcThread, R(ZoneClusterMgr*) mgr, R(lua_St
     }
 }
 
-void zc_mgr_deinit(R(ZoneClusterMgr*) mgr)
+void zc_mgr_deinit(ZoneClusterMgr* mgr)
 {
     if (mgr->activeZoneClusters)
     {
@@ -58,19 +58,19 @@ void zc_mgr_deinit(R(ZoneClusterMgr*) mgr)
     }
 }
 
-static ZoneCluster* zc_mgr_start_zone_from_reserved_list(R(ZoneClusterMgr*) mgr, int zoneSourceId)
+static ZoneCluster* zc_mgr_start_zone_from_reserved_list(ZoneClusterMgr* mgr, int zoneSourceId)
 {
-    R(ZoneReservation*) array   = array_data_type(mgr->zoneReservations, ZoneReservation);
-    uint32_t n                  = array_count(mgr->zoneReservations);
+    ZoneReservation* array  = array_data_type(mgr->zoneReservations, ZoneReservation);
+    uint32_t n              = array_count(mgr->zoneReservations);
     uint32_t i;
     
     for (i = 0; i < n; i++)
     {
-        R(ZoneReservation*) res = &array[i];
+        ZoneReservation* res = &array[i];
         
         if (res->sourceId == zoneSourceId)
         {
-            R(ZoneCluster*) zc = res->zoneCluster;
+            ZoneCluster* zc = res->zoneCluster;
             
             zc_mgr_start_zone_on_cluster(mgr, zc, zoneSourceId);
             return zc;
@@ -80,15 +80,15 @@ static ZoneCluster* zc_mgr_start_zone_from_reserved_list(R(ZoneClusterMgr*) mgr,
     return NULL;
 }
 
-static ZoneCluster* zc_mgr_start_zone_from_free_space(R(ZoneClusterMgr*) mgr, int zoneSourceId)
+static ZoneCluster* zc_mgr_start_zone_from_free_space(ZoneClusterMgr* mgr, int zoneSourceId)
 {
-    R(ZoneCluster**) array  = array_data_type(mgr->activeZoneClusters, ZoneCluster*);
-    uint32_t n              = array_count(mgr->activeZoneClusters);
+    ZoneCluster** array = array_data_type(mgr->activeZoneClusters, ZoneCluster*);
+    uint32_t n          = array_count(mgr->activeZoneClusters);
     uint32_t i;
     
     for (i = 0; i < n; i++)
     {
-        R(ZoneCluster*) zc = array[i];
+        ZoneCluster* zc = array[i];
         
         if (zone_cluster_has_free_space(zc))
         {
@@ -100,9 +100,9 @@ static ZoneCluster* zc_mgr_start_zone_from_free_space(R(ZoneClusterMgr*) mgr, in
     return NULL;
 }
 
-ZoneCluster* zc_mgr_get_or_start(R(ZoneClusterMgr*) mgr, int zoneSourceId)
+ZoneCluster* zc_mgr_get_or_start(ZoneClusterMgr* mgr, int zoneSourceId)
 {
-    R(ZoneCluster*) zc;
+    ZoneCluster* zc;
     
     // Is the zone already running?
     zc = zc_mgr_get(mgr, zoneSourceId);
@@ -127,9 +127,9 @@ ret:
     return zc;
 }
 
-ZoneCluster* zc_mgr_get(R(ZoneClusterMgr*) mgr, int sourceId)
+ZoneCluster* zc_mgr_get(ZoneClusterMgr* mgr, int sourceId)
 {
-    R(ZoneClusterBySourceId*) array = array_data_type(mgr->zoneClustersBySourceId, ZoneClusterBySourceId);
+    ZoneClusterBySourceId* array    = array_data_type(mgr->zoneClustersBySourceId, ZoneClusterBySourceId);
     uint32_t n                      = array_count(mgr->zoneClustersBySourceId);
     uint32_t i;
     
@@ -142,7 +142,7 @@ ZoneCluster* zc_mgr_get(R(ZoneClusterMgr*) mgr, int sourceId)
     return NULL;
 }
 
-void zc_mgr_start_zone_on_cluster(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, int sourceId)
+void zc_mgr_start_zone_on_cluster(ZoneClusterMgr* mgr, ZoneCluster* zc, int sourceId)
 {
     ZoneClusterBySourceId bySrc;
     
@@ -155,19 +155,19 @@ void zc_mgr_start_zone_on_cluster(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, in
     array_push_back(B(mgr->ipcThread), &mgr->zoneClustersBySourceId, &bySrc);
 }
 
-void zc_mgr_set_max_zones_per_cluster(R(ZoneClusterMgr*) mgr, uint16_t maxPer)
+void zc_mgr_set_max_zones_per_cluster(ZoneClusterMgr* mgr, uint16_t maxPer)
 {
     mgr->maxZonesPerCluster = maxPer;
     log_format(B(mgr->ipcThread), LogInfo, "Adjusted max zones per zone cluster to %u", maxPer);
 }
 
-ZoneCluster* zc_mgr_start_zone_cluster(R(ZoneClusterMgr*) mgr)
+ZoneCluster* zc_mgr_start_zone_cluster(ZoneClusterMgr* mgr)
 {
-    R(MasterIpcThread*) ipcThread   = mgr->ipcThread;
-    uint16_t id                     = array_count(mgr->activeZoneClusters);
-    uint16_t port                   = mgr->nextZoneClusterPort++;
+    MasterIpcThread* ipcThread  = mgr->ipcThread;
+    uint16_t id                 = array_count(mgr->activeZoneClusters);
+    uint16_t port               = mgr->nextZoneClusterPort++;
     ZoneClusterBySourceId bySrc;
-    R(ZoneCluster*) zc;
+    ZoneCluster* zc;
     
     zc = zone_cluster_create(ipcThread, id, port, mgr->maxZonesPerCluster);
     
@@ -182,9 +182,9 @@ ZoneCluster* zc_mgr_start_zone_cluster(R(ZoneClusterMgr*) mgr)
     return zc;
 }
 
-void zc_mgr_add_zone_reservation(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, R(const char*) shortName, int zoneId, int instanceId, int alwaysUp)
+void zc_mgr_add_zone_reservation(ZoneClusterMgr* mgr, ZoneCluster* zc, const char* shortName, int zoneId, int instanceId, int alwaysUp)
 {
-    R(Basic*) basic = B(mgr->ipcThread);
+    Basic* basic = B(mgr->ipcThread);
     ZoneReservation res;
     
     res.sourceId = 0;

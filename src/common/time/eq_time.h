@@ -14,6 +14,6 @@ STRUCT_DEFINE(EQ_Time)
     uint16_t    year;
 };
 
-void    eq_time_calc(R(EQ_Time*) eqTime, uint64_t baseUnixSeconds);
+void    eq_time_calc(EQ_Time* eqTime, uint64_t baseUnixSeconds);
 
 #endif//EQP_EQ_TIME_H

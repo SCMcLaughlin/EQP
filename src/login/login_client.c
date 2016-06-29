@@ -6,7 +6,7 @@
 #include "eqp_login.h"
 #include "login_client_trilogy.h"
 
-LoginClient* login_client_create(R(ProtocolHandler*) handler, int expansion, int state)
+LoginClient* login_client_create(ProtocolHandler* handler, int expansion, int state)
 {
     LoginClient* client = eqp_alloc_type(protocol_handler_basic(handler), LoginClient);
     
@@ -23,9 +23,9 @@ LoginClient* login_client_create(R(ProtocolHandler*) handler, int expansion, int
     return client;
 }
 
-void login_client_drop(R(LoginClient*) client)
+void login_client_drop(LoginClient* client)
 {
-    R(ClientList*) clientList;
+    ClientList* clientList;
     
     if (atomic_fetch_sub(&client->refCount, 1) > 1)
         return;
@@ -40,21 +40,21 @@ void login_client_drop(R(LoginClient*) client)
     free(client);
 }
 
-void client_on_disconnect(R(void*) vclient, int isLinkdead)
+void client_on_disconnect(void* vclient, int isLinkdead)
 {
-    R(LoginClient*) client = (LoginClient*)vclient;
+    LoginClient* client = (LoginClient*)vclient;
     (void)isLinkdead;
     
     if (client)
         login_client_drop(client);
 }
 
-void login_client_set_account_name(R(LoginClient*) client, R(const char*) name, int length)
+void login_client_set_account_name(LoginClient* client, const char* name, int length)
 {
     client->accountName = string_create_from_cstr(protocol_handler_basic(client->handler), name, length);
 }
 
-void login_client_set_password_temp(R(LoginClient*) client, R(const char*) password, int length)
+void login_client_set_password_temp(LoginClient* client, const char* password, int length)
 {
     if ((uint32_t)length >= sizeof(client->passwordTemp))
         length = sizeof(client->passwordTemp) - 1;
@@ -65,11 +65,11 @@ void login_client_set_password_temp(R(LoginClient*) client, R(const char*) passw
 }
 
 #ifndef EQP_LOGIN_DISABLE_ACCOUNT_AUTO_CREATION
-static void login_client_auto_create_account_callback(R(Query*) query)
+static void login_client_auto_create_account_callback(Query* query)
 {
-    R(LoginClient*) client  = query_userdata_type(query, LoginClient);
-    R(Login*) login         = (Login*)protocol_handler_basic(login_client_handler(client));
-    uint32_t accountId      = (uint32_t)query_last_insert_id(query);
+    LoginClient* client = query_userdata_type(query, LoginClient);
+    Login* login        = (Login*)protocol_handler_basic(login_client_handler(client));
+    uint32_t accountId  = (uint32_t)query_last_insert_id(query);
     
     login_client_set_account_id(client, accountId);
     client_list_add(B(login), login_client_list(login), client);
@@ -84,14 +84,14 @@ static void login_client_auto_create_account_callback(R(Query*) query)
     login_client_drop(client);
 }
 
-static void login_client_auto_create_account(R(LoginClient*) client)
+static void login_client_auto_create_account(LoginClient* client)
 {
-    R(ProtocolHandler*) handler = login_client_handler(client);
-    R(String*) username         = login_client_account_name(client);
-    R(const char*) password     = login_client_password_temp(client);
+    ProtocolHandler* handler    = login_client_handler(client);
+    String* username            = login_client_account_name(client);
+    const char* password        = login_client_password_temp(client);
     int passLength              = login_client_password_length(client);
-    R(Login*) login             = (Login*)protocol_handler_basic(handler);
-    R(LoginCrypto*) crypto      = login_get_crypto(login);
+    Login* login                = (Login*)protocol_handler_basic(handler);
+    LoginCrypto* crypto         = login_get_crypto(login);
     byte salt[EQP_LOGIN_SALT_LENGTH];
     Query query;
     
@@ -114,14 +114,14 @@ static void login_client_auto_create_account(R(LoginClient*) client)
 }
 #endif
 
-static void login_client_credentials_callback(R(Query*) query)
+static void login_client_credentials_callback(Query* query)
 {
-    R(LoginClient*) client      = query_userdata_type(query, LoginClient);
-    R(ProtocolHandler*) handler = login_client_handler(client);
-    R(const char*) password     = login_client_password_temp(client);
+    LoginClient* client         = query_userdata_type(query, LoginClient);
+    ProtocolHandler* handler    = login_client_handler(client);
+    const char* password        = login_client_password_temp(client);
     int passLength              = login_client_password_length(client);
-    R(Login*) login             = (Login*)protocol_handler_basic(handler);
-    R(LoginCrypto*) crypto      = login_get_crypto(login);
+    Login* login                = (Login*)protocol_handler_basic(handler);
+    LoginCrypto* crypto         = login_get_crypto(login);
     int success                 = 0;
     
     while (query_select(query))
@@ -129,8 +129,8 @@ static void login_client_credentials_callback(R(Query*) query)
         uint32_t hashLength;
         uint32_t saltLength;
         int64_t id          = query_get_int64(query, 1);
-        R(const byte*) hash = query_get_blob(query, 2, &hashLength);
-        R(const byte*) salt = query_get_blob(query, 3, &saltLength);
+        const byte* hash    = query_get_blob(query, 2, &hashLength);
+        const byte* salt    = query_get_blob(query, 3, &saltLength);
         
         login_crypto_hash(crypto, password, passLength, salt, saltLength);
         
@@ -179,8 +179,8 @@ static void login_client_credentials_callback(R(Query*) query)
     login_client_drop(client);
 }
 
-void login_client_check_credentials(R(LoginClient*) client, R(Login*) login, R(const char*) username, int nameLength,
-    R(const char*) password, int passLength)
+void login_client_check_credentials(LoginClient* client, Login* login, const char* username, int nameLength,
+    const char* password, int passLength)
 {
     Query query;
     
@@ -199,7 +199,7 @@ void login_client_check_credentials(R(LoginClient*) client, R(Login*) login, R(c
     db_schedule(core_db(C(login)), &query);
 }
 
-void login_client_handle_login_response(R(LoginClient*) client, int response)
+void login_client_handle_login_response(LoginClient* client, int response)
 {
     if (client->expansion == ExpansionId_Trilogy)
         login_client_trilogy_handle_login_response(client, response);
@@ -207,10 +207,10 @@ void login_client_handle_login_response(R(LoginClient*) client, int response)
     //  login_client_standard_handle_login_response(client, response);
 }
 
-void login_client_generate_session_key(R(LoginClient*) client)
+void login_client_generate_session_key(LoginClient* client)
 {
-    R(char*) key    = client->sessionKey;
-    uint32_t n      = sizeof(client->sessionKey) - 1;
+    char* key   = client->sessionKey;
+    uint32_t n  = sizeof(client->sessionKey) - 1;
     uint32_t i;
     
     for (i = 0; i < n; i++)

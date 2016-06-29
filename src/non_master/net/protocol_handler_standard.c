@@ -7,9 +7,9 @@
 
 #define MAX_LENGTH 512
 
-void protocol_handler_standard_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, uint32_t index)
+void protocol_handler_standard_init(UdpSocket* sock, UdpClient* client, ProtocolHandler* handler, uint32_t index)
 {
-    R(ProtocolHandlerStandard*) h = &handler->standard;
+    ProtocolHandlerStandard* h  = &handler->standard;
     
     ack_mgr_standard_init(sock, client, &h->ackMgr, index);
     
@@ -21,16 +21,16 @@ void protocol_handler_standard_init(R(UdpSocket*) sock, R(UdpClient*) client, R(
     h->protocolFormat           = ProtocolFormat_None;
 }
 
-void protocol_handler_standard_deinit(R(ProtocolHandlerStandard*) handler)
+void protocol_handler_standard_deinit(ProtocolHandlerStandard* handler)
 {
     ack_mgr_standard_deinit(&handler->ackMgr);
 }
 
-static void protocol_handler_standard_handle_session_request(R(ProtocolHandlerStandard*) handler, R(Aligned*) a)
+static void protocol_handler_standard_handle_session_request(ProtocolHandlerStandard* handler, Aligned* a)
 {
     Protocol_SessionResponse response;
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w  = &write;
     
     if (aligned_remaining(a) < sizeof(Protocol_SessionRequest))
         return;
@@ -63,7 +63,7 @@ static void protocol_handler_standard_handle_session_request(R(ProtocolHandlerSt
     protocol_handler_standard_send_immediate(handler, &response, sizeof(Protocol_SessionResponse));
 }
 
-static void protocol_handler_standard_handle_combined(R(ProtocolHandlerStandard*) handler, R(Aligned*) a)
+static void protocol_handler_standard_handle_combined(ProtocolHandlerStandard* handler, Aligned* a)
 {
     Aligned r;
     
@@ -82,7 +82,7 @@ static void protocol_handler_standard_handle_combined(R(ProtocolHandlerStandard*
     }
 }
 
-static int protocol_handler_standard_validate_crc(R(Aligned*) a, uint32_t crcKey)
+static int protocol_handler_standard_validate_crc(Aligned* a, uint32_t crcKey)
 {
     Aligned r;
     uint32_t check;
@@ -106,14 +106,14 @@ ret_true:
     return true;
 }
 
-static int protocol_handler_standard_decompress_packet(R(ProtocolHandlerStandard*) handler, R(Aligned*) a)
+static int protocol_handler_standard_decompress_packet(ProtocolHandlerStandard* handler, Aligned* a)
 {
     (void)handler;
     (void)a;
     return true;
 }
 
-static int protocol_handler_standard_validate_and_decompress_packet(R(ProtocolHandlerStandard*) handler, R(Aligned*) a, int isFromCombined)
+static int protocol_handler_standard_validate_and_decompress_packet(ProtocolHandlerStandard* handler, Aligned* a, int isFromCombined)
 {
     if (!isFromCombined && handler->protocolValidation == ProtocolValidation_Crc)
     {
@@ -141,7 +141,7 @@ static int protocol_handler_standard_validate_and_decompress_packet(R(ProtocolHa
     return true;
 }
 
-void protocol_handler_standard_handle_recv(R(ProtocolHandlerStandard*) handler, R(Aligned*) a, int isFromCombined)
+void protocol_handler_standard_handle_recv(ProtocolHandlerStandard* handler, Aligned* a, int isFromCombined)
 {
     uint16_t protocolOpcode = toHostUint16(aligned_read_uint16(a));
     
@@ -202,17 +202,17 @@ void protocol_handler_standard_handle_recv(R(ProtocolHandlerStandard*) handler, 
     }
 }
 
-void protocol_handler_standard_recv(R(ProtocolHandlerStandard*) handler, R(byte*) data, int len)
+void protocol_handler_standard_recv(ProtocolHandlerStandard* handler, byte* data, int len)
 {
     Aligned aligned;
-    R(Aligned*) a = &aligned;
+    Aligned* a = &aligned;
     
     protocol_handler_standard_increment_packets_received(handler);
     aligned_init(protocol_handler_standard_basic(handler), a, data, len);
     protocol_handler_standard_handle_recv(handler, a, false);
 }
 
-void protocol_handler_standard_disconnect(R(ProtocolHandlerStandard*) handler)
+void protocol_handler_standard_disconnect(ProtocolHandlerStandard* handler)
 {
     Protocol_SessionDisconnect dis;
     Aligned w;

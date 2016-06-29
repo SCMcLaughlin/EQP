@@ -2,23 +2,23 @@
 #include "server_list.h"
 #include "eqp_login.h"
 
-void server_list_init(R(Basic*) basic, R(ServerList*) list)
+void server_list_init(Basic* basic, ServerList* list)
 {
     list->basic = basic;
     list->array = array_create_type(basic, ServerListing);
 }
 
-void server_list_deinit(R(ServerList*) list)
+void server_list_deinit(ServerList* list)
 {
     if (list->array)
     {
-        R(ServerListing*) array = server_list_data(list);
+        ServerListing* array    = server_list_data(list);
         uint32_t n              = server_list_count(list);
         uint32_t i;
         
         for (i = 0; i < n; i++)
         {
-            R(ServerListing*) server = &array[i];
+            ServerListing* server   = &array[i];
             
             if (server->longName)
                 string_destroy(server->longName);
@@ -38,7 +38,7 @@ void server_list_deinit(R(ServerList*) list)
     }
 }
 
-uint32_t server_list_add(R(ServerList*) list, R(ServerListing*) server)
+uint32_t server_list_add(ServerList* list, ServerListing* server)
 {
     server->nameLength          = (server->longName) ? string_length(server->longName) + 1 : 0;
     server->remoteAddressLength = (server->remoteIpAddress) ? string_length(server->remoteIpAddress) + 1 : 0;
@@ -48,9 +48,9 @@ uint32_t server_list_add(R(ServerList*) list, R(ServerListing*) server)
     return array_count(list->array) - 1;
 }
 
-void server_list_remove_by_index(R(ServerList*) list, uint32_t index)
+void server_list_remove_by_index(ServerList* list, uint32_t index)
 {
-    R(ServerListing*) server = array_get_type(list->array, index, ServerListing);
+    ServerListing* server = array_get_type(list->array, index, ServerListing);
     
     if (server == NULL)
         return;
@@ -70,9 +70,9 @@ void server_list_remove_by_index(R(ServerList*) list, uint32_t index)
     array_swap_and_pop(list->array, index);
 }
 
-void server_list_update_by_index(R(ServerList*) list, uint32_t index, int playerCount, int status)
+void server_list_update_by_index(ServerList* list, uint32_t index, int playerCount, int status)
 {
-    R(ServerListing*) server = array_get_type(list->array, index, ServerListing);
+    ServerListing* server = array_get_type(list->array, index, ServerListing);
     
     if (server == NULL)
         return;
@@ -81,16 +81,16 @@ void server_list_update_by_index(R(ServerList*) list, uint32_t index, int player
     server->playerCount = playerCount;
 }
 
-void server_list_send_client_login_request_by_ip_address(R(Login*) login, R(const char*) ipAddress, uint32_t accountId)
+void server_list_send_client_login_request_by_ip_address(Login* login, const char* ipAddress, uint32_t accountId)
 {
-    R(ServerList*) list     = login_server_list(login);
-    R(ServerListing*) array = array_data_type(list->array, ServerListing);
+    ServerList* list        = login_server_list(login);
+    ServerListing* array    = array_data_type(list->array, ServerListing);
     uint32_t n              = array_count(list->array);
     uint32_t i;
     
     for (i = 0; i < n; i++)
     {
-        R(ServerListing*) server = &array[i];
+        ServerListing* server = &array[i];
         
         if (string_compare_cstr(server->remoteIpAddress, ipAddress) == 0)
         {

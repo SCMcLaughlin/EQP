@@ -9,19 +9,19 @@
 #define ERR_BIND "[tcp_server_open] bind() syscall failed"
 #define ERR_LISTEN "[tcp_server_open] listen() syscall failed"
 
-void tcp_server_init(R(Login*) login, R(TcpServer*) server)
+void tcp_server_init(Login* login, TcpServer* server)
 {
     server->acceptFd    = INVALID_SOCKET;
     server->login       = login;
     server->clients     = array_create_type(B(login), TcpClient);
 }
 
-void tcp_server_deinit(R(TcpServer*) server)
+void tcp_server_deinit(TcpServer* server)
 {
     tcp_server_close(server);
 }
 
-void tcp_server_open(R(TcpServer*) server, uint16_t port)
+void tcp_server_open(TcpServer* server, uint16_t port)
 {
     IpAddress addr;
     int opt = 1;
@@ -65,7 +65,7 @@ void tcp_server_open(R(TcpServer*) server, uint16_t port)
     log_format(B(server->login), LogNetwork, "Listening for TCP connections on port %u", port);
 }
 
-void tcp_server_close(R(TcpServer*) server)
+void tcp_server_close(TcpServer* server)
 {
     if (server->acceptFd != INVALID_SOCKET)
     {
@@ -89,7 +89,7 @@ void tcp_server_close(R(TcpServer*) server)
     }
 }
 
-void tcp_server_accept_new_connections(R(TcpServer*) server)
+void tcp_server_accept_new_connections(TcpServer* server)
 {
     IpAddress addr;
     socklen_t addrLen   = sizeof(IpAddress);
@@ -143,10 +143,10 @@ void tcp_server_accept_new_connections(R(TcpServer*) server)
     }
 }
 
-static void tcp_server_handle_closed_client(R(TcpServer*) server, R(TcpClient*) cli, uint32_t index)
+static void tcp_server_handle_closed_client(TcpServer* server, TcpClient* cli, uint32_t index)
 {
-    R(IpAddress*) addr  = &tcp_client_address(cli);
-    uint32_t ip         = addr->sin_addr.s_addr;
+    IpAddress* addr = &tcp_client_address(cli);
+    uint32_t ip     = addr->sin_addr.s_addr;
     
     log_format(B(server->login), LogNetwork, "Server from %u.%u.%u.%u:%u disconnected",
         (ip >> 0) & 0xff, (ip >> 8) & 0xff, (ip >> 16) & 0xff, (ip >> 24) & 0xff, addr->sin_port);
@@ -164,13 +164,13 @@ static void tcp_server_handle_closed_client(R(TcpServer*) server, R(TcpClient*) 
         prevBack = server_list_count(login_server_list(server->login));
         if (prevBack > 0)
         {
-            R(TcpClient*) array = array_data_type(server->clients, TcpClient);
+            TcpClient* array    = array_data_type(server->clients, TcpClient);
             uint32_t n          = array_count(server->clients);
             uint32_t i;
             
             for (i = 0; i < n; i++)
             {
-                R(TcpClient*) client = &array[i];
+                TcpClient* client = &array[i];
                 
                 if (tcp_client_login_server_index(client) == prevBack)
                 {
@@ -185,20 +185,20 @@ static void tcp_server_handle_closed_client(R(TcpServer*) server, R(TcpClient*) 
     array_swap_and_pop(server->clients, index);
 }
 
-void tcp_server_recv(R(TcpServer*) server)
+void tcp_server_recv(TcpServer* server)
 {
-    R(Login*) login     = server->login;
-    R(TcpClient*) array = array_data_type(server->clients, TcpClient);
+    Login* login        = server->login;
+    TcpClient* array    = array_data_type(server->clients, TcpClient);
     uint32_t n          = array_count(server->clients);
     uint32_t i          = 0;
     
     while (i < n)
     {
-        R(TcpClient*) cli   = &array[i];
-        int fd              = tcp_client_fd(cli);
-        int buffered        = tcp_client_buffered(cli);
-        int readLength      = tcp_client_read_length(cli);
-        R(byte*) recvBuf    = tcp_client_recv_buffer(cli);
+        TcpClient* cli  = &array[i];
+        int fd          = tcp_client_fd(cli);
+        int buffered    = tcp_client_buffered(cli);
+        int readLength  = tcp_client_read_length(cli);
+        byte* recvBuf   = tcp_client_recv_buffer(cli);
         int len;
         
     redo:
@@ -251,23 +251,23 @@ void tcp_server_recv(R(TcpServer*) server)
     }
 }
 
-void tcp_server_close_client(R(TcpServer*) server, R(TcpClient*) client)
+void tcp_server_close_client(TcpServer* server, TcpClient* client)
 {
-    R(TcpClient*) array = array_data_type(server->clients, TcpClient);
+    TcpClient* array    = array_data_type(server->clients, TcpClient);
     uint32_t index      = (((byte*)client) - ((byte*)array)) / sizeof(TcpClient);
     
     tcp_server_handle_closed_client(server, client, index);
 }
 
-void tcp_server_send_client_login_request(R(TcpServer*) server, int loginServerIndex, uint32_t accountId)
+void tcp_server_send_client_login_request(TcpServer* server, int loginServerIndex, uint32_t accountId)
 {
-    R(TcpClient*) array = array_data_type(server->clients, TcpClient);
+    TcpClient* array    = array_data_type(server->clients, TcpClient);
     uint32_t n          = array_count(server->clients);
     uint32_t i;
     
     for (i = 0; i < n; i++)
     {
-        R(TcpClient*) cli = &array[i];
+        TcpClient* cli  = &array[i];
         
         if (tcp_client_login_server_index(cli) == loginServerIndex)
         {

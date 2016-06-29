@@ -1,7 +1,7 @@
 
 #include "zone_cluster.h"
 
-void zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath, R(const char*) sourceId, R(const char*) port)
+void zc_init(ZC* zc, const char* ipcPath, const char* masterIpcPath, const char* logWriterIpcPath, const char* sourceId, const char* port)
 {
     zc->sourceId = strtol(sourceId, NULL, 10) + EQP_SOURCE_ID_ZONE_CLUSTER_OFFSET;
     
@@ -14,6 +14,8 @@ void zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath, R(
     // Containers
     zc->zoneList                = array_create_type(B(zc), ZoneBySourceId);
     zc->expectedClientsByName   = hash_table_create_type(B(zc), Client*);
+    zc->connectedClients        = array_create_type(B(zc), ConnectedClient);
+    zc->connectedClientsByName  = hash_table_create_type(B(zc), Client*);
     
     // Lua
     zc_lua_init(zc);
@@ -21,9 +23,12 @@ void zc_init(R(ZC*) zc, R(const char*) ipcPath, R(const char*) masterIpcPath, R(
     // UDP socket
     zc->socket = udp_socket_create(B(zc));
     udp_socket_open(zc->socket, strtol(port, NULL, 10));
+    
+    // Always-running timers
+    timer_init(&zc->timerClientKeepAlive, &zc->timerPool, EQP_ZC_CLIENT_KEEP_ALIVE_DELAY_MS, zc_client_keep_alive_callback, zc, true);
 }
 
-void zc_deinit(R(ZC*) zc)
+void zc_deinit(ZC* zc)
 {
     core_deinit(C(zc));
     ipc_set_deinit(&zc->ipcSet);
@@ -42,8 +47,8 @@ void zc_deinit(R(ZC*) zc)
     
     if (zc->zoneList)
     {
-        R(ZoneBySourceId*) array    = array_data_type(zc->zoneList, ZoneBySourceId);
-        uint32_t n                  = array_count(zc->zoneList);
+        ZoneBySourceId* array   = array_data_type(zc->zoneList, ZoneBySourceId);
+        uint32_t n              = array_count(zc->zoneList);
         uint32_t i;
         
         for (i = 0; i < n; i++)
@@ -62,11 +67,11 @@ void zc_deinit(R(ZC*) zc)
     }
 }
 
-void zc_main_loop(R(ZC*) zc)
+void zc_main_loop(ZC* zc)
 {
-    R(UdpSocket*) socket    = zc->socket;
-    R(IpcSet*) ipcSet       = &zc->ipcSet;
-    int sourceId            = zc->sourceId;
+    UdpSocket* socket   = zc->socket;
+    IpcSet* ipcSet      = &zc->ipcSet;
+    int sourceId        = zc->sourceId;
     
     for (;;)
     {
@@ -90,7 +95,7 @@ void zc_main_loop(R(ZC*) zc)
     }
 }
 
-void zc_start_zone(R(ZC*) zc, int sourceId)
+void zc_start_zone(ZC* zc, int sourceId)
 {
     ZoneBySourceId zone;
     int zoneId;
@@ -120,10 +125,10 @@ void zc_start_zone(R(ZC*) zc, int sourceId)
     ipc_set_log_file_open(B(zc), &zc->ipcSet, sourceId);
 }
 
-Zone* zc_get_zone_by_source_id(R(ZC*) zc, int sourceId)
+Zone* zc_get_zone_by_source_id(ZC* zc, int sourceId)
 {
-    R(ZoneBySourceId*) array    = array_data_type(zc->zoneList, ZoneBySourceId);
-    uint32_t n                  = array_count(zc->zoneList);
+    ZoneBySourceId* array   = array_data_type(zc->zoneList, ZoneBySourceId);
+    uint32_t n              = array_count(zc->zoneList);
     uint32_t i;
     
     for (i = 0; i < n; i++)
@@ -135,11 +140,11 @@ Zone* zc_get_zone_by_source_id(R(ZC*) zc, int sourceId)
     return NULL;
 }
 
-static void zc_expected_client_timeout_callback(R(Timer*) timer)
+static void zc_expected_client_timeout_callback(Timer* timer)
 {
-    R(Client*) client   = timer_userdata_type(timer, Client);
-    R(ZC*) zc           = client_zone_cluster(client);
-    R(String*) name     = client_name(client);
+    Client* client  = timer_userdata_type(timer, Client);
+    ZC* zc          = client_zone_cluster(client);
+    String* name    = client_name(client);
 
     if (hash_table_get_by_str(zc->expectedClientsByName, name))
     {
@@ -150,11 +155,11 @@ static void zc_expected_client_timeout_callback(R(Timer*) timer)
     timer_destroy(timer);
 }
 
-void zc_client_expected_to_zone_in(R(ZC*) zc, int sourceId, R(IpcPacket*) packet)
+void zc_client_expected_to_zone_in(ZC* zc, int sourceId, IpcPacket* packet)
 {
-    R(Server_ClientZoning*) zoning;
-    R(Zone*) zone;
-    R(Client*) client;
+    Server_ClientZoning* zoning;
+    Zone* zone;
+    Client* client;
     
     if (ipc_packet_length(packet) < sizeof(Server_ClientZoning))
         return;
@@ -177,16 +182,16 @@ void zc_client_expected_to_zone_in(R(ZC*) zc, int sourceId, R(IpcPacket*) packet
     hash_table_set_by_cstr(B(zc), &zc->expectedClientsByName, zoning->characterName, strlen(zoning->characterName), (void*)&client);
 }
 
-void zc_client_match_with_expected(R(ZC*) zc, R(Client*) clientStub, R(ProtocolHandler*) handler, R(const char*) name)
+void zc_client_match_with_expected(ZC* zc, Client* clientStub, ProtocolHandler* handler, const char* name)
 {
     // Working with the assumption that the IPC notification of this zone in (as handled by zc_client_expected_to_zone_in() above)
     // will always occur before the client connects and sends enough UDP packets to trigger this call.
     uint32_t len        = strlen(name);
-    R(Client**) pclient = hash_table_get_type_by_cstr(zc->expectedClientsByName, name, len, Client*);
+    Client** pclient    = hash_table_get_type_by_cstr(zc->expectedClientsByName, name, len, Client*);
     
     if (pclient)
     {
-        R(Client*) client = *pclient;
+        Client* client = *pclient;
         
         hash_table_remove_by_cstr(zc->expectedClientsByName, name, len);
         
@@ -204,14 +209,109 @@ void zc_client_match_with_expected(R(ZC*) zc, R(Client*) clientStub, R(ProtocolH
     free(clientStub);
 }
 
+void zc_client_keep_alive_callback(Timer* timer)
+{
+    ZC* zc                  = timer_userdata_type(timer, ZC);
+    ConnectedClient* array  = array_data_type(zc->connectedClients, ConnectedClient);
+    uint32_t n              = array_count(zc->connectedClients);
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        ConnectedClient* cli = &array[i];
+        
+        // If the ProtocolHandler is NULL, this client must be linkdead
+        if (!cli->handler)
+            continue;
+        
+        if (cli->expansion == ExpansionId_Trilogy)
+            client_trilogy_send_keep_alive(cli->handler);
+        /*else
+            client_standard_send_keep_alive(cli->handler);*/
+    }
+}
+
+void zc_add_connected_client(ZC* zc, Client* client)
+{
+    String* name = client_name(client);
+    Client** prev;
+    ConnectedClient con;
+    
+    // Is this client already connected?
+    prev = hash_table_get_by_str(zc->connectedClientsByName, name);
+    
+    if (prev)
+    {
+        Client* cli = *prev;
+        zc_remove_connected_client(zc, cli, false);
+        client_drop(cli);
+    }
+    
+    // Insert into our zone-cluster-wide lists
+    hash_table_set_by_str(B(zc), &zc->connectedClientsByName, name, (void*)&client);
+    
+    con.expansion   = client_expansion(client);
+    con.handler     = client_handler(client);
+    con.client      = client;
+    
+    array_push_back(B(zc), &zc->connectedClients, &con);
+    
+    zone_spawn_client(zc, client_zone(client), client);
+}
+
+void zc_remove_connected_client(ZC* zc, Client* client, int isLinkdead)
+{
+    ConnectedClient* array  = array_data_type(zc->connectedClients, ConnectedClient);
+    uint32_t n              = array_count(zc->connectedClients);
+    String* name;
+    uint32_t i;
+    
+    if (isLinkdead)
+    {
+        client_grab(client);
+        protocol_handler_drop(client_handler(client));
+        client_set_handler(client, NULL);
+        client_set_linkdead(client);
+        
+        zone_mark_client_as_linkdead(client_zone(client), client);
+        
+        for (i = 0; i < n; i++)
+        {
+            if (array[i].client == client)
+            {
+                array[i].handler = NULL;
+                break;
+            }
+        }
+        
+        //fixme: add a timeout for the linkdead client
+        
+        return;
+    }
+    
+    name = client_name(client);
+    hash_table_remove_by_str(zc->connectedClientsByName, name);
+    
+    zone_remove_client(client_zone(client), client);
+    
+    for (i = 0; i < n; i++)
+    {
+        if (array[i].client == client)
+        {
+            array_swap_and_pop(zc->connectedClients, i);
+            break;
+        }
+    }
+}
+
 /* LuaJIT API */
 
-void zc_log(R(ZC*) zc, R(const char*) str)
+void zc_log(ZC* zc, const char* str)
 {
     log_format(B(zc), LogLua, "%s", str);
 }
 
-void zc_log_for(R(ZC*) zc, int sourceId, R(const char*) str)
+void zc_log_for(ZC* zc, int sourceId, const char* str)
 {
     log_from_format(B(zc), sourceId, LogLua, "%s", str);
 }

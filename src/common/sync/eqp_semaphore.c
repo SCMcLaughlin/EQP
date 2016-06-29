@@ -2,7 +2,7 @@
 #include "eqp_semaphore.h"
 #include "exception.h"
 
-void semaphore_init(R(Basic*) basic, R(Semaphore*) sem)
+void semaphore_init(Basic* basic, Semaphore* sem)
 {
 #ifdef EQP_WINDOWS
     *sem = CreateSemaphore(NULL, 0, 2147483647, NULL);
@@ -14,7 +14,7 @@ void semaphore_init(R(Basic*) basic, R(Semaphore*) sem)
         exception_throw(basic, ErrorSyncPrimitive);
 }
 
-void semaphore_deinit(R(Basic*) basic, R(Semaphore*) sem)
+void semaphore_deinit(Basic* basic, Semaphore* sem)
 {
 #ifdef EQP_WINDOWS
     if (CloseHandle(*sem))
@@ -24,7 +24,7 @@ void semaphore_deinit(R(Basic*) basic, R(Semaphore*) sem)
         exception_throw(basic, ErrorSyncPrimitive);
 }
 
-void semaphore_wait(R(Basic*) basic, R(Semaphore*) sem)
+void semaphore_wait(Basic* basic, Semaphore* sem)
 {
 #ifdef EQP_WINDOWS
     if (WaitForSingleObject(*sem, INFINITE))
@@ -34,7 +34,7 @@ void semaphore_wait(R(Basic*) basic, R(Semaphore*) sem)
         exception_throw(basic, ErrorSyncPrimitive);
 }
 
-int semaphore_try_wait(R(Basic*) basic, R(Semaphore*) sem)
+int semaphore_try_wait(Basic* basic, Semaphore* sem)
 {
 #ifdef EQP_WINDOWS
     if (WaitForSingleObject(*sem, 0))
@@ -54,7 +54,7 @@ int semaphore_try_wait(R(Basic*) basic, R(Semaphore*) sem)
     return true;
 }
 
-void semaphore_trigger(R(Basic*) basic, R(Semaphore*) sem)
+void semaphore_trigger(Basic* basic, Semaphore* sem)
 {
 #ifdef EQP_WINDOWS
     if (ReleaseSemaphore(*sem, 1, NULL))

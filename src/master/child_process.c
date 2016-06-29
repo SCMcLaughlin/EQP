@@ -2,7 +2,7 @@
 #include "child_process.h"
 #include "eqp_master.h"
 
-void proc_init(R(ChildProcess*) proc)
+void proc_init(ChildProcess* proc)
 {
     proc->ipc                   = NULL;
     proc->lastActivityTimestamp = 0;
@@ -12,7 +12,7 @@ void proc_init(R(ChildProcess*) proc)
     shm_creator_init(&proc->shmCreator);
 }
 
-void proc_deinit(R(ChildProcess*) proc)
+void proc_deinit(ChildProcess* proc)
 {
     if (proc->ipc)
     {
@@ -22,18 +22,18 @@ void proc_deinit(R(ChildProcess*) proc)
     }
 }
 
-void proc_create_ipc_buffer(R(Basic*) basic, R(ChildProcess*) proc, R(const char*) path)
+void proc_create_ipc_buffer(Basic* basic, ChildProcess* proc, const char* path)
 {
     ipc_buffer_shm_create_init(basic, &proc->ipc, &proc->shmCreator, &proc->shmViewer, path);
 }
 
-void proc_open_ipc_buffer(R(Basic*) basic, R(ChildProcess*) proc, R(const char*) path)
+void proc_open_ipc_buffer(Basic* basic, ChildProcess* proc, const char* path)
 {
     shm_viewer_open(basic, &proc->shmViewer, path, sizeof(IpcBuffer));
     proc->ipc = shm_viewer_memory_type(&proc->shmViewer, IpcBuffer);
 }
 
-void proc_start(R(ChildProcess*) proc, pid_t pid)
+void proc_start(ChildProcess* proc, pid_t pid)
 {
     uint32_t time = clock_milliseconds();
     
@@ -42,7 +42,7 @@ void proc_start(R(ChildProcess*) proc, pid_t pid)
     proc->creationTimestamp     = time;
 }
 
-void proc_shutdown(R(Master*) M, R(ChildProcess*) proc)
+void proc_shutdown(Master* M, ChildProcess* proc)
 {
     if (proc->ipc)
     {
@@ -51,7 +51,7 @@ void proc_shutdown(R(Master*) M, R(ChildProcess*) proc)
     }
 }
 
-void proc_kill(R(ChildProcess*) proc)
+void proc_kill(ChildProcess* proc)
 {
     char command[256];
     
@@ -61,18 +61,18 @@ void proc_kill(R(ChildProcess*) proc)
     proc_deinit(proc);
 }
 
-void proc_ipc_send(R(Basic*) basic, R(ChildProcess*) proc, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data)
+void proc_ipc_send(Basic* basic, ChildProcess* proc, ServerOp opcode, int sourceId, uint32_t length, const void* data)
 {
     if (proc->ipc)
         ipc_buffer_write(basic, proc->ipc, opcode, sourceId, length, data);
 }
 
-void proc_update_last_activity_time(R(ChildProcess*) proc)
+void proc_update_last_activity_time(ChildProcess* proc)
 {
     proc->lastActivityTimestamp = clock_milliseconds();
 }
 
-uint64_t proc_last_activity_time(R(ChildProcess*) proc)
+uint64_t proc_last_activity_time(ChildProcess* proc)
 {
     return proc->lastActivityTimestamp;
 }

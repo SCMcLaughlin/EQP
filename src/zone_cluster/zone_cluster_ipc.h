@@ -9,6 +9,6 @@
 
 STRUCT_DECLARE(ZC);
 
-int zc_ipc_check(R(ZC*) zc);
+int zc_ipc_check(ZC* zc);
 
 #endif//EQP_ZONE_CLUSTER_IPC_H

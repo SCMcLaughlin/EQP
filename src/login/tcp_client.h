@@ -26,11 +26,11 @@ STRUCT_DEFINE(TcpClient)
     bool        isLocal;
 };
 
-void    tcp_client_init(R(Basic*) basic, R(TcpClient*) client, int fd, R(IpAddress*) addr);
-void    tcp_client_deinit(R(TcpClient*) client);
+void    tcp_client_init(Basic* basic, TcpClient* client, int fd, IpAddress* addr);
+void    tcp_client_deinit(TcpClient* client);
 
-void    tcp_client_handle_packet(R(Login*) login, R(TcpClient*) client);
-void    tcp_client_send_client_login_request(R(Login*) login, R(TcpClient*) client, uint32_t accountId);
+void    tcp_client_handle_packet(Login* login, TcpClient* client);
+void    tcp_client_send_client_login_request(Login* login, TcpClient* client, uint32_t accountId);
 
 #define tcp_client_fd(cli) ((cli)->socketFd)
 #define tcp_client_buffered(cli) ((cli)->buffered)

@@ -36,7 +36,7 @@ static uint32_t crc_table[] = {
 	0xB3667A2E, 0xC4614AB8, 0x5D681B02, 0x2A6F2B94, 0xB40BBE37, 0xC30C8EA1, 0x5A05DF1B, 0x2D02EF8D
 };
 
-static uint32_t crc_update(R(const byte*) data, uint32_t len, uint32_t crc)
+static uint32_t crc_update(const byte* data, uint32_t len, uint32_t crc)
 {
     uint32_t i;
     
@@ -48,7 +48,7 @@ static uint32_t crc_update(R(const byte*) data, uint32_t len, uint32_t crc)
     return crc;
 }
 
-uint16_t crc_calc16(R(const void*) data, uint32_t len, uint32_t key)
+uint16_t crc_calc16(const void* data, uint32_t len, uint32_t key)
 {
     uint32_t keybuf[1]  = { key };
     byte* keybytes      = (byte*)keybuf;
@@ -64,17 +64,17 @@ uint16_t crc_calc16(R(const void*) data, uint32_t len, uint32_t key)
     return ~crc & 0xffff;
 }
 
-uint16_t crc_calc16_network(R(const void*) data, uint32_t len, uint32_t key)
+uint16_t crc_calc16_network(const void* data, uint32_t len, uint32_t key)
 {
     return toNetworkUint16(crc_calc16(data, len, key));
 }
 
-uint32_t crc_calc32(R(const void*) data, uint32_t len)
+uint32_t crc_calc32(const void* data, uint32_t len)
 {
     return ~crc_update((const byte*)data, len, 0xffffffff);
 }
 
-uint32_t crc_calc32_network(R(const void*) data, uint32_t len)
+uint32_t crc_calc32_network(const void* data, uint32_t len)
 {
     return toNetworkUint32(crc_calc32(data, len));
 }

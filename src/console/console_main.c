@@ -3,7 +3,7 @@
 #include "eqp_string.h"
 #include "terminal.h"
 
-int console_main(R(Console*) console, int argc, R(const char**) argv)
+int console_main(Console* console, int argc, const char** argv)
 {
     ExceptionScope exScope;
     int volatile ret = 0;

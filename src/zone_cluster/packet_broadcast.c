@@ -2,7 +2,7 @@
 #include "packet_broadcast.h"
 #include "client_packet_trilogy_output.h"
 
-void packet_broadcast_init(R(ZC*) zc, R(PacketBroadcast*) packet, BroadcastEncoder encoder, R(const void*) source)
+void packet_broadcast_init(ZC* zc, PacketBroadcast* packet, BroadcastEncoder encoder, const void* source)
 {
     packet->source  = source;
     packet->encoder = encoder;
@@ -11,7 +11,7 @@ void packet_broadcast_init(R(ZC*) zc, R(PacketBroadcast*) packet, BroadcastEncod
     packet->zc      = zc;
 }
 
-void packet_broadcast_set_packet_for_expansion(R(PacketBroadcast*) packetBroadcast, int expansionId, R(void*) packet)
+void packet_broadcast_set_packet_for_expansion(PacketBroadcast* packetBroadcast, int expansionId, void* packet)
 {
     switch (expansionId)
     {
@@ -25,7 +25,7 @@ void packet_broadcast_set_packet_for_expansion(R(PacketBroadcast*) packetBroadca
     }
 }
 
-PacketTrilogy* packet_broadcast_get_trilogy(R(PacketBroadcast*) packet)
+PacketTrilogy* packet_broadcast_get_trilogy(PacketBroadcast* packet)
 {
     if (packet->trilogy)
         goto ret;
@@ -41,7 +41,7 @@ ret:
 
 /* Encoding dispatchers */
 
-void packet_broadcast_encode_op_spawn(R(PacketBroadcast*) packet, int expansionId)
+void packet_broadcast_encode_op_spawn(PacketBroadcast* packet, int expansionId)
 {
     (void)packet;
     (void)expansionId;

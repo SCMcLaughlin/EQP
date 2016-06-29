@@ -30,9 +30,9 @@ STRUCT_DEFINE(LogIpc)
     IpcBuffer*  ipc;
 };
 
-void    log_init(R(LogIpc*) log, R(IpcBuffer*) ipc);
-void    log_format(R(Basic*) basic, LogType type, R(const char*) fmt, ...);
-void    log_from_format(R(Basic*) basic, int sourceId, LogType type, R(const char*) fmt, ...);
-void    log_from_vformat(R(Basic*) basic, int sourceId, LogType type, R(const char*) fmt, va_list args);
+void    log_init(LogIpc* log, IpcBuffer* ipc);
+void    log_format(Basic* basic, LogType type, const char* fmt, ...);
+void    log_from_format(Basic* basic, int sourceId, LogType type, const char* fmt, ...);
+void    log_from_vformat(Basic* basic, int sourceId, LogType type, const char* fmt, va_list args);
 
 #endif//EQP_LOG_H

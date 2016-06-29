@@ -3,18 +3,18 @@
 #include "eqp_basic.h"
 #include "eqp_string.h"
 
-void exception_init(R(Basic*) basic)
+void exception_init(Basic* basic)
 {
-    R(ExceptionState*) es = &basic->exceptionState;
+    ExceptionState* es = &basic->exceptionState;
     
     memset(es, 0, sizeof(ExceptionState));
     
     es->errMsg = string_create(basic);
 }
 
-void exception_deinit(R(Basic*) basic)
+void exception_deinit(Basic* basic)
 {
-    R(ExceptionState*) es = &basic->exceptionState;
+    ExceptionState* es = &basic->exceptionState;
     
     if (es->errMsg)
     {
@@ -23,21 +23,21 @@ void exception_deinit(R(Basic*) basic)
     }
 }
 
-void exception_throw(R(Basic*) basic, ErrorCode errcode)
+void exception_throw(Basic* basic, ErrorCode errcode)
 {
-    R(ExceptionState*) es = &basic->exceptionState;
+    ExceptionState* es = &basic->exceptionState;
     
     es->state = errcode;
     longjmp(es->topScope->jmpBuf, (int)errcode);
 }
 
-void exception_throw_message(R(Basic*) basic, ErrorCode errcode, R(const char*) msg, uint32_t len)
+void exception_throw_message(Basic* basic, ErrorCode errcode, const char* msg, uint32_t len)
 {
     string_set_from_cstr(basic, &basic->exceptionState.errMsg, msg, len ? len : strlen(msg));
     exception_throw(basic, errcode);
 }
 
-void exception_throw_format(R(Basic*) basic, ErrorCode errcode, R(const char*) fmt, ...)
+void exception_throw_format(Basic* basic, ErrorCode errcode, const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -46,7 +46,7 @@ void exception_throw_format(R(Basic*) basic, ErrorCode errcode, R(const char*) f
     exception_throw(basic, errcode);
 }
 
-int exception_try(R(Basic*) basic, R(ExceptionScope*) scope)
+int exception_try(Basic* basic, ExceptionScope* scope)
 {
     ExceptionState* es = &basic->exceptionState;
     
@@ -57,7 +57,7 @@ int exception_try(R(Basic*) basic, R(ExceptionScope*) scope)
     return setjmp(scope->jmpBuf);
 }
 
-void exception_handled(R(Basic*) basic)
+void exception_handled(Basic* basic)
 {
     String* errMsg = basic->exceptionState.errMsg;
     basic->exceptionState.state = Try;
@@ -66,7 +66,7 @@ void exception_handled(R(Basic*) basic)
         string_clear(errMsg);
 }
 
-void exception_end_try(R(Basic*) basic)
+void exception_end_try(Basic* basic)
 {
     ExceptionState* es = &basic->exceptionState;
     
@@ -81,10 +81,10 @@ void exception_end_try(R(Basic*) basic)
     }
 }
 
-void exception_end_try_with_finally(R(Basic*) basic)
+void exception_end_try_with_finally(Basic* basic)
 {
-    R(ExceptionState*) es   = &basic->exceptionState;
-    R(ExceptionScope*) top  = es->topScope;
+    ExceptionState* es  = &basic->exceptionState;
+    ExceptionScope* top = es->topScope;
     
     // Has the finally block just finished executing?
     if (es->inFinallyBlock)
@@ -107,7 +107,7 @@ void exception_end_try_with_finally(R(Basic*) basic)
     }
 }
 
-String* exception_get_message(R(Basic*) basic)
+String* exception_get_message(Basic* basic)
 {
     return basic->exceptionState.errMsg;
 }

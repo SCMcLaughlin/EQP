@@ -4,19 +4,19 @@
 #include "eqp_core.h"
 #include "eqp_string.h"
 
-void query_init(R(Query*) query)
+void query_init(Query* query)
 {
     memset(query, 0, sizeof(Query));
     query->state = QUERY_NOT_YET_RUN;
 }
 
-void query_deinit(R(Query*) query)
+void query_deinit(Query* query)
 {
     sqlite3_finalize(query->stmt); // Safe if m_stmt is null
     query->stmt = NULL;
 }
 
-void query_set_db_and_stmt(R(Query*) query, R(Database*) db, R(sqlite3_stmt*) stmt, uint32_t queryId)
+void query_set_db_and_stmt(Query* query, Database* db, sqlite3_stmt* stmt, uint32_t queryId)
 {
     query->stmt         = stmt;
     query->database     = db;
@@ -24,14 +24,14 @@ void query_set_db_and_stmt(R(Query*) query, R(Database*) db, R(sqlite3_stmt*) st
     query->timestamp    = clock_microseconds();
 }
 
-void query_update_last_insert_id(R(Query*) query)
+void query_update_last_insert_id(Query* query)
 {
-    R(sqlite3*) sqlite  = db_get_sqlite(query->database);
+    sqlite3* sqlite     = db_get_sqlite(query->database);
     query->lastInsertId = sqlite3_last_insert_rowid(sqlite);
     query->affectedRows = sqlite3_changes(sqlite);
 }
 
-int query_execute_background(R(Query*) query)
+int query_execute_background(Query* query)
 {
     int rc = sqlite3_step(query->stmt);
     
@@ -59,7 +59,7 @@ int query_execute_background(R(Query*) query)
     return true;
 }
 
-void query_execute_synchronus(R(Query*) query)
+void query_execute_synchronus(Query* query)
 {
     for (;;)
     {
@@ -68,7 +68,7 @@ void query_execute_synchronus(R(Query*) query)
     }
 }
 
-int query_select(R(Query*) query)
+int query_select(Query* query)
 {
     sqlite3_stmt* stmt;
     int rc;
@@ -107,7 +107,7 @@ int query_select(R(Query*) query)
     return false;
 }
 
-void query_bind_int(R(Query*) query, int col, int val)
+void query_bind_int(Query* query, int col, int val)
 {
     int rc = sqlite3_bind_int(query->stmt, col, val);
     
@@ -115,7 +115,7 @@ void query_bind_int(R(Query*) query, int col, int val)
         exception_throw_format(B(db_get_core(query->database)), ErrorSql, "[query_bind_int] %s", sqlite3_errstr(rc));
 }
 
-void query_bind_int64(R(Query*) query, int col, int64_t val)
+void query_bind_int64(Query* query, int col, int64_t val)
 {
     int rc = sqlite3_bind_int64(query->stmt, col, val);
     
@@ -123,7 +123,7 @@ void query_bind_int64(R(Query*) query, int col, int64_t val)
         exception_throw_format(B(db_get_core(query->database)), ErrorSql, "[query_bind_int64] %s", sqlite3_errstr(rc));
 }
 
-void query_bind_double(R(Query*) query, int col, double val)
+void query_bind_double(Query* query, int col, double val)
 {
     int rc = sqlite3_bind_double(query->stmt, col, val);
     
@@ -131,7 +131,7 @@ void query_bind_double(R(Query*) query, int col, double val)
         exception_throw_format(B(db_get_core(query->database)), ErrorSql, "[query_bind_double] %s", sqlite3_errstr(rc));
 }
 
-static void query_do_bind_string(R(Query*) query, int col, R(const char*) str, int len, void (*type)(void*))
+static void query_do_bind_string(Query* query, int col, const char* str, int len, void (*type)(void*))
 {
     int rc = sqlite3_bind_text(query->stmt, col, str, len, type);
     
@@ -139,17 +139,17 @@ static void query_do_bind_string(R(Query*) query, int col, R(const char*) str, i
         exception_throw_format(B(db_get_core(query->database)), ErrorSql, "[query_do_bind_string] %s", sqlite3_errstr(rc));
 }
 
-void query_bind_string(R(Query*) query, int col, R(const char*) str, int len)
+void query_bind_string(Query* query, int col, const char* str, int len)
 {
     query_do_bind_string(query, col, str, len, SQLITE_TRANSIENT);
 }
 
-void query_bind_string_no_copy(R(Query*) query, int col, R(const char*) str, int len)
+void query_bind_string_no_copy(Query* query, int col, const char* str, int len)
 {
     query_do_bind_string(query, col, str, len, SQLITE_STATIC);
 }
 
-static void query_do_bind_blob(R(Query*) query, int col, R(const void*) data, uint32_t len, void (*type)(void*))
+static void query_do_bind_blob(Query* query, int col, const void* data, uint32_t len, void (*type)(void*))
 {
     int rc = sqlite3_bind_blob(query->stmt, col, data, len, type);
     
@@ -157,32 +157,32 @@ static void query_do_bind_blob(R(Query*) query, int col, R(const void*) data, ui
         exception_throw_format(B(db_get_core(query->database)), ErrorSql, "[query_do_bind_blob] %s", sqlite3_errstr(rc));
 }
 
-void query_bind_blob(R(Query*) query, int col, R(const void*) data, uint32_t len)
+void query_bind_blob(Query* query, int col, const void* data, uint32_t len)
 {
     query_do_bind_blob(query, col, data, len, SQLITE_TRANSIENT);
 }
 
-void query_bind_blob_no_copy(R(Query*) query, int col, R(const void*) data, uint32_t len)
+void query_bind_blob_no_copy(Query* query, int col, const void* data, uint32_t len)
 {
     query_do_bind_blob(query, col, data, len, SQLITE_STATIC);
 }
 
-int query_get_int(R(Query*) query, int col)
+int query_get_int(Query* query, int col)
 {
     return sqlite3_column_int(query->stmt, col - 1);
 }
 
-int64_t query_get_int64(R(Query*) query, int col)
+int64_t query_get_int64(Query* query, int col)
 {
     return sqlite3_column_int64(query->stmt, col - 1);
 }
 
-double query_get_double(R(Query*) query, int col)
+double query_get_double(Query* query, int col)
 {
     return sqlite3_column_double(query->stmt, col - 1);
 }
 
-const char* query_get_string(R(Query*) query, int col, R(uint32_t*) len)
+const char* query_get_string(Query* query, int col, uint32_t* len)
 {
     sqlite3_stmt* stmt = query->stmt;
     col--;
@@ -191,7 +191,7 @@ const char* query_get_string(R(Query*) query, int col, R(uint32_t*) len)
     return (const char*)sqlite3_column_text(stmt, col);
 }
 
-const byte* query_get_blob(R(Query*) query, int col, R(uint32_t*) len)
+const byte* query_get_blob(Query* query, int col, uint32_t* len)
 {
     sqlite3_stmt* stmt = query->stmt;
     col--;
@@ -200,7 +200,7 @@ const byte* query_get_blob(R(Query*) query, int col, R(uint32_t*) len)
     return (const byte*)sqlite3_column_blob(stmt, col);
 }
 
-int query_is_null(R(Query*) query, int col)
+int query_is_null(Query* query, int col)
 {
     col--;
     return (sqlite3_column_type(query->stmt, col) == SQLITE_NULL);

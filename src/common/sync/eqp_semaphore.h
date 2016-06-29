@@ -17,10 +17,10 @@ typedef sem_t Semaphore;
 
 STRUCT_DECLARE(Basic);
 
-void    semaphore_init(R(Basic*) basic, R(Semaphore*) sem);
-void    semaphore_deinit(R(Basic*) basic, R(Semaphore*) sem);
-void    semaphore_wait(R(Basic*) basic, R(Semaphore*) sem);
-int     semaphore_try_wait(R(Basic*) basic, R(Semaphore*) sem);
-void    semaphore_trigger(R(Basic*) basic, R(Semaphore*) sem);
+void    semaphore_init(Basic* basic, Semaphore* sem);
+void    semaphore_deinit(Basic* basic, Semaphore* sem);
+void    semaphore_wait(Basic* basic, Semaphore* sem);
+int     semaphore_try_wait(Basic* basic, Semaphore* sem);
+void    semaphore_trigger(Basic* basic, Semaphore* sem);
 
 #endif//EQP_SEMAPHORE_H

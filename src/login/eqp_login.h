@@ -32,9 +32,9 @@ STRUCT_DEFINE(Login)
     LoginCrypto*    crypto;
 };
 
-void    login_init(R(Login*) login, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath);
-void    login_deinit(R(Login*) login);
-void    login_main_loop(R(Login*) login);
+void    login_init(Login* login, const char* ipcPath, const char* masterIpcPath, const char* logWriterIpcPath);
+void    login_deinit(Login* login);
+void    login_main_loop(Login* login);
 
 int     login_is_ip_address_local(uint32_t ip);
 

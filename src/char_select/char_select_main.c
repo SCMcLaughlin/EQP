@@ -3,7 +3,7 @@
 #include "eqp_string.h"
 #include "terminal.h"
 
-int char_select_main(R(CharSelect*) charSelect, R(const char**) argv)
+int char_select_main(CharSelect* charSelect, const char** argv)
 {
     ExceptionScope exScope;
     int volatile ret = 0;

@@ -15,7 +15,7 @@ STRUCT_DECLARE(Core);
 STRUCT_DECLARE(Database);
 STRUCT_DECLARE(Query);
 
-typedef void(*QueryCallback)(R(Query*) query);
+typedef void(*QueryCallback)(Query* query);
 
 STRUCT_DEFINE(Query)
 {
@@ -40,34 +40,34 @@ STRUCT_DEFINE(Query)
     uint64_t        timestamp;
 };
 
-void        query_init(R(Query*) query);
-void        query_deinit(R(Query*) query);
+void        query_init(Query* query);
+void        query_deinit(Query* query);
 
-void        query_set_db_and_stmt(R(Query*) query, R(Database*) db, R(sqlite3_stmt*) stmt, uint32_t queryId);
+void        query_set_db_and_stmt(Query* query, Database* db, sqlite3_stmt* stmt, uint32_t queryId);
 #define     query_set_state(q, st) ((q)->state = (st))
 #define     query_set_callback(q, cb) ((q)->callback = (cb))
-void        query_update_last_insert_id(R(Query*) query);
+void        query_update_last_insert_id(Query* query);
 
-int         query_execute_background(R(Query*) query);
-void        query_execute_synchronus(R(Query*) query);
+int         query_execute_background(Query* query);
+void        query_execute_synchronus(Query* query);
 
-int         query_select(R(Query*) query);
+int         query_select(Query* query);
 
-void        query_bind_int(R(Query*) query, int col, int value);
-void        query_bind_int64(R(Query*) query, int col, int64_t value);
-void        query_bind_double(R(Query*) query, int col, double value);
-void        query_bind_string(R(Query*) query, int col, R(const char*) str, int len);
-void        query_bind_string_no_copy(R(Query*) query, int col, R(const char*) str, int len);
+void        query_bind_int(Query* query, int col, int value);
+void        query_bind_int64(Query* query, int col, int64_t value);
+void        query_bind_double(Query* query, int col, double value);
+void        query_bind_string(Query* query, int col, const char* str, int len);
+void        query_bind_string_no_copy(Query* query, int col, const char* str, int len);
 #define     query_bind_string_literal(q, col, str) query_bind_string_no_copy((q), (col), (str), sizeof(str) - 1)
-void        query_bind_blob(R(Query*) query, int col, R(const void*) blob, uint32_t len);
-void        query_bind_blob_no_copy(R(Query*) query, int col, R(const void*) blob, uint32_t len);
+void        query_bind_blob(Query* query, int col, const void* blob, uint32_t len);
+void        query_bind_blob_no_copy(Query* query, int col, const void* blob, uint32_t len);
 
-int         query_get_int(R(Query*) query, int col);
-int64_t     query_get_int64(R(Query*) query, int col);
-double      query_get_double(R(Query*) query, int col);
-const char* query_get_string(R(Query*) query, int col, R(uint32_t*) len);
-const byte* query_get_blob(R(Query*) query, int col, R(uint32_t*) len);
-int         query_is_null(R(Query*) query, int col);
+int         query_get_int(Query* query, int col);
+int64_t     query_get_int64(Query* query, int col);
+double      query_get_double(Query* query, int col);
+const char* query_get_string(Query* query, int col, uint32_t* len);
+const byte* query_get_blob(Query* query, int col, uint32_t* len);
+int         query_is_null(Query* query, int col);
 
 #define     query_execute_callback(q) if ((q)->callback) (q)->callback((q))
 #define     query_has_callback(q) ((q)->callback ? true : false)

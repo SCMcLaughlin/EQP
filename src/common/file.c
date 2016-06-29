@@ -1,7 +1,7 @@
 
 #include "file.h"
 
-uint64_t file_calc_size(R(FILE*) fp)
+uint64_t file_calc_size(FILE* fp)
 {
     uint64_t size;
     

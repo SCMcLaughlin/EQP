@@ -21,10 +21,10 @@ STRUCT_DEFINE(LogThread)
     Array*      logFiles;
 };
 
-void    log_thread_init(R(Basic*) basic, R(LogThread*) logThread);
-void    log_thread_deinit(R(LogThread*) logThread);
-void    log_thread_main_loop(R(Thread*) thread);
-void    log_thread_post_message(R(Basic*) basic, R(LogThread*) logThread, R(IpcPacket*) packet);
+void    log_thread_init(Basic* basic, LogThread* logThread);
+void    log_thread_deinit(LogThread* logThread);
+void    log_thread_main_loop(Thread* thread);
+void    log_thread_post_message(Basic* basic, LogThread* logThread, IpcPacket* packet);
 #define log_thread_start(basic, thread) thread_start_and_detach((basic), T(thread), log_thread_main_loop)
 
 #endif//EQP_LOG_THREAD_H

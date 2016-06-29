@@ -4,7 +4,7 @@
 
 #define DEFAULT_CAPACITY 32
 
-void timer_pool_init(R(Basic*) basic, R(TimerPool*) pool)
+void timer_pool_init(Basic* basic, TimerPool* pool)
 {
     pool->basic     = basic;
     pool->capacity  = DEFAULT_CAPACITY;
@@ -16,7 +16,7 @@ void timer_pool_init(R(Basic*) basic, R(TimerPool*) pool)
     pool->triggered     = array_create_type(basic, uint32_t);
 }
 
-void timer_pool_deinit(R(TimerPool*) pool)
+void timer_pool_deinit(TimerPool* pool)
 {
     if (pool->triggerTimes)
     {
@@ -37,7 +37,7 @@ void timer_pool_deinit(R(TimerPool*) pool)
     }
 }
 
-static void timer_pool_swap_and_pop(R(TimerPool*) pool, uint32_t index)
+static void timer_pool_swap_and_pop(TimerPool* pool, uint32_t index)
 {
     uint32_t back = --pool->count;
     
@@ -50,7 +50,7 @@ static void timer_pool_swap_and_pop(R(TimerPool*) pool, uint32_t index)
     }
 }
 
-static void timer_pool_trigger(R(TimerPool*) pool, uint32_t index)
+static void timer_pool_trigger(TimerPool* pool, uint32_t index)
 {
     Timer* timer = pool->timerObjects[index];
     
@@ -59,7 +59,7 @@ static void timer_pool_trigger(R(TimerPool*) pool, uint32_t index)
     timer_execute_callback(timer);
 }
 
-void timer_pool_execute_callbacks(R(TimerPool*) pool)
+void timer_pool_execute_callbacks(TimerPool* pool)
 {
     uint32_t i              = 0;
     uint32_t n              = pool->count;
@@ -102,7 +102,7 @@ void timer_pool_execute_callbacks(R(TimerPool*) pool)
     }
 }
 
-static void timer_pool_realloc(R(TimerPool*) pool)
+static void timer_pool_realloc(TimerPool* pool)
 {
     uint32_t c = pool->capacity * 2;
     
@@ -112,7 +112,7 @@ static void timer_pool_realloc(R(TimerPool*) pool)
     pool->capacity = c;
 }
 
-void timer_pool_internal_start_timer(R(TimerPool*) pool, R(Timer*) timer)
+void timer_pool_internal_start_timer(TimerPool* pool, Timer* timer)
 {
     uint64_t curTime    = clock_milliseconds();
     uint32_t index      = pool->count++;
@@ -126,22 +126,22 @@ void timer_pool_internal_start_timer(R(TimerPool*) pool, R(Timer*) timer)
     timer->poolIndex = index;
 }
 
-void timer_pool_internal_restart_timer(R(TimerPool*) pool, R(Timer*) timer)
+void timer_pool_internal_restart_timer(TimerPool* pool, Timer* timer)
 {
     pool->triggerTimes[timer->poolIndex] = clock_milliseconds() + timer_period_milliseconds(timer);
 }
 
-void timer_pool_internal_delay_timer(R(TimerPool*) pool, R(Timer*) timer, uint32_t milliseconds)
+void timer_pool_internal_delay_timer(TimerPool* pool, Timer* timer, uint32_t milliseconds)
 {
     pool->triggerTimes[timer->poolIndex] += milliseconds;
 }
 
-void timer_pool_internal_force_timer_trigger_next_cycle(R(TimerPool*) pool, R(Timer*) timer)
+void timer_pool_internal_force_timer_trigger_next_cycle(TimerPool* pool, Timer* timer)
 {
     pool->triggerTimes[timer->poolIndex] = clock_milliseconds();
 }
 
-void timer_pool_internal_mark_timer_as_dead(R(TimerPool*) pool, uint32_t index)
+void timer_pool_internal_mark_timer_as_dead(TimerPool* pool, uint32_t index)
 {
     // The 63rd bit (counting from 0) is the 'dead' flag bit
     pool->triggerTimes[index] |= 1ULL << 63;

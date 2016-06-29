@@ -2,7 +2,7 @@
 #include "network_client_trilogy.h"
 #include "udp_socket.h"
 
-void network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkClientTrilogy*) client, uint32_t index)
+void network_client_trilogy_init(UdpSocket* sock, UdpClient* udpClient, NetworkClientTrilogy* client, uint32_t index)
 {
     network_client_init(sock, udpClient, &client->base, index);
     
@@ -15,19 +15,19 @@ void network_client_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(
     client->sendFromIndex           = 0;
 }
 
-void network_client_trilogy_deinit(R(NetworkClientTrilogy*) client)
+void network_client_trilogy_deinit(NetworkClientTrilogy* client)
 {
     network_client_deinit(&client->base);
     
     if (client->outputPackets)
     {
-        R(OutputPacketTrilogy*) array   = array_data_type(client->outputPackets, OutputPacketTrilogy);
-        uint32_t n                      = array_count(client->outputPackets);
+        OutputPacketTrilogy* array  = array_data_type(client->outputPackets, OutputPacketTrilogy);
+        uint32_t n                  = array_count(client->outputPackets);
         uint32_t i;
         
         for (i = 0; i < n; i++)
         {
-            R(PacketTrilogy*) packet = array[i].packet;
+            PacketTrilogy* packet = array[i].packet;
             
             if (packet)
                 packet_trilogy_drop(packet);
@@ -38,10 +38,10 @@ void network_client_trilogy_deinit(R(NetworkClientTrilogy*) client)
     }
 }
 
-void network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) client, uint16_t ack)
+void network_client_trilogy_recv_ack_response(NetworkClientTrilogy* client, uint16_t ack)
 {
-    R(OutputPacketTrilogy*) array   = array_data_type(client->outputPackets, OutputPacketTrilogy);
-    uint32_t n                      = client->sendFromIndex;
+    OutputPacketTrilogy* array  = array_data_type(client->outputPackets, OutputPacketTrilogy);
+    uint32_t n                  = client->sendFromIndex;
     uint32_t i;
     
     ack                     = toHostUint16(ack);
@@ -49,7 +49,7 @@ void network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) client, u
     
     for (i = 0; i < n; i++)
     {
-        R(OutputPacketTrilogy*) wrapper = &array[i];
+        OutputPacketTrilogy* wrapper    = &array[i];
         uint16_t ackRequest             = wrapper->ackRequest + (wrapper->fragCount - 1);
         
         if (ackRequest > ack)
@@ -69,7 +69,7 @@ void network_client_trilogy_recv_ack_response(R(NetworkClientTrilogy*) client, u
     }
 }
 
-void network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) client, uint16_t ack, int isFirstPacket)
+void network_client_trilogy_recv_ack_request(NetworkClientTrilogy* client, uint16_t ack, int isFirstPacket)
 {
     if (isFirstPacket)
     {
@@ -86,13 +86,13 @@ void network_client_trilogy_recv_ack_request(R(NetworkClientTrilogy*) client, ui
     }
 }
 
-void network_client_trilogy_schedule_packet(R(NetworkClientTrilogy*) client, R(OutputPacketTrilogy*) packet)
+void network_client_trilogy_schedule_packet(NetworkClientTrilogy* client, OutputPacketTrilogy* packet)
 {
     packet_trilogy_grab(packet->packet);
     array_push_back(network_client_trilogy_basic(client), &client->outputPackets, packet);
 }
 
-void network_client_trilogy_send_pure_ack(R(NetworkClientTrilogy*) client, uint16_t ackResponse)
+void network_client_trilogy_send_pure_ack(NetworkClientTrilogy* client, uint16_t ackResponse)
 {
     byte buf[10];
     Aligned write;
@@ -109,7 +109,7 @@ void network_client_trilogy_send_pure_ack(R(NetworkClientTrilogy*) client, uint1
     network_client_send(&client->base, buf, sizeof(buf));
 }
 
-void network_client_trilogy_send_disconnect(R(NetworkClientTrilogy*) client)
+void network_client_trilogy_send_disconnect(NetworkClientTrilogy* client)
 {
     STRUCT_DEFINE(TrilogyDisconnect)
     {
@@ -127,12 +127,12 @@ void network_client_trilogy_send_disconnect(R(NetworkClientTrilogy*) client)
     network_client_send(&client->base, &dis, sizeof(dis));
 }
 
-static void network_client_trilogy_send_fragment(R(NetworkClientTrilogy*) client, R(OutputPacketTrilogy*) wrapper, R(Aligned*) a,
+static void network_client_trilogy_send_fragment(NetworkClientTrilogy* client, OutputPacketTrilogy* wrapper, Aligned* a,
     uint32_t dataLength, uint16_t opcode, uint16_t ackResponse, uint32_t fragIndex)
 {
     uint32_t orig   = aligned_position(a);
     uint16_t header = wrapper->header;
-    R(byte*) data;
+    byte* data;
     
     // opcode
     if (fragIndex == 0 && opcode)
@@ -180,24 +180,24 @@ static void network_client_trilogy_send_fragment(R(NetworkClientTrilogy*) client
     network_client_send(&client->base, data, dataLength + sizeof(uint32_t));
 }
 
-void network_client_trilogy_send_queued(R(NetworkClientTrilogy*) client)
+void network_client_trilogy_send_queued(NetworkClientTrilogy* client)
 {
     Aligned aligned;
-    R(Aligned*) a                   = &aligned;
-    uint32_t n                      = array_count(client->outputPackets);
-    R(OutputPacketTrilogy*) array   = array_data_type(client->outputPackets, OutputPacketTrilogy);
-    uint16_t ackResponse            = toNetworkUint16(client->nextAckResponse);
-    uint16_t ackReceived            = client->lastAckReceived;
-    uint32_t sendFromIndex          = client->sendFromIndex;
-    uint64_t time                   = clock_milliseconds();
+    Aligned* a                  = &aligned;
+    uint32_t n                  = array_count(client->outputPackets);
+    OutputPacketTrilogy* array  = array_data_type(client->outputPackets, OutputPacketTrilogy);
+    uint16_t ackResponse        = toNetworkUint16(client->nextAckResponse);
+    uint16_t ackReceived        = client->lastAckReceived;
+    uint32_t sendFromIndex      = client->sendFromIndex;
+    uint64_t time               = clock_milliseconds();
     uint32_t i;
     
     aligned_set_basic(a, network_client_trilogy_basic(client));
     
     for (i = 0; i < n; i++)
     {
-        R(OutputPacketTrilogy*) wrapper = &array[i];
-        R(PacketTrilogy*) packet        = wrapper->packet;
+        OutputPacketTrilogy* wrapper    = &array[i];
+        PacketTrilogy* packet           = wrapper->packet;
         uint32_t dataLength             = packet_trilogy_length(packet);
         uint16_t opcode                 = packet_trilogy_opcode(packet);
         uint16_t fragCount              = wrapper->fragCount;

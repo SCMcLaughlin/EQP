@@ -19,10 +19,10 @@ STRUCT_DEFINE(ProtocolHandlerTrilogy)
     void*           clientObject;
 };
 
-void    protocol_handler_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, uint32_t index);
-void    protocol_handler_trilogy_deinit(R(ProtocolHandlerTrilogy*) handler);
+void    protocol_handler_trilogy_init(UdpSocket* sock, UdpClient* client, ProtocolHandler* handler, uint32_t index);
+void    protocol_handler_trilogy_deinit(ProtocolHandlerTrilogy* handler);
 
-void    protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) data, int len);
+void    protocol_handler_trilogy_recv(ProtocolHandlerTrilogy* handler, byte* data, int len);
 
 #define protocol_handler_trilogy_basic(handler) ack_mgr_trilogy_basic(&(handler)->ackMgr)
 #define protocol_handler_trilogy_client_object(handler) ((handler)->clientObject)

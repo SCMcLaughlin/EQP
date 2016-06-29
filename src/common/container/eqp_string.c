@@ -13,9 +13,9 @@ STRUCT_DEFINE(String)
     char        data[0];
 };
 
-String* string_create(R(Basic*) basic)
+String* string_create(Basic* basic)
 {
-    R(String*) str = eqp_alloc_type_bytes(basic, sizeof(String) + MIN_CAPACITY, String);
+    String* str     = eqp_alloc_type_bytes(basic, sizeof(String) + MIN_CAPACITY, String);
     
     str->length     = 0;
     str->capacity   = MIN_CAPACITY;
@@ -23,9 +23,9 @@ String* string_create(R(Basic*) basic)
     return str;
 }
 
-String* string_create_with_capacity(R(Basic*) basic, uint32_t capacity)
+String* string_create_with_capacity(Basic* basic, uint32_t capacity)
 {
-    R(String*) str;
+    String* str;
     
     if (capacity < MIN_CAPACITY)
         capacity = MIN_CAPACITY;
@@ -40,7 +40,7 @@ String* string_create_with_capacity(R(Basic*) basic, uint32_t capacity)
     return str;
 }
 
-static String* string_realloc_next_pow2(R(Basic*) basic, R(String*) str, uint32_t len)
+static String* string_realloc_next_pow2(Basic* basic, String* str, uint32_t len)
 {
     uint32_t cap    = bit_pow2_greater_than(len);
     size_t size     = cap + sizeof(String) + 1;
@@ -52,7 +52,7 @@ static String* string_realloc_next_pow2(R(Basic*) basic, R(String*) str, uint32_
     return str;
 }
 
-static String* string_realloc_and_fill(R(Basic*) basic, R(String*) str, R(const char*) src, uint32_t len)
+static String* string_realloc_and_fill(Basic* basic, String* str, const char* src, uint32_t len)
 {
     str = string_realloc_next_pow2(basic, str, len);
     
@@ -62,15 +62,15 @@ static String* string_realloc_and_fill(R(Basic*) basic, R(String*) str, R(const 
     return str;
 }
 
-String* string_create_from_cstr(R(Basic*) basic, R(const char*) src, uint32_t len)
+String* string_create_from_cstr(Basic* basic, const char* src, uint32_t len)
 {
     return string_realloc_and_fill(basic, NULL, src, len);
 }
 
-String* string_create_from_file(R(Basic*) basic, R(FILE*) fp)
+String* string_create_from_file(Basic* basic, FILE* fp)
 {
     uint32_t len    = (uint32_t)file_calc_size(fp);
-    R(String*) str  = string_create_with_capacity(basic, len + 1); // Make sure there will be room for the guaranteed null terminator
+    String* str     = string_create_with_capacity(basic, len + 1); // Make sure there will be room for the guaranteed null terminator
     
     if (len > 0)
     {
@@ -84,15 +84,15 @@ String* string_create_from_file(R(Basic*) basic, R(FILE*) fp)
     return str;
 }
 
-void string_clear(R(String*) str)
+void string_clear(String* str)
 {
     str->length     = 0;
     str->data[0]    = 0;
 }
 
-void string_set_from_cstr(R(Basic*) basic, R(String**) str, R(const char*) src, uint32_t len)
+void string_set_from_cstr(Basic* basic, String** str, const char* src, uint32_t len)
 {
-    R(String*) base = *str;
+    String* base = *str;
     
     if (len == 0 || src == NULL)
     {
@@ -110,7 +110,7 @@ void string_set_from_cstr(R(Basic*) basic, R(String**) str, R(const char*) src, 
     }
 }
 
-void string_set_from_format(R(Basic*) basic, R(String**) str, R(const char*) fmt, ...)
+void string_set_from_format(Basic* basic, String** str, const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -118,9 +118,9 @@ void string_set_from_format(R(Basic*) basic, R(String**) str, R(const char*) fmt
     va_end(args);
 }
 
-void string_set_from_vformat(R(Basic*) basic, R(String**) str, R(const char*) fmt, va_list args)
+void string_set_from_vformat(Basic* basic, String** str, const char* fmt, va_list args)
 {
-    R(String*) base = *str;
+    String* base = *str;
     va_list args_copy;
     int len;
     
@@ -150,19 +150,19 @@ void string_set_from_vformat(R(Basic*) basic, R(String**) str, R(const char*) fm
     va_end(args_copy);
 }
 
-const char* string_get_data(R(String*) str)
+const char* string_get_data(String* str)
 {
     return (str->length == 0) ? NULL : str->data;
 }
 
-uint32_t string_get_length(R(String*) str)
+uint32_t string_get_length(String* str)
 {
     return str->length;
 }
 
-void string_add_char(R(Basic*) basic, R(String**) str, int c)
+void string_add_char(Basic* basic, String** str, int c)
 {
-    R(String*) base = *str;
+    String* base    = *str;
     uint32_t index  = base->length++;
     
     if (base->length >= base->capacity)
@@ -175,9 +175,9 @@ void string_add_char(R(Basic*) basic, R(String**) str, int c)
     base->data[index + 1] = 0;
 }
 
-void string_add_cstr(R(Basic*) basic, R(String**) str, R(const char*) cstr, uint32_t len)
+void string_add_cstr(Basic* basic, String** str, const char* cstr, uint32_t len)
 {
-    R(String*) base = *str;
+    String* base    = *str;
     uint32_t index  = base->length;
     uint32_t end    = index + len;
     uint32_t i;
@@ -200,12 +200,12 @@ void string_add_cstr(R(Basic*) basic, R(String**) str, R(const char*) cstr, uint
     base->data[end] = 0;
 }
 
-void string_add_string(R(Basic*) basic, R(String**) str, R(String*) src)
+void string_add_string(Basic* basic, String** str, String* src)
 {
     string_add_cstr(basic, str, src->data, src->length);
 }
 
-int string_compare_cstr(R(String*) str, R(const char*) cstr)
+int string_compare_cstr(String* str, const char* cstr)
 {
     return strcmp(str->data, cstr);
 }

@@ -7,7 +7,7 @@
 #define ERR_NONBLOCK "[udp_socket_open] Setting non-blocking mode failed"
 #define ERR_BIND "[udp_socket_open] bind() syscall failed"
 
-UdpSocket* udp_socket_create(R(Basic*) basic)
+UdpSocket* udp_socket_create(Basic* basic)
 {
     UdpSocket* sock = eqp_alloc_type(basic, UdpSocket);
     
@@ -18,13 +18,13 @@ UdpSocket* udp_socket_create(R(Basic*) basic)
     return sock;
 }
 
-void udp_socket_destroy(R(UdpSocket*) sock)
+void udp_socket_destroy(UdpSocket* sock)
 {
     udp_socket_close(sock);
     free(sock);
 }
 
-void udp_socket_open(R(UdpSocket*) sock, uint16_t port)
+void udp_socket_open(UdpSocket* sock, uint16_t port)
 {
     IpAddress addr;
 #ifdef EQP_WINDOWS
@@ -56,7 +56,7 @@ void udp_socket_open(R(UdpSocket*) sock, uint16_t port)
     log_format(sock->basic, LogNetwork, "Listening for UDP packets on port %u", port);
 }
 
-void udp_socket_close(R(UdpSocket*) sock)
+void udp_socket_close(UdpSocket* sock)
 {
     if (sock->socketFd != INVALID_SOCKET)
     {
@@ -65,12 +65,12 @@ void udp_socket_close(R(UdpSocket*) sock)
     }
 }
 
-void udp_socket_recv(R(UdpSocket*) sock)
+void udp_socket_recv(UdpSocket* sock)
 {
     IpAddress addr;
     socklen_t addrLen   = sizeof(IpAddress);
     int fd              = sock->socketFd;
-    R(byte*) buffer     = sock->recvBuffer;
+    byte* buffer        = sock->recvBuffer;
     
     for (;;)
     {
@@ -126,7 +126,7 @@ void udp_socket_recv(R(UdpSocket*) sock)
     }
 }
 
-static void udp_socket_handle_dead_client(R(UdpSocket*) sock, R(UdpClient*) cli, uint32_t index)
+static void udp_socket_handle_dead_client(UdpSocket* sock, UdpClient* cli, uint32_t index)
 {
     udp_client_deinit(cli);
     if (array_swap_and_pop(sock->clients, index))
@@ -134,7 +134,7 @@ static void udp_socket_handle_dead_client(R(UdpSocket*) sock, R(UdpClient*) cli,
     printf("Destroyed UdpClient at index %u\n", index);
 }
 
-void udp_socket_check_timeouts(R(UdpSocket*) sock)
+void udp_socket_check_timeouts(UdpSocket* sock)
 {
     UdpClient* array    = array_data_type(sock->clients, UdpClient);
     uint32_t n          = array_count(sock->clients);
@@ -143,7 +143,7 @@ void udp_socket_check_timeouts(R(UdpSocket*) sock)
     
     while (i < n)
     {
-        R(UdpClient*) cli = &array[i];
+        UdpClient* cli = &array[i];
         
         if (udp_client_is_dead(cli))
         {
@@ -154,7 +154,7 @@ void udp_socket_check_timeouts(R(UdpSocket*) sock)
         
         if ((udp_client_last_recv_time(cli) + EQP_UDP_SOCKET_LINKDEAD_TIMEOUT_MILLISECONDS) < time)
         {
-            R(void*) clientObject = protocol_handler_client_object(udp_client_handler(cli));
+            void* clientObject = protocol_handler_client_object(udp_client_handler(cli));
             
             if (clientObject)
                 client_on_disconnect(clientObject, true);
@@ -168,7 +168,7 @@ void udp_socket_check_timeouts(R(UdpSocket*) sock)
     }
 }
 
-void udp_socket_send(R(UdpSocket*) sock)
+void udp_socket_send(UdpSocket* sock)
 {
     UdpClient* array    = array_data_type(sock->clients, UdpClient);
     uint32_t n          = array_count(sock->clients);
@@ -176,7 +176,7 @@ void udp_socket_send(R(UdpSocket*) sock)
     
     for (i = 0; i < n; i++)
     {
-        R(UdpClient*) cli = &array[i];
+        UdpClient* cli = &array[i];
         
         if (udp_client_is_dead(cli))
             continue;
@@ -185,9 +185,9 @@ void udp_socket_send(R(UdpSocket*) sock)
     }
 }
 
-void udp_socket_flag_client_as_dead_by_index(R(UdpSocket*) sock, uint32_t index)
+void udp_socket_flag_client_as_dead_by_index(UdpSocket* sock, uint32_t index)
 {
-    R(UdpClient*) cli = array_get_type(sock->clients, index, UdpClient);
+    UdpClient* cli = array_get_type(sock->clients, index, UdpClient);
     
     if (cli)
         udp_client_flag_as_dead(cli);

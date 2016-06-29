@@ -7,22 +7,22 @@
 
 #define MIN_PACKET_LENGTH 10
 
-void protocol_handler_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, uint32_t index)
+void protocol_handler_trilogy_init(UdpSocket* sock, UdpClient* client, ProtocolHandler* handler, uint32_t index)
 {
     ack_mgr_trilogy_init(sock, client, &handler->trilogy.ackMgr, index);
     
     handler->trilogy.clientObject = client_create_from_new_connection_trilogy(handler);
 }
 
-void protocol_handler_trilogy_deinit(R(ProtocolHandlerTrilogy*) handler)
+void protocol_handler_trilogy_deinit(ProtocolHandlerTrilogy* handler)
 {
     ack_mgr_trilogy_deinit(&handler->ackMgr);
 }
 
-static void protocol_handler_trilogy_sequence_end(R(ProtocolHandlerTrilogy*) handler, uint16_t header, R(byte*) data, int len)
+static void protocol_handler_trilogy_sequence_end(ProtocolHandlerTrilogy* handler, uint16_t header, byte* data, int len)
 {
-    R(Basic*) basic = protocol_handler_trilogy_basic(handler);
-    R(NetworkClientTrilogy*) net = &handler->ackMgr.client;
+    Basic* basic                = protocol_handler_trilogy_basic(handler);
+    NetworkClientTrilogy* net   = &handler->ackMgr.client;
     char buf[4096];
     int i;
     
@@ -38,10 +38,10 @@ static void protocol_handler_trilogy_sequence_end(R(ProtocolHandlerTrilogy*) han
     log_format(basic, LogNetwork, "%s", buf);
 }
 
-void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) data, int len)
+void protocol_handler_trilogy_recv(ProtocolHandlerTrilogy* handler, byte* data, int len)
 {
     Aligned aligned;
-    R(Aligned*) a = &aligned;
+    Aligned* a = &aligned;
     uint16_t header;
     uint16_t seq;
     uint16_t opcode;
@@ -49,8 +49,8 @@ void protocol_handler_trilogy_recv(R(ProtocolHandlerTrilogy*) handler, R(byte*) 
     //uint16_t fragGroup;
     uint16_t fragCount;
     uint16_t fragIndex;
-    R(AckMgrTrilogy*) ackMgr;
-    R(void*) clientObject;
+    AckMgrTrilogy* ackMgr;
+    void* clientObject;
     
     if (len < MIN_PACKET_LENGTH)
         return;

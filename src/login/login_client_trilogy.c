@@ -7,21 +7,21 @@
 #define SERVER_DOWN -1
 #define SERVER_LOCKED -2
 
-void* client_create_from_new_connection_trilogy(R(ProtocolHandler*) handler)
+void* client_create_from_new_connection_trilogy(ProtocolHandler* handler)
 {
     return login_client_create(handler, ExpansionId_Trilogy, LoginClientTrilogy_BrandNew);
 }
 
-static void login_trilogy_schedule_packet(R(ProtocolHandler*) handler, R(PacketTrilogy*) packet)
+static void login_trilogy_schedule_packet(ProtocolHandler* handler, PacketTrilogy* packet)
 {
     packet_trilogy_fragmentize(packet);
     protocol_handler_trilogy_schedule_packet(&handler->trilogy, packet);
 }
 
-static void login_trilogy_err_msg(R(ProtocolHandler*) handler, R(const char*) msg, uint32_t len)
+static void login_trilogy_err_msg(ProtocolHandler* handler, const char* msg, uint32_t len)
 {
-    R(Basic*) basic             = protocol_handler_basic(handler);
-    R(PacketTrilogy*) packet    = packet_trilogy_create(basic, TrilogyOp_Error, ++len);
+    Basic* basic            = protocol_handler_basic(handler);
+    PacketTrilogy* packet   = packet_trilogy_create(basic, TrilogyOp_Error, ++len);
     Aligned w;
     
     aligned_init(basic, &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
@@ -32,10 +32,10 @@ static void login_trilogy_err_msg(R(ProtocolHandler*) handler, R(const char*) ms
 
 #define login_trilogy_err_literal(handler, msg) login_trilogy_err_msg((handler), (msg), sizeof(msg) - 1)
 
-static void login_trilogy_handle_op_version(R(LoginClient*) client, R(ProtocolHandler*) handler)
+static void login_trilogy_handle_op_version(LoginClient* client, ProtocolHandler* handler)
 {
-    R(Basic*) basic             = protocol_handler_basic(handler);
-    R(PacketTrilogy*) packet    = packet_trilogy_create(basic, TrilogyOp_Version, sizeof(EQP_LOGIN_TRILOGY_VERSION));
+    Basic* basic            = protocol_handler_basic(handler);
+    PacketTrilogy* packet   = packet_trilogy_create(basic, TrilogyOp_Version, sizeof(EQP_LOGIN_TRILOGY_VERSION));
     Aligned w;
     
     aligned_init(basic, &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
@@ -46,11 +46,11 @@ static void login_trilogy_handle_op_version(R(LoginClient*) client, R(ProtocolHa
     login_client_set_state(client, LoginClientTrilogy_VersionSent);
 }
 
-static void login_trilogy_handle_op_credentials(R(LoginClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+static void login_trilogy_handle_op_credentials(LoginClient* client, ProtocolHandler* handler, Aligned* a)
 {
-    R(Login*) login;
-    R(LoginCrypto*) crypto;
-    R(LoginTrilogy_Credentials*) cred;
+    Login* login;
+    LoginCrypto* crypto;
+    LoginTrilogy_Credentials* cred;
     int nameLength;
     int passLength;
     
@@ -78,9 +78,9 @@ static void login_trilogy_handle_op_credentials(R(LoginClient*) client, R(Protoc
     login_crypto_clear(crypto);
 }
 
-void login_client_trilogy_handle_credentials_result(R(LoginClient*) client, uint32_t accountId)
+void login_client_trilogy_handle_credentials_result(LoginClient* client, uint32_t accountId)
 {
-    R(ProtocolHandler*) handler = login_client_handler(client);
+    ProtocolHandler* handler = login_client_handler(client);
     
     if (accountId == 0)
     {
@@ -88,10 +88,10 @@ void login_client_trilogy_handle_credentials_result(R(LoginClient*) client, uint
     }
     else
     {
-        R(Basic*) basic             = protocol_handler_basic(handler);
-        R(PacketTrilogy*) packet    = packet_trilogy_create_type(basic, TrilogyOp_Session, LoginTrilogy_Session);
+        Basic* basic            = protocol_handler_basic(handler);
+        PacketTrilogy* packet   = packet_trilogy_create_type(basic, TrilogyOp_Session, LoginTrilogy_Session);
         Aligned write;
-        R(Aligned*) w = &write;
+        Aligned* w = &write;
         
         aligned_init(basic, w, packet_trilogy_data(packet), packet_trilogy_length(packet));
         
@@ -107,10 +107,10 @@ void login_client_trilogy_handle_credentials_result(R(LoginClient*) client, uint
     }
 }
 
-static void login_trilogy_handle_op_banner(R(LoginClient*) client, R(ProtocolHandler*) handler)
+static void login_trilogy_handle_op_banner(LoginClient* client, ProtocolHandler* handler)
 {
-    R(Basic*) basic;
-    R(PacketTrilogy*) packet;
+    Basic* basic;
+    PacketTrilogy* packet;
     Aligned w;
     
     if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
@@ -129,14 +129,14 @@ static void login_trilogy_handle_op_banner(R(LoginClient*) client, R(ProtocolHan
     login_trilogy_schedule_packet(handler, packet);
 }
 
-static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(ProtocolHandler*) handler)
+static void login_trilogy_handle_op_server_list(LoginClient* client, ProtocolHandler* handler)
 {
-    R(Login*) login;
-    R(ServerList*) list;
-    R(ServerListing*) data;
-    R(PacketTrilogy*) packet;
+    Login* login;
+    ServerList* list;
+    ServerListing* data;
+    PacketTrilogy* packet;
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w  = &write;
     uint32_t count;
     uint32_t length;
     uint32_t n;
@@ -163,7 +163,7 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     
     for (i = 0; i < count; i++)
     {
-        R(ServerListing*) server = &data[i];
+        ServerListing* server = &data[i];
         
         if (!server_listing_name(server))
             continue;
@@ -210,7 +210,7 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     for (i = 0; i < count; i++)
     {
         int playerCount;
-        R(ServerListing*) server = &data[i];
+        ServerListing* server = &data[i];
         
         if (!server_listing_name(server))
             continue;
@@ -261,9 +261,9 @@ static void login_trilogy_handle_op_server_list(R(LoginClient*) client, R(Protoc
     login_trilogy_schedule_packet(handler, packet);
 }
 
-static void login_trilogy_handle_op_server_status_request(R(LoginClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+static void login_trilogy_handle_op_server_status_request(LoginClient* client, ProtocolHandler* handler, Aligned* a)
 {
-    R(const char*) ipAddress = (const char*)aligned_current(a);
+    const char* ipAddress = (const char*)aligned_current(a);
     
     if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
         return;
@@ -271,9 +271,9 @@ static void login_trilogy_handle_op_server_status_request(R(LoginClient*) client
     server_list_send_client_login_request_by_ip_address((Login*)protocol_handler_basic(handler), ipAddress, login_client_account_id(client));
 }
 
-void login_client_trilogy_handle_login_response(R(LoginClient*) client, int response)
+void login_client_trilogy_handle_login_response(LoginClient* client, int response)
 {
-    R(ProtocolHandler*) handler;
+    ProtocolHandler* handler;
     
     if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
         return;
@@ -305,12 +305,12 @@ void login_client_trilogy_handle_login_response(R(LoginClient*) client, int resp
     }
 }
 
-static void login_trilogy_handle_op_session_key(R(LoginClient*) client, R(ProtocolHandler*) handler)
+static void login_trilogy_handle_op_session_key(LoginClient* client, ProtocolHandler* handler)
 {
-    R(Basic*) basic;
-    R(PacketTrilogy*) packet;
+    Basic* basic;
+    PacketTrilogy* packet;
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w = &write;
     
     if (login_client_get_state(client) != LoginClientTrilogy_AcceptedCredentials)
         return;
@@ -327,10 +327,10 @@ static void login_trilogy_handle_op_session_key(R(LoginClient*) client, R(Protoc
     login_trilogy_schedule_packet(handler, packet);
 }
 
-void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a)
+void client_recv_packet_trilogy(void* vclient, uint16_t opcode, Aligned* a)
 {
-    R(LoginClient*) client      = (LoginClient*)vclient;
-    R(ProtocolHandler*) handler = login_client_handler(client);
+    LoginClient* client         = (LoginClient*)vclient;
+    ProtocolHandler* handler    = login_client_handler(client);
 
     switch (opcode)
     {

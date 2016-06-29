@@ -27,12 +27,12 @@ STRUCT_DEFINE(ProtocolHandlerStandard)
     uint8_t         protocolFormat;
 };
 
-void    protocol_handler_standard_init(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, uint32_t index);
-void    protocol_handler_standard_deinit(R(ProtocolHandlerStandard*) handler);
+void    protocol_handler_standard_init(UdpSocket* sock, UdpClient* client, ProtocolHandler* handler, uint32_t index);
+void    protocol_handler_standard_deinit(ProtocolHandlerStandard* handler);
 
-void    protocol_handler_standard_recv(R(ProtocolHandlerStandard*) handler, R(byte*) data, int len);
-void    protocol_handler_standard_handle_recv(R(ProtocolHandlerStandard*) handler, R(Aligned*) a, int isFromCombined);
-void    protocol_handler_standard_disconnect(R(ProtocolHandlerStandard*) handler);
+void    protocol_handler_standard_recv(ProtocolHandlerStandard* handler, byte* data, int len);
+void    protocol_handler_standard_handle_recv(ProtocolHandlerStandard* handler, Aligned* a, int isFromCombined);
+void    protocol_handler_standard_disconnect(ProtocolHandlerStandard* handler);
 
 #define protocol_handler_standard_basic(handler) ack_mgr_standard_basic(&(handler)->ackMgr)
 #define protocol_handler_standard_client_object(handler) ((handler)->clientObject)

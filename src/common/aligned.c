@@ -7,7 +7,7 @@
 #define ERR_REVERSE "[aligned_reverse] Attempt to advance below beginning of buffer"
 #define ERR_CHECK "[aligned_check] Attempt to check beyond end of buffer"
 
-void aligned_init(R(Basic*) basic, R(Aligned*) a, R(void*) ptr, uint32_t len)
+void aligned_init(Basic* basic, Aligned* a, void* ptr, uint32_t len)
 {
     a->cursor   = 0;
     a->length   = len;
@@ -15,7 +15,7 @@ void aligned_init(R(Basic*) basic, R(Aligned*) a, R(void*) ptr, uint32_t len)
     a->basic    = basic;
 }
 
-void aligned_init_cursor(R(Basic*) basic, R(Aligned*) a, R(void*) ptr, uint32_t len, uint32_t cursor)
+void aligned_init_cursor(Basic* basic, Aligned* a, void* ptr, uint32_t len, uint32_t cursor)
 {
     a->cursor   = cursor;
     a->length   = len;
@@ -23,12 +23,12 @@ void aligned_init_cursor(R(Basic*) basic, R(Aligned*) a, R(void*) ptr, uint32_t 
     a->basic    = basic;
 }
 
-void aligned_init_copy(R(Aligned*) dst, R(Aligned*) src)
+void aligned_init_copy(Aligned* dst, Aligned* src)
 {
     memcpy(dst, src, sizeof(Aligned));
 }
 
-uint32_t aligned_advance(R(Aligned*) a, uint32_t len)
+uint32_t aligned_advance(Aligned* a, uint32_t len)
 {
     uint32_t c = a->cursor;
     a->cursor += len;
@@ -39,7 +39,7 @@ uint32_t aligned_advance(R(Aligned*) a, uint32_t len)
     return c;
 }
 
-uint32_t aligned_reverse(R(Aligned*) a, uint32_t len)
+uint32_t aligned_reverse(Aligned* a, uint32_t len)
 {
     uint32_t c = a->cursor;
     int cursor = ((int)a->cursor) - ((int)len);
@@ -52,7 +52,7 @@ uint32_t aligned_reverse(R(Aligned*) a, uint32_t len)
     return c;
 }
 
-void aligned_check(R(Aligned*) a, uint32_t len)
+void aligned_check(Aligned* a, uint32_t len)
 {
     uint32_t c = a->cursor + len;
     
@@ -60,7 +60,7 @@ void aligned_check(R(Aligned*) a, uint32_t len)
         exception_throw_literal(a->basic, ErrorOutOfBounds, ERR_CHECK);
 }
 
-int aligned_advance_null_terminator(R(Aligned*) a)
+int aligned_advance_null_terminator(Aligned* a)
 {
     int len         = 0;
     uint32_t length = a->length;
@@ -79,14 +79,14 @@ int aligned_advance_null_terminator(R(Aligned*) a)
     return -1;
 }
 
-void aligned_reinit(R(Aligned*) a, R(void*) ptr, uint32_t len)
+void aligned_reinit(Aligned* a, void* ptr, uint32_t len)
 {
     a->cursor   = 0;
     a->length   = len;
     a->buffer   = (byte*)ptr;
 }
 
-void aligned_reinit_cursor(R(Aligned*) a, R(void*) ptr, uint32_t len, uint32_t cursor)
+void aligned_reinit_cursor(Aligned* a, void* ptr, uint32_t len, uint32_t cursor)
 {
     a->cursor   = cursor;
     a->length   = len;
@@ -94,16 +94,16 @@ void aligned_reinit_cursor(R(Aligned*) a, R(void*) ptr, uint32_t len, uint32_t c
 }
 
 // Read
-uint8_t aligned_read_uint8(R(Aligned*) a)
+uint8_t aligned_read_uint8(Aligned* a)
 {
     uint32_t c = aligned_advance(a, sizeof(uint8_t));
     return a->buffer[c];
 }
 
-uint16_t aligned_read_uint16(R(Aligned*) a)
+uint16_t aligned_read_uint16(Aligned* a)
 {
     uint32_t c      = aligned_advance(a, sizeof(uint16_t));
-    R(byte*) buffer = a->buffer;
+    byte* buffer    = a->buffer;
     uint16_t ret;
     
     ret  = buffer[c + 0] << 0;
@@ -112,10 +112,10 @@ uint16_t aligned_read_uint16(R(Aligned*) a)
     return ret;
 }
 
-uint32_t aligned_read_uint32(R(Aligned*) a)
+uint32_t aligned_read_uint32(Aligned* a)
 {
     uint32_t c      = aligned_advance(a, sizeof(uint32_t));
-    R(byte*) buffer = a->buffer;
+    byte* buffer    = a->buffer;
     uint32_t ret;
     
     ret  = buffer[c + 0] <<  0;
@@ -126,10 +126,10 @@ uint32_t aligned_read_uint32(R(Aligned*) a)
     return ret;
 }
 
-uint64_t aligned_read_uint64(R(Aligned*) a)
+uint64_t aligned_read_uint64(Aligned* a)
 {
     uint32_t c      = aligned_advance(a, sizeof(uint64_t));
-    R(byte*) buffer = a->buffer;
+    byte* buffer    = a->buffer;
     uint64_t ret;
     
     ret  = ((uint64_t)buffer[c + 0]) <<  0;
@@ -144,11 +144,11 @@ uint64_t aligned_read_uint64(R(Aligned*) a)
     return ret;
 }
 
-void aligned_read_buffer(R(Aligned*) a, R(void*) ptr, uint32_t len)
+void aligned_read_buffer(Aligned* a, void* ptr, uint32_t len)
 {
-    R(byte*) dst    = (byte*)ptr;
-    R(byte*) src    = a->buffer;
-    uint32_t c      = aligned_advance(a, len);
+    byte* dst   = (byte*)ptr;
+    byte* src   = a->buffer;
+    uint32_t c  = aligned_advance(a, len);
     uint32_t i;
     
     for (i = 0; i < len; i++)
@@ -157,38 +157,38 @@ void aligned_read_buffer(R(Aligned*) a, R(void*) ptr, uint32_t len)
     }
 }
 
-uint8_t aligned_peek_uint8(R(Aligned*) a)
+uint8_t aligned_peek_uint8(Aligned* a)
 {
     aligned_check(a, sizeof(uint8_t));
     return a->buffer[a->cursor];
 }
 
 // Write
-void aligned_write_memset(R(Aligned*) a, int val, uint32_t len)
+void aligned_write_memset(Aligned* a, int val, uint32_t len)
 {
     uint32_t c = aligned_advance(a, len);
     memset(a->buffer + c, val, len);
 }
 
-void aligned_write_uint8(R(Aligned*) a, uint8_t v)
+void aligned_write_uint8(Aligned* a, uint8_t v)
 {
     uint32_t c = aligned_advance(a, sizeof(uint8_t));
     a->buffer[c] = v;
 }
 
-void aligned_write_uint16(R(Aligned*) a, uint16_t v)
+void aligned_write_uint16(Aligned* a, uint16_t v)
 {
     uint32_t c      = aligned_advance(a, sizeof(uint16_t));
-    R(byte*) buffer = a->buffer;
+    byte* buffer    = a->buffer;
     
     buffer[c + 0] = (uint8_t)((v & 0x00ff) >> 0);
     buffer[c + 1] = (uint8_t)((v & 0xff00) >> 8);
 }
 
-void aligned_write_uint32(R(Aligned*) a, uint32_t v)
+void aligned_write_uint32(Aligned* a, uint32_t v)
 {
     uint32_t c      = aligned_advance(a, sizeof(uint32_t));
-    R(byte*) buffer = a->buffer;
+    byte* buffer    = a->buffer;
     
     buffer[c + 0] = (uint8_t)((v & 0x000000ff) >>  0);
     buffer[c + 1] = (uint8_t)((v & 0x0000ff00) >>  8);
@@ -196,10 +196,10 @@ void aligned_write_uint32(R(Aligned*) a, uint32_t v)
     buffer[c + 3] = (uint8_t)((v & 0xff000000) >> 24);
 }
 
-void aligned_write_uint64(R(Aligned*) a, uint64_t v)
+void aligned_write_uint64(Aligned* a, uint64_t v)
 {
     uint32_t c      = aligned_advance(a, sizeof(uint64_t));
-    R(byte*) buffer = a->buffer;
+    byte* buffer    = a->buffer;
     
     buffer[c + 0] = (uint8_t)((v & 0x00000000000000ff) >>  0);
     buffer[c + 1] = (uint8_t)((v & 0x000000000000ff00) >>  8);
@@ -211,17 +211,17 @@ void aligned_write_uint64(R(Aligned*) a, uint64_t v)
     buffer[c + 7] = (uint8_t)((v & 0xff00000000000000) >> 56);
 }
 
-void aligned_write_float(R(Aligned*) a, float v)
+void aligned_write_float(Aligned* a, float v)
 {
     uint32_t u = *(uint32_t*)&v;
     aligned_write_uint32(a, u);
 }
 
-void aligned_write_buffer(R(Aligned*) a, R(const void*) data, uint32_t len)
+void aligned_write_buffer(Aligned* a, const void* data, uint32_t len)
 {
-    uint32_t c          = aligned_advance(a, len);
-    R(byte*) dst        = a->buffer;
-    R(const byte*) src  = (const byte*)data;
+    uint32_t c      = aligned_advance(a, len);
+    byte* dst       = a->buffer;
+    const byte* src = (const byte*)data;
     uint32_t i;
     
     for (i = 0; i < len; i++)
@@ -230,19 +230,19 @@ void aligned_write_buffer(R(Aligned*) a, R(const void*) data, uint32_t len)
     }
 }
 
-void aligned_write_random(R(Aligned*) a, int bytes)
+void aligned_write_random(Aligned* a, int bytes)
 {
     uint32_t c = aligned_advance(a, (uint32_t)bytes);
     random_bytes(a->buffer + c, bytes);
 }
 
-void aligned_write_zeroes(R(Aligned*) a, uint32_t count)
+void aligned_write_zeroes(Aligned* a, uint32_t count)
 {
     uint32_t c = aligned_advance(a, count);
     memset(a->buffer + c, 0, count);
 }
 
-void aligned_write_snprintf_full_advance(R(Aligned*) a, uint32_t n, R(const char*) fmt, ...)
+void aligned_write_snprintf_full_advance(Aligned* a, uint32_t n, const char* fmt, ...)
 {
     uint32_t c = aligned_advance(a, n);
     va_list args;
@@ -252,16 +252,16 @@ void aligned_write_snprintf_full_advance(R(Aligned*) a, uint32_t n, R(const char
     va_end(args);
 }
 
-void aligned_write_reverse_uint8(R(Aligned*) a, uint8_t v)
+void aligned_write_reverse_uint8(Aligned* a, uint8_t v)
 {
     uint32_t c = aligned_reverse(a, sizeof(uint8_t));
     a->buffer[c - 1] = v;
 }
 
-void aligned_write_reverse_uint16(R(Aligned*) a, uint16_t v)
+void aligned_write_reverse_uint16(Aligned* a, uint16_t v)
 {
     uint32_t c      = aligned_reverse(a, sizeof(uint16_t));
-    R(byte*) buffer = a->buffer;
+    byte* buffer    = a->buffer;
     
     buffer[c - 2] = (uint8_t)((v & 0x00ff) >> 0);
     buffer[c - 1] = (uint8_t)((v & 0xff00) >> 8);

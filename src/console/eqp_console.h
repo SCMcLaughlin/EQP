@@ -28,9 +28,9 @@ STRUCT_DEFINE(Console)
     ShmViewer   shmViewerMaster;
 };
 
-void    console_init(R(Console*) console);
-void    console_deinit(R(Console*) console);
-int     console_send(R(Console*) console, int argc, R(const char**) argv);
-void    console_recv(R(Console*) console);
+void    console_init(Console* console);
+void    console_deinit(Console* console);
+int     console_send(Console* console, int argc, const char** argv);
+void    console_recv(Console* console);
 
 #endif//EQP_CONSOLE_H

@@ -11,7 +11,7 @@ STRUCT_DEFINE(ConsoleMessage)
     char        replyTo[0];
 };
 
-static void console_destroy(R(Console*) console)
+static void console_destroy(Console* console)
 {
     if (console->sourceId == EQP_SOURCE_ID_CONSOLE)
         proc_deinit(&console->procConsole);
@@ -19,14 +19,14 @@ static void console_destroy(R(Console*) console)
     free(console);
 }
 
-static void console_lua_push_string(R(lua_State*) L, R(Aligned*) a)
+static void console_lua_push_string(lua_State* L, Aligned* a)
 {
     uint32_t len = aligned_read_uint32(a);
     lua_pushlstring(L, (const char*)aligned_current(a), len);
     aligned_advance(a, len + 1); // len does not include the null terminator
 }
 
-static void console_lua_push_table(R(lua_State*) L, R(Aligned*) a, uint32_t count)
+static void console_lua_push_table(lua_State* L, Aligned* a, uint32_t count)
 {
     uint32_t i;
     
@@ -40,7 +40,7 @@ static void console_lua_push_table(R(lua_State*) L, R(Aligned*) a, uint32_t coun
     }
 }
 
-static int console_push_to_lua(R(Basic*) basic, R(lua_State*) L, R(Console*) console, R(ConsoleMessage*) msg, R(Aligned*) a)
+static int console_push_to_lua(Basic* basic, lua_State* L, Console* console, ConsoleMessage* msg, Aligned* a)
 {
     uint32_t argCount   = msg->argCount;
     int ret             = false;
@@ -81,12 +81,12 @@ static int console_push_to_lua(R(Basic*) basic, R(lua_State*) L, R(Console*) con
     return ret;
 }
 
-static int console_do_receive(R(MasterIpcThread*) ipcThread, R(Master*) M, R(ChildProcess*) proc, int sourceId, R(IpcPacket*) packet, Console* volatile* conPtr)
+static int console_do_receive(MasterIpcThread* ipcThread, Master* M, ChildProcess* proc, int sourceId, IpcPacket* packet, Console* volatile* conPtr)
 {
     Aligned read;
-    R(Aligned*) a = &read;
-    R(Console*) console;
-    R(ConsoleMessage*) msg;
+    Aligned* a = &read;
+    Console* console;
+    ConsoleMessage* msg;
     
     aligned_init(B(ipcThread), a, ipc_packet_data(packet), ipc_packet_length(packet));
     
@@ -120,7 +120,7 @@ static int console_do_receive(R(MasterIpcThread*) ipcThread, R(Master*) M, R(Chi
     return console_push_to_lua(B(ipcThread), master_ipc_thread_lua(ipcThread), console, msg, a);
 }
 
-int console_receive(R(MasterIpcThread*) ipcThread, R(Master*) M, R(ChildProcess*) proc, int sourceId, R(IpcPacket*) packet)
+int console_receive(MasterIpcThread* ipcThread, Master* M, ChildProcess* proc, int sourceId, IpcPacket* packet)
 {
     ExceptionScope exScope;
     Console* volatile console   = NULL;
@@ -148,12 +148,12 @@ int console_receive(R(MasterIpcThread*) ipcThread, R(Master*) M, R(ChildProcess*
     return ret;
 }
 
-static void console_write(R(Console*) console, R(const char*) msg, uint32_t length, ServerOp opcode)
+static void console_write(Console* console, const char* msg, uint32_t length, ServerOp opcode)
 {
     char buf[EQP_IPC_PACKET_MAX_SIZE];
-    R(ChildProcess*) proc;
+    ChildProcess* proc;
     Aligned w;
-    R(Basic*) basic = B(console->ipcThread);
+    Basic* basic    = B(console->ipcThread);
     int sourceId    = console->sourceId;
     
     aligned_init(basic, &w, buf, sizeof(buf));
@@ -177,12 +177,12 @@ static void console_write(R(Console*) console, R(const char*) msg, uint32_t leng
     ipc_buffer_write(basic, proc_ipc(proc), opcode, sourceId, aligned_position(&w), buf);
 }
 
-void console_reply(R(Console*) console, R(const char*) msg, uint32_t length)
+void console_reply(Console* console, const char* msg, uint32_t length)
 {
     console_write(console, msg, length, ServerOp_ConsoleMessage);
 }
 
-void console_finish(R(Console*) console)
+void console_finish(Console* console)
 {
     console_write(console, NULL, 0, ServerOp_ConsoleFinish);
     console_destroy(console);

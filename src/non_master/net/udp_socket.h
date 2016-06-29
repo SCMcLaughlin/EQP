@@ -24,19 +24,19 @@ STRUCT_DEFINE(UdpSocket)
     byte    compressBuffer[EQP_UDP_SOCKET_BUFFER_SIZE];
 };
 
-UdpSocket*  udp_socket_create(R(Basic*) basic);
-void        udp_socket_destroy(R(UdpSocket*) sock);
+UdpSocket*  udp_socket_create(Basic* basic);
+void        udp_socket_destroy(UdpSocket* sock);
 
-void        udp_socket_open(R(UdpSocket*) sock, uint16_t port);
-void        udp_socket_close(R(UdpSocket*) sock);
-void        udp_socket_recv(R(UdpSocket*) sock);
-void        udp_socket_check_timeouts(R(UdpSocket*) sock);
-void        udp_socket_send(R(UdpSocket*) sock);
+void        udp_socket_open(UdpSocket* sock, uint16_t port);
+void        udp_socket_close(UdpSocket* sock);
+void        udp_socket_recv(UdpSocket* sock);
+void        udp_socket_check_timeouts(UdpSocket* sock);
+void        udp_socket_send(UdpSocket* sock);
 
 #define     udp_socket_fd(sock) ((sock)->socketFd)
 #define     udp_socket_basic(sock) ((sock)->basic)
 #define     udp_socket_get_compress_buffer(sock) ((sock)->compressBuffer)
 
-void        udp_socket_flag_client_as_dead_by_index(R(UdpSocket*) sock, uint32_t index);
+void        udp_socket_flag_client_as_dead_by_index(UdpSocket* sock, uint32_t index);
 
 #endif//EQP_UDP_SOCKET_H

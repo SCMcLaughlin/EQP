@@ -64,10 +64,10 @@ STRUCT_DEFINE(CSTrilogy_CharCreateParams)
     float       z;
 };
 
-void    cs_client_trilogy_on_auth(R(CharSelectClient*) client);
-void    cs_client_trilogy_on_account_id(R(CharSelectClient*) client, uint32_t accountId);
-void    cs_client_trilogy_on_character_name_checked(R(CharSelectClient*) client, int taken);
-void    cs_client_trilogy_on_zone_in_failure(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) zoneShortName);
-void    cs_client_trilogy_on_zone_in_success(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(Server_ZoneAddress*) zoneAddr);
+void    cs_client_trilogy_on_auth(CharSelectClient* client);
+void    cs_client_trilogy_on_account_id(CharSelectClient* client, uint32_t accountId);
+void    cs_client_trilogy_on_character_name_checked(CharSelectClient* client, int taken);
+void    cs_client_trilogy_on_zone_in_failure(CharSelectClient* client, CharSelect* charSelect, const char* zoneShortName);
+void    cs_client_trilogy_on_zone_in_success(CharSelectClient* client, CharSelect* charSelect, Server_ZoneAddress* zoneAddr);
 
 #endif//EQP_CHAR_SELECT_CLIENT_TRILOGY_H

@@ -4,9 +4,9 @@
 #include "eqp_master.h"
 #include "client.h"
 
-ZoneCluster* zone_cluster_create(R(MasterIpcThread*) ipcThread, uint16_t id, uint16_t port, uint16_t maxZones)
+ZoneCluster* zone_cluster_create(MasterIpcThread* ipcThread, uint16_t id, uint16_t port, uint16_t maxZones)
 {
-    R(ZoneCluster*) zc = eqp_alloc_type(B(ipcThread), ZoneCluster);
+    ZoneCluster* zc = eqp_alloc_type(B(ipcThread), ZoneCluster);
     
     proc_init(&zc->proc);
     
@@ -22,9 +22,9 @@ ZoneCluster* zone_cluster_create(R(MasterIpcThread*) ipcThread, uint16_t id, uin
     return zc;
 }
 
-void zone_cluster_start_zone(R(ZoneCluster*) zc, int sourceId)
+void zone_cluster_start_zone(ZoneCluster* zc, int sourceId)
 {
-    R(Basic*) basic = B(zc->ipcThread);
+    Basic* basic    = B(zc->ipcThread);
     int zoneId      = sourceId % EQP_SOURCE_ID_ZONE_INSTANCE_OFFSET;
     int instId      = sourceId / EQP_SOURCE_ID_ZONE_INSTANCE_OFFSET;
     
@@ -34,12 +34,12 @@ void zone_cluster_start_zone(R(ZoneCluster*) zc, int sourceId)
     proc_ipc_send(basic, zone_cluster_proc(zc), ServerOp_StartZone, sourceId, 0, NULL);
 }
 
-void zone_cluster_ipc_send(R(ZoneCluster*) zc, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data)
+void zone_cluster_ipc_send(ZoneCluster* zc, ServerOp opcode, int sourceId, uint32_t length, const void* data)
 {
     proc_ipc_send(B(zc->ipcThread), zone_cluster_proc(zc), opcode, sourceId, length, data);
 }
 
-void zone_cluster_inform_of_client_zoning_in(R(ZoneCluster*) zc, R(Client*) client, int sourceId)
+void zone_cluster_inform_of_client_zoning_in(ZoneCluster* zc, Client* client, int sourceId)
 {
     Server_ClientZoning zoning;
     
@@ -53,7 +53,7 @@ void zone_cluster_inform_of_client_zoning_in(R(ZoneCluster*) zc, R(Client*) clie
     zone_cluster_ipc_send(zc, ServerOp_ClientZoning, sourceId, sizeof(zoning), &zoning);
 }
 
-int zone_cluster_has_free_space(R(ZoneCluster*) zc)
+int zone_cluster_has_free_space(ZoneCluster* zc)
 {
     // Use signed ints to avoid underflow when reserved > max
     int maxZones    = zc->maxZones;
@@ -63,7 +63,7 @@ int zone_cluster_has_free_space(R(ZoneCluster*) zc)
     return (count < (maxZones - reserved));
 }
 
-void zone_cluster_set_max_zones(R(ZoneCluster*) zc, uint16_t maxZones)
+void zone_cluster_set_max_zones(ZoneCluster* zc, uint16_t maxZones)
 {
     zc->maxZones = maxZones;
 }

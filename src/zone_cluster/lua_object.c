@@ -1,25 +1,26 @@
 
 #include "lua_object.h"
 #include "zone_cluster.h"
+#include "zone.h"
 
 #define SYS_INDEX       2
 #define SYS_SCRIPT      "scripts/zone_cluster/sys/sys.lua"
 #define ZC_INIT_SCRIPT  "scripts/zone_cluster/init/zone_cluster_init.lua"
 
-static void zc_lua_push_sys_func(R(ZC*) zc, R(lua_State*) L, R(const char*) funcName)
+static void zc_lua_push_sys_func(ZC* zc, lua_State* L, const char* funcName)
 {
     lua_getfield(L, SYS_INDEX, funcName);
     
     if (!lua_isfunction(L, -1))
     {
-        exception_throw_format(B(zc), ErrorLua, "sys.%s() does not exist; expected it to be defined in " SYS_SCRIPT, funcName);
         lua_pop(L, 1);
+        exception_throw_format(B(zc), ErrorLua, "sys.%s() does not exist; expected it to be defined in " SYS_SCRIPT, funcName);
     }
 }
 
-void zc_lua_init(R(ZC*) zc)
+void zc_lua_init(ZC* zc)
 {
-    R(lua_State*) L = lua_sys_open(B(zc));
+    lua_State* L = lua_sys_open(B(zc));
     
     zc->L = L;
     
@@ -35,12 +36,12 @@ void zc_lua_init(R(ZC*) zc)
     lua_sys_run_file_no_throw(B(zc), L, ZC_INIT_SCRIPT, 0);
 }
 
-void zc_lua_clear(R(lua_State*) L)
+void zc_lua_clear(lua_State* L)
 {
     lua_settop(L, SYS_INDEX);
 }
 
-static void zc_lua_push(R(ZC*) zc, R(lua_State*) L, int index, R(const char*) getName)
+static void zc_lua_push(ZC* zc, lua_State* L, int index, const char* getName)
 {
     lua_getfield(L, SYS_INDEX, getName);
     lua_pushinteger(L, index);
@@ -48,58 +49,94 @@ static void zc_lua_push(R(ZC*) zc, R(lua_State*) L, int index, R(const char*) ge
         lua_pushnil(L);
 }
 
-static void zc_lua_push_object(R(ZC*) zc, R(lua_State*) L, int index)
+static void zc_lua_push_object(ZC* zc, lua_State* L, int index)
 {
     zc_lua_push(zc, L, index, "getObject");
 }
 
-static void zc_lua_push_callback(R(ZC*) zc, R(lua_State*) L, int index)
+static void zc_lua_push_callback(ZC* zc, lua_State* L, int index)
 {
     zc_lua_push(zc, L, index, "getCallback");
 }
 
-static void zc_lua_push_timer(R(ZC*) zc, R(lua_State*) L, int index)
+static void zc_lua_push_timer(ZC* zc, lua_State* L, int index)
 {
     zc_lua_push(zc, L, index, "getTimer");
 }
 
-void zc_lua_create_object(R(ZC*) zc, R(lua_State*) L, R(LuaObject*) lobj, R(const char*) funcName)
+void zc_lua_create_zone(ZC* zc, Zone* zone)
 {
-    zc_lua_push_sys_func(zc, L, funcName);
+    lua_State* L    = zc->L;
+    LuaObject* lobj = (LuaObject*)zone;
+    
+    zc_lua_push_sys_func(zc, L, "createZone");
     
     lua_pushlightuserdata(L, lobj);
-    lobj->index = (lua_sys_call_no_throw(B(zc), L, 1, 1)) ? lua_tointeger(L, -1) : 0;
-    zc_lua_clear(L);
+    
+    if (lua_sys_call_no_throw(B(zc), L, 1, 1))
+    {
+        lobj->index = lua_tointeger(L, -1);
+        lua_pop(L, 1);
+    }
 }
 
-void zc_lua_destroy_object(R(ZC*) zc, R(LuaObject*) lobj)
+void zc_lua_create_object(ZC* zc, Zone* zone, LuaObject* lobj, const char* funcName)
 {
-    R(lua_State*) L = zc->L;
+    lua_State* L = zc->L;
+    
+    zc_lua_push_sys_func(zc, L, funcName);
+    
+    zc_lua_push_object(zc, L, zone->luaObj.index);
+    lua_pushlightuserdata(L, lobj);
+    
+    if (lua_sys_call_no_throw(B(zc), L, 2, 1))
+    {
+        lobj->index = lua_tointeger(L, -1);
+        lua_pop(L, 1);
+    }
+}
+
+void zc_lua_destroy_object(ZC* zc, LuaObject* lobj)
+{
+    lua_State* L = zc->L;
     
     zc_lua_push_sys_func(zc, L, "objectGC");
     lua_pushinteger(L, lobj->index);
     lua_sys_call_no_throw(B(zc), L, 1, 0);
 }
 
-int zc_lua_object_get_index(R(LuaObject*) lobj)
+void zc_lua_event_basic(ZC* zc, Zone* zone, LuaObject* lobj, const char* eventName)
+{
+    lua_State* L = zc->L;
+    
+    zc_lua_push_sys_func(zc, L, "eventCall");
+    
+    lua_pushstring(L, eventName);
+    zc_lua_push_object(zc, L, zone->luaObj.index);
+    zc_lua_push_object(zc, L, lobj->index);
+    
+    lua_sys_call_no_throw(B(zc), L, 3, 0);
+}
+
+int zc_lua_object_get_index(LuaObject* lobj)
 {
     return lobj->index;
 }
 
-static void zc_lua_timer_callback(R(Timer*) timer)
+static void zc_lua_timer_callback(Timer* timer)
 {
-    R(LuaTimer*) ltimer = timer_userdata_type(timer, LuaTimer);
-    R(ZC*) zc           = ltimer->zc;
-    R(lua_State*) L     = zc->L;
+    LuaTimer* ltimer    = timer_userdata_type(timer, LuaTimer);
+    ZC* zc              = ltimer->zc;
+    lua_State* L        = zc->L;
     
     zc_lua_push_callback(zc, L, ltimer->luaCallback);
     zc_lua_push_timer(zc, L, ltimer->luaObj.index);
     lua_sys_call_no_throw(B(zc), L, 1, 0);
 }
 
-LuaTimer* zc_lua_timer_create(R(ZC*) zc, uint32_t periodMilliseconds, int luaCallback, int timerIndex, int start)
+LuaTimer* zc_lua_timer_create(ZC* zc, uint32_t periodMilliseconds, int luaCallback, int timerIndex, int start)
 {
-    R(LuaTimer*) timer = eqp_alloc_type(B(zc), LuaTimer);
+    LuaTimer* timer = eqp_alloc_type(B(zc), LuaTimer);
     
     timer->luaObj.index = timerIndex;
     timer->luaCallback  = luaCallback;
@@ -109,23 +146,23 @@ LuaTimer* zc_lua_timer_create(R(ZC*) zc, uint32_t periodMilliseconds, int luaCal
     return timer;
 }
 
-void zc_lua_timer_destroy(R(LuaTimer*) timer)
+void zc_lua_timer_destroy(LuaTimer* timer)
 {
     timer_stop(&timer->timer);
     free(timer);
 }
 
-Timer* zc_lua_timer_get_timer(R(LuaTimer*) timer)
+Timer* zc_lua_timer_get_timer(LuaTimer* timer)
 {
     return &timer->timer;
 }
 
-int zc_lua_timer_get_callback_index(R(LuaTimer*) timer)
+int zc_lua_timer_get_callback_index(LuaTimer* timer)
 {
     return timer->luaCallback;
 }
 
-void zc_lua_timer_set_callback_index(R(LuaTimer*) timer, int index)
+void zc_lua_timer_set_callback_index(LuaTimer* timer, int index)
 {
     timer->luaCallback = index;
 }

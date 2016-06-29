@@ -68,22 +68,22 @@ STRUCT_DEFINE(Master)
     Timer           timerStatusChecks;
 };
 
-void            master_init(R(Master*) M);
-void            master_deinit(R(Master*) M);
-void            master_shut_down_all_child_processes(R(Master*) M);
+void            master_init(Master* M);
+void            master_deinit(Master* M);
+void            master_shut_down_all_child_processes(Master* M);
 
 #define         master_start_ipc_thread(M) master_ipc_thread_start(B(M), &(M)->ipcThread)
 
-void            master_main_loop(R(Master*) M);
+void            master_main_loop(Master* M);
 
-void            master_start_log_writer(R(Master*) M);
-void            master_start_char_select(R(Master*) M);
-void            master_start_login(R(Master*) M);
-void            master_start_zone_cluster(R(Master*) M, R(ZoneCluster*) zoneCluster, uint16_t id, uint16_t port);
+void            master_start_log_writer(Master* M);
+void            master_start_char_select(Master* M);
+void            master_start_login(Master* M);
+void            master_start_zone_cluster(Master* M, ZoneCluster* zoneCluster, uint16_t id, uint16_t port);
 
-void            master_status_checks_callback(R(Timer*) timer);
+void            master_status_checks_callback(Timer* timer);
 
-ChildProcess*   master_get_child_process(R(Master*) M, int sourceId);
+ChildProcess*   master_get_child_process(Master* M, int sourceId);
 
 #define         master_db(M) core_db(C((M)))
 #define         master_lock_init(M) master_ipc_thread_lock_init(&(M)->ipcThread)

@@ -121,8 +121,8 @@ STRUCT_DEFINE(Skills)
     uint8_t language[Lang_COUNT];
 };
 
-void    skills_preinit(R(Skills*) skills);
-void    skills_init(R(Skills*) skills, uint32_t class, uint32_t level, uint32_t race);
-void    skills_set_from_db(R(Skills*) skills, uint32_t skillId, uint32_t value);
+void    skills_preinit(Skills* skills);
+void    skills_init(Skills* skills, uint32_t class, uint32_t level, uint32_t race);
+void    skills_set_from_db(Skills* skills, uint32_t skillId, uint32_t value);
 
 #endif//EQP_SKILLS_H

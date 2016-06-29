@@ -6,7 +6,7 @@
 #define BIN_CHAR_SELECT     "./eqp-char-select"
 #define BIN_ZONE_CLUSTER    "./eqp-zone-cluster"
 
-void master_init(R(Master*) M)
+void master_init(Master* M)
 {
     master_lock_init(M);
     
@@ -30,7 +30,7 @@ void master_init(R(Master*) M)
     core_init(C(M), EQP_SOURCE_ID_MASTER, M->procLogWriter.ipc);
 }
 
-void master_deinit(R(Master*) M)
+void master_deinit(Master* M)
 {
     master_shut_down_all_child_processes(M);
     
@@ -47,10 +47,10 @@ void master_deinit(R(Master*) M)
     share_mem_destroy(&M->shmCreatorMaster, &M->shmViewerMaster);
 }
 
-void master_shut_down_all_child_processes(R(Master*) M)
+void master_shut_down_all_child_processes(Master* M)
 {
-    R(ZoneCluster**) zcProcs    = array_data_type(M->zoneClusterProcs, ZoneCluster*);
-    uint32_t n                  = array_count(M->zoneClusterProcs);
+    ZoneCluster** zcProcs   = array_data_type(M->zoneClusterProcs, ZoneCluster*);
+    uint32_t n              = array_count(M->zoneClusterProcs);
     uint32_t i;
     
     master_lock(M);
@@ -60,7 +60,7 @@ void master_shut_down_all_child_processes(R(Master*) M)
     
     for (i = 0; i < n; i++)
     {
-        R(ZoneCluster*) zc = zcProcs[i];
+        ZoneCluster* zc = zcProcs[i];
         
         proc_shutdown(M, zone_cluster_proc(zc));
         zone_cluster_destroy(zc);
@@ -73,8 +73,8 @@ void master_shut_down_all_child_processes(R(Master*) M)
     master_unlock(M);
 }
 
-static pid_t master_spawn_process(R(Master*) M, R(const char*) path, R(const char*) arg1, R(const char*) arg2, R(const char*) arg3,
-    R(const char*) arg4, R(const char*) arg5)
+static pid_t master_spawn_process(Master* M, const char* path, const char* arg1, const char* arg2, const char* arg3,
+    const char* arg4, const char* arg5)
 {
     pid_t pid;
     
@@ -116,7 +116,7 @@ static pid_t master_spawn_process(R(Master*) M, R(const char*) path, R(const cha
     return pid;
 }
 
-void master_start_log_writer(R(Master*) M)
+void master_start_log_writer(Master* M)
 {
     // Tell the log writer to open the log file for Master once it's started
     ipc_buffer_write(B(M), proc_ipc(&M->procLogWriter), ServerOp_LogOpen, EQP_SOURCE_ID_MASTER, 0, NULL);
@@ -125,7 +125,7 @@ void master_start_log_writer(R(Master*) M)
     proc_start(&M->procLogWriter, master_spawn_process(M, BIN_LOG_WRITER, proc_shm_path(&M->procLogWriter), NULL, NULL, NULL, NULL));
 }
 
-static void master_start_process(R(Master*) M, R(const char*) binPath, R(ChildProcess*) proc, R(const char*) ipcPath, R(const char*) id, R(const char*) port)
+static void master_start_process(Master* M, const char* binPath, ChildProcess* proc, const char* ipcPath, const char* id, const char* port)
 {
     ExceptionScope exScope;
     
@@ -145,17 +145,17 @@ static void master_start_process(R(Master*) M, R(const char*) binPath, R(ChildPr
     exception_end_try(B(M));
 }
 
-void master_start_char_select(R(Master*) M)
+void master_start_char_select(Master* M)
 {
     master_start_process(M, BIN_CHAR_SELECT, &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH, NULL, NULL);
 }
 
-void master_start_login(R(Master*) M)
+void master_start_login(Master* M)
 {
     master_start_process(M, BIN_LOGIN, &M->procLogin, EQP_LOGIN_SHM_PATH, NULL, NULL);
 }
 
-void master_start_zone_cluster(R(Master*) M, R(ZoneCluster*) zoneCluster, uint16_t id, uint16_t port)
+void master_start_zone_cluster(Master* M, ZoneCluster* zoneCluster, uint16_t id, uint16_t port)
 {
     char idBuf[32];
     char portBuf[32];
@@ -168,7 +168,7 @@ void master_start_zone_cluster(R(Master*) M, R(ZoneCluster*) zoneCluster, uint16
     array_push_back(B(M), &M->zoneClusterProcs, (void*)&zoneCluster);
 }
 
-ChildProcess* master_get_child_process(R(Master*) M, int sourceId)
+ChildProcess* master_get_child_process(Master* M, int sourceId)
 {
     ChildProcess* proc = NULL;
     
@@ -195,14 +195,14 @@ ChildProcess* master_get_child_process(R(Master*) M, int sourceId)
     return proc;
 }
 
-static void master_check_threads_status(R(Master*) M)
+static void master_check_threads_status(Master* M)
 {
     if (!thread_is_running(T(&M->ipcThread)))
         exception_throw_message(B(M), ErrorThread, "[master_check_threads_status] IPC thread lifetime ended unexpectedly", 0);
 }
 
-static void master_restart_proc(R(Master*) M, R(ChildProcess*) proc, int sourceId, R(const char*) binPath, R(const char*) ipcPath,
-    R(const char*) id, R(const char*) port)
+static void master_restart_proc(Master* M, ChildProcess* proc, int sourceId, const char* binPath, const char* ipcPath,
+    const char* id, const char* port)
 {
     log_from_format(B(M), sourceId, LogInfo, "eqp-master has detected that this process may be non-responsive; restarting...");
     log_format(B(M), LogInfo, "Detected that process %i for binary '%s' is non-responsive; restarting it", proc_pid(proc), binPath);
@@ -215,11 +215,11 @@ static void master_restart_proc(R(Master*) M, R(ChildProcess*) proc, int sourceI
     master_start_process(M, binPath, proc, ipcPath, id, port);
 }
 
-static void master_check_child_procs_status(R(Master*) M)
+static void master_check_child_procs_status(Master* M)
 {
-    R(ZoneCluster**) zcProcs    = array_data_type(M->zoneClusterProcs, ZoneCluster*);
-    uint32_t n                  = array_count(M->zoneClusterProcs);
-    uint64_t time               = clock_milliseconds();
+    ZoneCluster** zcProcs   = array_data_type(M->zoneClusterProcs, ZoneCluster*);
+    uint32_t n              = array_count(M->zoneClusterProcs);
+    uint64_t time           = clock_milliseconds();
     uint32_t i;
     
     if ((time - proc_last_activity_time(&M->procLogin)) >= EQP_CHILD_PROC_TIMEOUT_MILLISECONDS)
@@ -234,7 +234,7 @@ static void master_check_child_procs_status(R(Master*) M)
     /*
     for (i = 0; i < n; i++)
     {
-        R(ZoneCluster*) zc = &zcProcs[i];
+        ZoneCluster* zc     = &zcProcs[i];
     
         if ((time - proc_last_activity_time(zone_cluster_proc(zc))) >= EQP_CHILD_PROC_TIMEOUT_MILLISECONDS)
         {
@@ -251,9 +251,9 @@ static void master_check_child_procs_status(R(Master*) M)
     */
 }
 
-void master_status_checks_callback(R(Timer*) timer)
+void master_status_checks_callback(Timer* timer)
 {
-    R(Master*) M = timer_userdata_type(timer, Master);
+    Master* M = timer_userdata_type(timer, Master);
     
     master_lock(M);
     
@@ -263,7 +263,7 @@ void master_status_checks_callback(R(Timer*) timer)
     master_unlock(M);
 }
 
-void master_main_loop(R(Master*) M)
+void master_main_loop(Master* M)
 {
     for (;;)
     {

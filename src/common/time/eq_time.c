@@ -7,7 +7,7 @@
 #define MINUTES_PER_DAY         (MINUTES_PER_HOUR * 24)
 #define MINUTES_PER_YEAR        (MINUTES_PER_DAY * DAYS_PER_YEAR)
 
-void eq_time_calc(R(EQ_Time*) eqTime, uint64_t baseUnixSeconds)
+void eq_time_calc(EQ_Time* eqTime, uint64_t baseUnixSeconds)
 {
     uint64_t eq;
     uint32_t day;

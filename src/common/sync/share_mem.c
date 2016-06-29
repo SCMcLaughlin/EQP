@@ -1,7 +1,7 @@
 
 #include "share_mem.h"
 
-void shm_viewer_init(R(ShmViewer*) viewer)
+void shm_viewer_init(ShmViewer* viewer)
 {
     viewer->memory = NULL;
     viewer->length = 0;
@@ -11,7 +11,7 @@ void shm_viewer_init(R(ShmViewer*) viewer)
 #endif
 }
 
-void shm_viewer_open(R(Basic*) basic, R(ShmViewer*) viewer, R(const char*) path, uint32_t length)
+void shm_viewer_open(Basic* basic, ShmViewer* viewer, const char* path, uint32_t length)
 {
 #ifdef EQP_WINDOWS
     viewer->handle = OpenFileMappingA(FILE_MAP_ALL_ACCESS, FALSE, path);
@@ -40,7 +40,7 @@ void shm_viewer_open(R(Basic*) basic, R(ShmViewer*) viewer, R(const char*) path,
     viewer->length = length;
 }
 
-void shm_viewer_close(R(ShmViewer*) viewer)
+void shm_viewer_close(ShmViewer* viewer)
 {
     if (viewer->memory)
     {
@@ -61,7 +61,7 @@ void shm_viewer_close(R(ShmViewer*) viewer)
 #endif
 }
 
-static void shm_pick_name(R(ShmCreator*) creator, R(const char*) pathBase)
+static void shm_pick_name(ShmCreator* creator, const char* pathBase)
 {
     for (;;)
     {
@@ -78,7 +78,7 @@ static void shm_pick_name(R(ShmCreator*) creator, R(const char*) pathBase)
     }
 }
 
-void share_mem_create(R(Basic*) basic, R(ShmCreator*) creator, R(ShmViewer*) viewer, R(const char*) pathBase, uint32_t length)
+void share_mem_create(Basic* basic, ShmCreator* creator, ShmViewer* viewer, const char* pathBase, uint32_t length)
 {
 #ifdef EQP_LINUX
     int fd;
@@ -119,7 +119,7 @@ void share_mem_create(R(Basic*) basic, R(ShmCreator*) creator, R(ShmViewer*) vie
     viewer->length = length;
 }
 
-void share_mem_destroy(R(ShmCreator*) creator, R(ShmViewer*) viewer)
+void share_mem_destroy(ShmCreator* creator, ShmViewer* viewer)
 {
 #ifdef EQP_LINUX
     if (viewer->memory)

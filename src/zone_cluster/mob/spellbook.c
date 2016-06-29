@@ -2,7 +2,16 @@
 #include "spellbook.h"
 #include "zone_cluster.h"
 
-void spellbook_add_from_database(R(ZC*) zc, R(Spellbook*) spellbook, uint32_t slotId, uint32_t spellId)
+void spellbook_deinit(Spellbook* spellbook)
+{
+    if (spellbook->knownSpells)
+    {
+        array_destroy(spellbook->knownSpells);
+        spellbook->knownSpells = NULL;
+    }
+}
+
+void spellbook_add_from_database(ZC* zc, Spellbook* spellbook, uint32_t slotId, uint32_t spellId)
 {
     SpellbookSlot slot;
     
@@ -15,9 +24,9 @@ void spellbook_add_from_database(R(ZC*) zc, R(Spellbook*) spellbook, uint32_t sl
     array_push_back(B(zc), &spellbook->knownSpells, &slot);
 }
 
-void spellbook_add_memorized_from_database(R(ZC*) zc, R(Spellbook*) spellbook, uint32_t slotId, uint32_t spellId, uint64_t recastTimestamp)
+void spellbook_add_memorized_from_database(ZC* zc, Spellbook* spellbook, uint32_t slotId, uint32_t spellId, uint64_t recastTimestamp)
 {
-    R(MemorizedSpell*) memmed;
+    MemorizedSpell* memmed;
     (void)zc; //will be used to look up spell
     
     if (slotId >= 9)

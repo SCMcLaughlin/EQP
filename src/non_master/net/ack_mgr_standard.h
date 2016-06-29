@@ -15,8 +15,8 @@ STRUCT_DEFINE(AckMgrStandard)
     NetworkClientStandard   client;
 };
 
-void    ack_mgr_standard_init(R(UdpSocket*) sock, R(UdpClient*) client, R(AckMgrStandard*) ackMgr, uint32_t index);
-void    ack_mgr_standard_deinit(R(AckMgrStandard*) ackMgr);
+void    ack_mgr_standard_init(UdpSocket* sock, UdpClient* client, AckMgrStandard* ackMgr, uint32_t index);
+void    ack_mgr_standard_deinit(AckMgrStandard* ackMgr);
 
 #define ack_mgr_standard_basic(ack) network_client_standard_basic(&(ack)->client)
 #define ack_mgr_standard_update_index(ack, i) network_client_standard_update_index(&(ack)->client, i)

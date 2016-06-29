@@ -63,10 +63,10 @@ STRUCT_DEFINE(PacketTrilogy)
     byte        data[0];
 };
 
-PacketTrilogy*  packet_trilogy_create(R(Basic*) basic, uint16_t opcode, uint32_t length);
+PacketTrilogy*  packet_trilogy_create(Basic* basic, uint16_t opcode, uint32_t length);
 #define         packet_trilogy_create_type(basic, opcode, type) packet_trilogy_create((basic), (opcode), sizeof(type))
-void            packet_trilogy_grab(R(PacketTrilogy*) packet);
-void            packet_trilogy_drop(R(PacketTrilogy*) packet);
+void            packet_trilogy_grab(PacketTrilogy* packet);
+void            packet_trilogy_drop(PacketTrilogy* packet);
 
 #define         packet_trilogy_opcode(packet) ((packet)->opcode)
 #define         packet_trilogy_data(packet) (&(packet)->data[EQP_PACKET_TRILOGY_DATA_OFFSET])
@@ -75,6 +75,6 @@ void            packet_trilogy_drop(R(PacketTrilogy*) packet);
 #define         packet_trilogy_length_raw(packet) ((packet)->dataLength + ((EQP_PACKET_TRILOGY_DATA_OFFSET + sizeof(uint32_t)) * ((packet)->fragCount + 1)))
 #define         packet_trilogy_frag_count(packet) ((packet)->fragCount)
 
-void            packet_trilogy_fragmentize(R(PacketTrilogy*) packet);
+void            packet_trilogy_fragmentize(PacketTrilogy* packet);
 
 #endif//EQP_PACKET_TRILOGY_H

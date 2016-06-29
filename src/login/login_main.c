@@ -3,7 +3,7 @@
 #include "eqp_string.h"
 #include "terminal.h"
 
-int login_main(R(Login*) login, R(const char**) argv)
+int login_main(Login* login, const char** argv)
 {
     ExceptionScope exScope;
     int volatile ret = 0;

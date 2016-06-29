@@ -27,16 +27,16 @@ STRUCT_DEFINE(CharSelectClientAttemptingZoneIn)
     CharSelectClient*   client;
 };
 
-CharSelectClient*   char_select_client_create(R(ProtocolHandler*) handler, int expansion);
+CharSelectClient*   char_select_client_create(ProtocolHandler* handler, int expansion);
 #define             char_select_client_grab(cli) atomic_fetch_add(&(cli)->refCount, 1)
-void                char_select_client_drop(R(CharSelectClient*) client);
+void                char_select_client_drop(CharSelectClient* client);
 
-void                char_select_client_set_auth(R(CharSelectClient*) client, R(CharSelectAuth*) auth);
-void                char_select_client_query_account_id(R(CharSelectClient*) client, R(CharSelect*) charSelect);
-void                char_select_client_query_character_name_taken(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) name);
-void                char_select_client_delete_character_by_name(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) name);
-void                char_select_client_on_zone_in_failure(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) zoneShortName);
-void                char_select_client_on_zone_in_success(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(Server_ZoneAddress*) zoneAddr);
+void                char_select_client_set_auth(CharSelectClient* client, CharSelectAuth* auth);
+void                char_select_client_query_account_id(CharSelectClient* client, CharSelect* charSelect);
+void                char_select_client_query_character_name_taken(CharSelectClient* client, CharSelect* charSelect, const char* name);
+void                char_select_client_delete_character_by_name(CharSelectClient* client, CharSelect* charSelect, const char* name);
+void                char_select_client_on_zone_in_failure(CharSelectClient* client, CharSelect* charSelect, const char* zoneShortName);
+void                char_select_client_on_zone_in_success(CharSelectClient* client, CharSelect* charSelect, Server_ZoneAddress* zoneAddr);
 
 #define             char_select_client_handler(client) ((client)->handler)
 #define             char_select_client_is_authed(client) ((client)->auth.timestamp != 0)

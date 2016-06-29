@@ -32,9 +32,9 @@ STRUCT_DEFINE(LoginClient)
     bool                isLocal;
 };
 
-LoginClient*    login_client_create(R(ProtocolHandler*) handler, int expansion, int state);
+LoginClient*    login_client_create(ProtocolHandler* handler, int expansion, int state);
 #define         login_client_grab(cli) atomic_fetch_add(&(cli)->refCount, 1)
-void            login_client_drop(R(LoginClient*) client);
+void            login_client_drop(LoginClient* client);
 
 #define         login_client_get_state(client) ((client)->state)
 #define         login_client_set_state(client, st) ((client)->state = (st))
@@ -45,16 +45,16 @@ void            login_client_drop(R(LoginClient*) client);
 #define         login_client_password_length(client) ((client)->passwordLength)
 #define         login_client_session_key(client) ((client)->sessionKey)
 
-void            login_client_set_account_name(R(LoginClient*) client, R(const char*) name, int length);
+void            login_client_set_account_name(LoginClient* client, const char* name, int length);
 #define         login_client_set_account_id(client, id) ((client)->accountId = (id))
-void            login_client_set_password_temp(R(LoginClient*) client, R(const char*) password, int length);
+void            login_client_set_password_temp(LoginClient* client, const char* password, int length);
 #define         login_client_clear_password_temp(client) memset((client)->passwordTemp, 0, sizeof((client)->passwordTemp))
 #define         login_client_set_is_local(client, val) ((client)->isLocal = (val))
 #define         login_client_is_local(client) ((client)->isLocal)
 
-void            login_client_check_credentials(R(LoginClient*) client, R(Login*) login, R(const char*) username, int nameLength, R(const char*) password, int passLength);
+void            login_client_check_credentials(LoginClient* client, Login* login, const char* username, int nameLength, const char* password, int passLength);
 
-void            login_client_handle_login_response(R(LoginClient*) client, int response);
-void            login_client_generate_session_key(R(LoginClient*) client);
+void            login_client_handle_login_response(LoginClient* client, int response);
+void            login_client_generate_session_key(LoginClient* client);
 
 #endif//EQP_LOGIN_CLIENT_H

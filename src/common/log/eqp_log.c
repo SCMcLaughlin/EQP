@@ -4,7 +4,7 @@
 
 #define ERR_STRFTIME "[log_construct_message] strftime() failed"
 
-static uint32_t log_construct_message(R(Basic*) basic, R(char*) message, LogType type, R(const char*) fmt, va_list args)
+static uint32_t log_construct_message(Basic* basic, char* message, LogType type, const char* fmt, va_list args)
 {
     time_t rawTime      = time(NULL);
     struct tm* curTime  = localtime(&rawTime);
@@ -62,12 +62,12 @@ static uint32_t log_construct_message(R(Basic*) basic, R(char*) message, LogType
     return 0;
 }
 
-void log_init(R(LogIpc*) log, R(IpcBuffer*) ipc)
+void log_init(LogIpc* log, IpcBuffer* ipc)
 {
     log->ipc = ipc;
 }
 
-void log_format(R(Basic*) basic, LogType type, R(const char*) fmt, ...)
+void log_format(Basic* basic, LogType type, const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -75,7 +75,7 @@ void log_format(R(Basic*) basic, LogType type, R(const char*) fmt, ...)
     va_end(args);
 }
 
-void log_from_format(R(Basic*) basic, int sourceId, LogType type, R(const char*) fmt, ...)
+void log_from_format(Basic* basic, int sourceId, LogType type, const char* fmt, ...)
 {
     va_list args;
     va_start(args, fmt);
@@ -83,7 +83,7 @@ void log_from_format(R(Basic*) basic, int sourceId, LogType type, R(const char*)
     va_end(args);
 }
 
-void log_from_vformat(R(Basic*) basic, int sourceId, LogType type, R(const char*) fmt, va_list args)
+void log_from_vformat(Basic* basic, int sourceId, LogType type, const char* fmt, va_list args)
 {
     char message[EQP_LOG_MESSAGE_SIZE];
     uint32_t length = log_construct_message(basic, message, type, fmt, args);

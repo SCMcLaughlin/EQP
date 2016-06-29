@@ -5,9 +5,9 @@
 #define SCRIPT_INCLUDE  "scripts/include.lua"
 #define TRACEBACK_INDEX 1
 
-lua_State* lua_sys_open(R(Basic*) basic)
+lua_State* lua_sys_open(Basic* basic)
 {
-    R(lua_State*) L = luaL_newstate();
+    lua_State* L = luaL_newstate();
     
     if (L == NULL)
         exception_throw_literal(basic, ErrorLua, "[lua_sys_open] luaL_newstate() failed");
@@ -32,7 +32,7 @@ lua_State* lua_sys_open(R(Basic*) basic)
     return L;
 }
 
-int lua_sys_run_file_no_throw(R(Basic*) basic, R(lua_State*) L, R(const char*) path, int numReturns)
+int lua_sys_run_file_no_throw(Basic* basic, lua_State* L, const char* path, int numReturns)
 {
     int ret = true;
     
@@ -46,13 +46,13 @@ int lua_sys_run_file_no_throw(R(Basic*) basic, R(lua_State*) L, R(const char*) p
     return ret;
 }
 
-void lua_sys_run_file(R(Basic*) basic, R(lua_State*) L, R(const char*) path, int numReturns)
+void lua_sys_run_file(Basic* basic, lua_State* L, const char* path, int numReturns)
 {
     if (!lua_sys_run_file_no_throw(basic, L, path, numReturns))
         exception_throw(basic, ErrorLua);
 }
 
-int lua_sys_call_no_throw(R(Basic*) basic, R(lua_State*) L, int numArgs, int numReturns)
+int lua_sys_call_no_throw(Basic* basic, lua_State* L, int numArgs, int numReturns)
 {
     int ret = true;
     
@@ -66,13 +66,13 @@ int lua_sys_call_no_throw(R(Basic*) basic, R(lua_State*) L, int numArgs, int num
     return ret;
 }
 
-void lua_sys_call(R(Basic*) basic, R(lua_State*) L, int numArgs, int numReturns)
+void lua_sys_call(Basic* basic, lua_State* L, int numArgs, int numReturns)
 {
     if (!lua_sys_call_no_throw(basic, L, numArgs, numReturns))
         exception_throw(basic, ErrorLua);
 }
 
-String* lua_sys_field_to_string(R(Basic*) basic, R(lua_State*) L, int index, R(const char*) field)
+String* lua_sys_field_to_string(Basic* basic, lua_State* L, int index, const char* field)
 {
     String* str;
     
@@ -88,7 +88,7 @@ String* lua_sys_field_to_string(R(Basic*) basic, R(lua_State*) L, int index, R(c
     return str;
 }
 
-void lua_clear(R(lua_State*) L)
+void lua_clear(lua_State* L)
 {
     lua_settop(L, TRACEBACK_INDEX);
 }

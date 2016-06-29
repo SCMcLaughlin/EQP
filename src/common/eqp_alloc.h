@@ -7,7 +7,7 @@
 
 STRUCT_DECLARE(Basic);
 
-void*   eqp_realloc(R(Basic*) basic, R(void*) ptr, size_t len);
+void*   eqp_realloc(Basic* basic, void* ptr, size_t len);
 #define eqp_realloc_type_bytes(es, ptr, len, type) ((type*)eqp_realloc((es), (ptr), (len)))
 #define eqp_realloc_type_array(es, ptr, num, type) eqp_realloc_type_bytes(es, ptr, sizeof(type) * (num), type)
 #define eqp_realloc_type(es, ptr, type) eqp_realloc_type_bytes(es, ptr, sizeof(type), type)

@@ -26,7 +26,7 @@ static uint32_t packet_trilogy_calc_length_and_frag_count(uint32_t length, uint1
     }
 }
 
-PacketTrilogy* packet_trilogy_create(R(Basic*) basic, uint16_t opcode, uint32_t length)
+PacketTrilogy* packet_trilogy_create(Basic* basic, uint16_t opcode, uint32_t length)
 {
     PacketTrilogy* packet;
     uint16_t fragCount;
@@ -42,12 +42,12 @@ PacketTrilogy* packet_trilogy_create(R(Basic*) basic, uint16_t opcode, uint32_t 
     return packet;
 }
 
-void packet_trilogy_grab(R(PacketTrilogy*) packet)
+void packet_trilogy_grab(PacketTrilogy* packet)
 {
     atomic_fetch_add(&packet->refCount, 1);
 }
 
-void packet_trilogy_drop(R(PacketTrilogy*) packet)
+void packet_trilogy_drop(PacketTrilogy* packet)
 {
     int refCount = atomic_fetch_sub(&packet->refCount, 1);
     
@@ -55,7 +55,7 @@ void packet_trilogy_drop(R(PacketTrilogy*) packet)
         free(packet);
 }
 
-void packet_trilogy_fragmentize(R(PacketTrilogy*) packet)
+void packet_trilogy_fragmentize(PacketTrilogy* packet)
 {
     uint16_t n = packet->fragCount;
     uint32_t dataLength;
@@ -63,7 +63,7 @@ void packet_trilogy_fragmentize(R(PacketTrilogy*) packet)
     uint32_t src;
     uint16_t i;
     uint32_t j;
-    R(byte*) data;
+    byte* data;
     
     if (n == 0)
         return;

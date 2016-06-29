@@ -17,8 +17,8 @@ STRUCT_DEFINE(LogWriter)
     ShmViewer   shmViewer;
 };
 
-void    log_writer_init(R(LogWriter*) logWriter, R(const char*) ipcPath);
-void    log_writer_deinit(R(LogWriter*) logWriter);
-void    log_writer_main_loop(R(LogWriter*) logWriter);
+void    log_writer_init(LogWriter* logWriter, const char* ipcPath);
+void    log_writer_deinit(LogWriter* logWriter);
+void    log_writer_main_loop(LogWriter* logWriter);
 
 #endif//EQP_LOG_WRITER_H

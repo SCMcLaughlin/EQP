@@ -23,17 +23,17 @@ STRUCT_DEFINE(ExceptionState)
     String*         errMsg;
 };
 
-void    exception_init(R(Basic*) basic);
-void    exception_deinit(R(Basic*) basic);
-void    exception_throw(R(Basic*) basic, ErrorCode errcode);
-void    exception_throw_message(R(Basic*) basic, ErrorCode errcode, R(const char*) msg, uint32_t len);
+void    exception_init(Basic* basic);
+void    exception_deinit(Basic* basic);
+void    exception_throw(Basic* basic, ErrorCode errcode);
+void    exception_throw_message(Basic* basic, ErrorCode errcode, const char* msg, uint32_t len);
 #define exception_throw_literal(basic, errcode, literal) exception_throw_message((basic), (errcode), (literal), sizeof((literal)) - 1)
-void    exception_throw_format(R(Basic*) basic, ErrorCode errcode, R(const char*) fmt, ...);
-int     exception_try(R(Basic*) basic, R(ExceptionScope*) scope);
-void    exception_handled(R(Basic*) basic);
-void    exception_end_try(R(Basic*) basic);
-void    exception_end_try_with_finally(R(Basic*) basic);
-String* exception_get_message(R(Basic*) basic);
+void    exception_throw_format(Basic* basic, ErrorCode errcode, const char* fmt, ...);
+int     exception_try(Basic* basic, ExceptionScope* scope);
+void    exception_handled(Basic* basic);
+void    exception_end_try(Basic* basic);
+void    exception_end_try_with_finally(Basic* basic);
+String* exception_get_message(Basic* basic);
 #define exception_message(basic) exception_get_message((basic))
 
 #endif//EQP_EXCEPTION_H

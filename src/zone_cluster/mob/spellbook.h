@@ -26,8 +26,9 @@ STRUCT_DEFINE(Spellbook)
     MemorizedSpell  memorized[9];
 };
 
-void    spellbook_add_from_database(R(ZC*) zc, R(Spellbook*) spellbook, uint32_t slotId, uint32_t spellId);
-void    spellbook_add_memorized_from_database(R(ZC*) zc, R(Spellbook*) spellbook, uint32_t slotId, uint32_t spellId, uint64_t recastTimestamp);
+void    spellbook_deinit(Spellbook* spellbook);
+void    spellbook_add_from_database(ZC* zc, Spellbook* spellbook, uint32_t slotId, uint32_t spellId);
+void    spellbook_add_memorized_from_database(ZC* zc, Spellbook* spellbook, uint32_t slotId, uint32_t spellId, uint64_t recastTimestamp);
 
 #define spellbook_is_empty(book) ((book)->knownSpells == NULL)
 

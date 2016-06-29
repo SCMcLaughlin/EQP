@@ -2,7 +2,7 @@
 #include "ipc_set.h"
 #include "eqp_basic.h"
 
-void ipc_set_open(R(Basic*) basic, R(IpcSet*) ipcSet, int sourceId, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath)
+void ipc_set_open(Basic* basic, IpcSet* ipcSet, int sourceId, const char* ipcPath, const char* masterIpcPath, const char* logWriterIpcPath)
 {
     ipcSet->keepAliveTimestamp = 0;
     
@@ -24,16 +24,16 @@ void ipc_set_open(R(Basic*) basic, R(IpcSet*) ipcSet, int sourceId, R(const char
     ipc_set_log_file_open(basic, ipcSet, sourceId);
 }
 
-void ipc_set_deinit(R(IpcSet*) ipcSet)
+void ipc_set_deinit(IpcSet* ipcSet)
 {
     shm_viewer_close(&ipcSet->shmViewerSelf);
     shm_viewer_close(&ipcSet->shmViewerMaster);
     shm_viewer_close(&ipcSet->shmViewerLogWriter);
 }
 
-int ipc_set_receive(R(Basic*) basic, R(IpcSet*) ipcSet)
+int ipc_set_receive(Basic* basic, IpcSet* ipcSet)
 {
-    R(IpcBuffer*) ipc = ipcSet->ipc;
+    IpcBuffer* ipc = ipcSet->ipc;
     
     if (ipc_buffer_try(basic, ipc))
     {
@@ -56,12 +56,12 @@ int ipc_set_receive(R(Basic*) basic, R(IpcSet*) ipcSet)
     return false;
 }
 
-int ipc_set_send(R(Basic*) basic, R(IpcSet*) ipcSet, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data)
+int ipc_set_send(Basic* basic, IpcSet* ipcSet, ServerOp opcode, int sourceId, uint32_t length, const void* data)
 {
     return ipc_buffer_write(basic, ipcSet->ipcMaster, opcode, sourceId, length, data);
 }
 
-void ipc_set_keep_alive(R(Basic*) basic, R(IpcSet*) ipcSet, int sourceId)
+void ipc_set_keep_alive(Basic* basic, IpcSet* ipcSet, int sourceId)
 {
     uint64_t curTime = clock_milliseconds();
     
@@ -72,7 +72,7 @@ void ipc_set_keep_alive(R(Basic*) basic, R(IpcSet*) ipcSet, int sourceId)
     }
 }
 
-void ipc_set_log_file_control(R(Basic*) basic, R(IpcSet*) ipcSet, int sourceId, int open)
+void ipc_set_log_file_control(Basic* basic, IpcSet* ipcSet, int sourceId, int open)
 {
     ipc_buffer_write(basic, ipc_set_log_writer_ipc(ipcSet), open ? ServerOp_LogOpen : ServerOp_LogClose, sourceId, 0, NULL);
 }

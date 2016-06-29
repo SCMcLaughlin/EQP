@@ -7,7 +7,7 @@
 #define SERVER_UP 0
 #define SERVER_LOCKED -2
 
-void tcp_client_init(R(Basic*) basic, R(TcpClient*) client, int fd, R(IpAddress*) addr)
+void tcp_client_init(Basic* basic, TcpClient* client, int fd, IpAddress* addr)
 {
     client->socketFd            = fd;
     client->buffered            = 0;
@@ -18,7 +18,7 @@ void tcp_client_init(R(Basic*) basic, R(TcpClient*) client, int fd, R(IpAddress*
     client->isLocal             = login_is_ip_address_local(addr->sin_addr.s_addr);
 }
 
-void tcp_client_deinit(R(TcpClient*) client)
+void tcp_client_deinit(TcpClient* client)
 {
     if (client->socketFd != INVALID_SOCKET)
     {
@@ -33,7 +33,7 @@ void tcp_client_deinit(R(TcpClient*) client)
     }
 }
 
-static void tcp_client_send(R(Login*) login, R(TcpClient*) client, R(const void*) data, int size)
+static void tcp_client_send(Login* login, TcpClient* client, const void* data, int size)
 {
     int fd      = client->socketFd;
     int sent    = 0;
@@ -65,7 +65,7 @@ static void tcp_client_send(R(Login*) login, R(TcpClient*) client, R(const void*
     }
 }
 
-static void tcp_client_keep_alive(R(Login*) login, R(TcpClient*) client)
+static void tcp_client_keep_alive(Login* login, TcpClient* client)
 {
     TcpPacketHeader packet;
 
@@ -75,11 +75,11 @@ static void tcp_client_keep_alive(R(Login*) login, R(TcpClient*) client)
     tcp_client_send(login, client, &packet, sizeof(TcpPacketHeader));
 }
 
-static String* tcp_client_string_from_fixed_field(R(Basic*) basic, R(Aligned*) a, uint32_t fieldLength)
+static String* tcp_client_string_from_fixed_field(Basic* basic, Aligned* a, uint32_t fieldLength)
 {
-    R(const char*) str  = aligned_current_type(a, const char);
-    uint32_t len        = strlen(str);
-    R(String*) out;
+    const char* str = aligned_current_type(a, const char);
+    uint32_t len    = strlen(str);
+    String* out;
     
     if (len >= fieldLength)
         len = fieldLength - 1;
@@ -91,7 +91,7 @@ static String* tcp_client_string_from_fixed_field(R(Basic*) basic, R(Aligned*) a
     return out;
 }
 
-static void tcp_client_handle_op_new_login_server(R(Login*) login, R(TcpClient*) client, R(Aligned*) a)
+static void tcp_client_handle_op_new_login_server(Login* login, TcpClient* client, Aligned* a)
 {
     ServerListing server;
 
@@ -138,7 +138,7 @@ static void tcp_client_handle_op_new_login_server(R(Login*) login, R(TcpClient*)
     client->loginServerIndex = server_list_add(login_server_list(login), &server);
 }
 
-static void tcp_client_handle_op_login_server_status(R(Login*) login, R(TcpClient*) client, R(Aligned*) a)
+static void tcp_client_handle_op_login_server_status(Login* login, TcpClient* client, Aligned* a)
 {
     int status;
     int playerCount;
@@ -171,11 +171,11 @@ static void tcp_client_handle_op_login_server_status(R(Login*) login, R(TcpClien
     tcp_client_keep_alive(login, client);
 }
 
-static void tcp_client_send_client_auth(R(Login*) login, R(TcpClient*) client, R(LoginClient*) loginClient)
+static void tcp_client_send_client_auth(Login* login, TcpClient* client, LoginClient* loginClient)
 {
     Tcp_ClientLoginAuth auth;
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w = &write;
     
     aligned_init(B(login), w, &auth, sizeof(Tcp_ClientLoginAuth));
     
@@ -205,9 +205,9 @@ static void tcp_client_send_client_auth(R(Login*) login, R(TcpClient*) client, R
     tcp_client_send(login, client, &auth, sizeof(Tcp_ClientLoginAuth));
 }
 
-static void tcp_client_handle_op_client_login_response(R(Login*) login, R(TcpClient*) client, R(Aligned*) a)
+static void tcp_client_handle_op_client_login_response(Login* login, TcpClient* client, Aligned* a)
 {
-    R(LoginClient*) loginClient;
+    LoginClient* loginClient;
     uint32_t accountId;
     int response;
     
@@ -232,10 +232,10 @@ static void tcp_client_handle_op_client_login_response(R(Login*) login, R(TcpCli
     login_client_handle_login_response(loginClient, response);
 }
 
-void tcp_client_handle_packet(R(Login*) login, R(TcpClient*) client)
+void tcp_client_handle_packet(Login* login, TcpClient* client)
 {
     Aligned aligned;
-    R(Aligned*) a = &aligned;
+    Aligned* a = &aligned;
     uint16_t opcode;
     
     aligned_init(B(login), a, client->recvBuf, client->readLength);
@@ -262,7 +262,7 @@ void tcp_client_handle_packet(R(Login*) login, R(TcpClient*) client)
     }
 }
 
-void tcp_client_send_client_login_request(R(Login*) login, R(TcpClient*) client, uint32_t accountId)
+void tcp_client_send_client_login_request(Login* login, TcpClient* client, uint32_t accountId)
 {
     // This struct is fully aligned
     Tcp_ClientLoginRequestSend req;

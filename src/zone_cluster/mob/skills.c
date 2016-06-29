@@ -4,7 +4,7 @@
 #define SKILL_CANT_LEARN            0xff
 #define SKILL_HAVENT_TRAINED_YET    0xfe
 
-void skills_preinit(R(Skills*) skills)
+void skills_preinit(Skills* skills)
 {
     uint32_t i;
     
@@ -39,7 +39,7 @@ void skills_preinit(R(Skills*) skills)
     skills->language[Lang_CommonTongue] = 100;
 }
 
-void skills_init(R(Skills*) skills, uint32_t class, uint32_t level, uint32_t race)
+void skills_init(Skills* skills, uint32_t class, uint32_t level, uint32_t race)
 {
     (void)class;
     (void)level;
@@ -81,7 +81,7 @@ void skills_init(R(Skills*) skills, uint32_t class, uint32_t level, uint32_t rac
         skills->skill[Skill_Swimming] = 100;
 }
 
-void skills_set_from_db(R(Skills*) skills, uint32_t skillId, uint32_t value)
+void skills_set_from_db(Skills* skills, uint32_t skillId, uint32_t value)
 {
     if (skillId >= EQP_DB_LANGUAGE_SKILL_OFFSET)
     {

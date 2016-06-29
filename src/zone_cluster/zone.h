@@ -49,11 +49,12 @@ STRUCT_DEFINE(ZoneBySourceId)
 STRUCT_DEFINE(ClientListing)
 {
     int     expansionId;
+    int     isLinkdead;
     Client* client;
 };
 
-Zone*   zone_create(R(ZC*) zc, int sourceId, int zoneId, int instId);
-void    zone_destroy(R(ZC*) zc, R(Zone*) zone);
+Zone*   zone_create(ZC* zc, int sourceId, int zoneId, int instId);
+void    zone_destroy(ZC* zc, Zone* zone);
 
 #define zone_type(zone) ((zone)->zoneType)
 #define zone_sky_type(zone) ((zone)->skyType)
@@ -62,16 +63,18 @@ void    zone_destroy(R(ZC*) zc, R(Zone*) zone);
 #define zone_min_clipping_distance(zone) ((zone)->minClippingDistance)
 #define zone_max_clipping_distance(zone) ((zone)->maxClippingDistance)
 
-void    zone_spawn_client(R(ZC*) zc, R(Zone*) zone, R(Client*) client);
+void    zone_spawn_client(ZC* zc, Zone* zone, Client* client);
+void    zone_remove_client(Zone* zone, Client* client);
+void    zone_mark_client_as_linkdead(Zone* zone, Client* client);
 
-void    zone_broadcast_packet(R(Zone*) zone, R(PacketBroadcast*) packet, R(Client*) ignore);
+void    zone_broadcast_packet(Zone* zone, PacketBroadcast* packet, Client* ignore);
 #define zone_broadcast_packet_to_all(zone, packet) zone_broadcast_packet((zone), (packet), NULL)
 
 /* LuaJIT API */
-EQP_API int         zone_get_source_id(R(Zone*) zone);
-EQP_API uint16_t    zone_get_zone_id(R(Zone*) zone);
-EQP_API uint16_t    zone_get_instance_id(R(Zone*) zone);
-EQP_API const char* zone_get_short_name(R(Zone*) zone);
-EQP_API const char* zone_get_long_name(R(Zone*) zone);
+EQP_API int         zone_get_source_id(Zone* zone);
+EQP_API uint16_t    zone_get_zone_id(Zone* zone);
+EQP_API uint16_t    zone_get_instance_id(Zone* zone);
+EQP_API const char* zone_get_short_name(Zone* zone);
+EQP_API const char* zone_get_long_name(Zone* zone);
 
 #endif//EQP_ZONE_H

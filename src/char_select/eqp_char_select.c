@@ -1,7 +1,7 @@
 
 #include "eqp_char_select.h"
 
-void char_select_init(R(CharSelect*) charSelect, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath)
+void char_select_init(CharSelect* charSelect, const char* ipcPath, const char* masterIpcPath, const char* logWriterIpcPath)
 {
     charSelect->serverStatus        = EQP_CHAR_SELECT_SERVER_LOCKED;
     charSelect->serverPlayerCount   = 0;
@@ -28,7 +28,7 @@ void char_select_init(R(CharSelect*) charSelect, R(const char*) ipcPath, R(const
     charSelect->clientsAttemptingToZoneIn   = array_create_type(B(charSelect), CharSelectClientAttemptingZoneIn);
 }
 
-void char_select_deinit(R(CharSelect*) charSelect)
+void char_select_deinit(CharSelect* charSelect)
 {
     core_deinit(C(charSelect));
     ipc_set_deinit(&charSelect->ipcSet);
@@ -47,7 +47,7 @@ void char_select_deinit(R(CharSelect*) charSelect)
     
     if (charSelect->loginServerConnections)
     {
-        R(TcpClient*) array = array_data_type(charSelect->loginServerConnections, TcpClient);
+        TcpClient* array    = array_data_type(charSelect->loginServerConnections, TcpClient);
         uint32_t n          = array_count(charSelect->loginServerConnections);
         uint32_t i;
         
@@ -79,10 +79,10 @@ void char_select_deinit(R(CharSelect*) charSelect)
     }
 }
 
-static void char_select_handle_op_client_zoning(R(CharSelect*) charSelect, R(byte*) data, uint32_t length)
+static void char_select_handle_op_client_zoning(CharSelect* charSelect, byte* data, uint32_t length)
 {
-    R(Server_ZoneAddress*) zoneAddr;
-    R(CharSelectClientAttemptingZoneIn*) array;
+    Server_ZoneAddress* zoneAddr;
+    CharSelectClientAttemptingZoneIn* array;
     uint32_t accountId;
     uint32_t n;
     uint32_t i;
@@ -110,10 +110,10 @@ static void char_select_handle_op_client_zoning(R(CharSelect*) charSelect, R(byt
     }
 }
 
-static void char_select_handle_op_client_zoning_rejected(R(CharSelect*) charSelect, R(byte*) data, uint32_t length)
+static void char_select_handle_op_client_zoning_rejected(CharSelect* charSelect, byte* data, uint32_t length)
 {
-    R(Server_ClientZoningReject*) reject;
-    R(CharSelectClientAttemptingZoneIn*) array;
+    Server_ClientZoningReject* reject;
+    CharSelectClientAttemptingZoneIn* array;
     uint32_t accountId;
     uint32_t n;
     uint32_t i;
@@ -137,12 +137,12 @@ static void char_select_handle_op_client_zoning_rejected(R(CharSelect*) charSele
     }
 }
 
-void ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet)
+void ipc_set_handle_packet(Basic* basic, IpcPacket* packet)
 {
-    R(CharSelect*) charSelect   = (CharSelect*)basic;
+    CharSelect* charSelect      = (CharSelect*)basic;
     ServerOp opcode             = ipc_packet_opcode(packet);
     uint32_t length             = ipc_packet_length(packet);
-    R(byte*) data               = ipc_packet_data(packet);
+    byte* data                  = ipc_packet_data(packet);
     
     switch (opcode)
     {
@@ -159,10 +159,10 @@ void ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet)
     }
 }
 
-void char_select_main_loop(R(CharSelect*) charSelect)
+void char_select_main_loop(CharSelect* charSelect)
 {
-    R(UdpSocket*) socket    = charSelect->socket;
-    R(IpcSet*) ipcSet       = &charSelect->ipcSet;
+    UdpSocket* socket   = charSelect->socket;
+    IpcSet* ipcSet      = &charSelect->ipcSet;
     
     for (;;)
     {
@@ -188,9 +188,9 @@ void char_select_main_loop(R(CharSelect*) charSelect)
     }
 }
 
-void char_select_start_login_server_connections(R(CharSelect*) charSelect)
+void char_select_start_login_server_connections(CharSelect* charSelect)
 {
-    R(lua_State*) L = charSelect->L;
+    lua_State* L = charSelect->L;
     uint32_t n;
     uint32_t i;
     
@@ -200,8 +200,8 @@ void char_select_start_login_server_connections(R(CharSelect*) charSelect)
     
     for (i = 1; i <= n; i++)
     {
-        R(TcpClient*) client;
-        R(LoginServerConfig*) server = eqp_alloc_type(B(charSelect), LoginServerConfig);
+        TcpClient* client;
+        LoginServerConfig* server = eqp_alloc_type(B(charSelect), LoginServerConfig);
         
         lua_pushinteger(L, i);
         lua_gettable(L, -2);
@@ -229,19 +229,19 @@ void char_select_start_login_server_connections(R(CharSelect*) charSelect)
     lua_clear(L);
 }
 
-void char_select_tcp_recv(R(CharSelect*) charSelect)
+void char_select_tcp_recv(CharSelect* charSelect)
 {
-    R(TcpClient*) array = array_data_type(charSelect->loginServerConnections, TcpClient);
+    TcpClient* array    = array_data_type(charSelect->loginServerConnections, TcpClient);
     uint32_t n          = array_count(charSelect->loginServerConnections);
     uint32_t i;
     
     for (i = 0; i < n; i++)
     {
-        R(TcpClient*) cli   = &array[i];
-        int fd              = tcp_client_fd(cli);
+        TcpClient* cli  = &array[i];
+        int fd          = tcp_client_fd(cli);
         int buffered;
         int readLength;
-        R(byte*) recvBuf;
+        byte* recvBuf;
         int len;
         
         if (fd == INVALID_SOCKET)
@@ -300,12 +300,12 @@ void char_select_tcp_recv(R(CharSelect*) charSelect)
     }
 }
 
-TcpClient* char_select_get_tcp_client(R(CharSelect*) charSelect, uint32_t index)
+TcpClient* char_select_get_tcp_client(CharSelect* charSelect, uint32_t index)
 {
     return array_get_type(charSelect->loginServerConnections, index, TcpClient);
 }
 
-void char_select_unclaimed_auths_timer_callback(R(Timer*) timer)
+void char_select_unclaimed_auths_timer_callback(Timer* timer)
 {
     CharSelect* charSelect  = timer_userdata_type(timer, CharSelect);
     CharSelectAuth* array   = array_data_type(charSelect->unclaimedAuths, CharSelectAuth);
@@ -328,18 +328,18 @@ void char_select_unclaimed_auths_timer_callback(R(Timer*) timer)
     }
 }
 
-void char_select_handle_client_auth(R(CharSelect*) charSelect, R(CharSelectAuth*) auth)
+void char_select_handle_client_auth(CharSelect* charSelect, CharSelectAuth* auth)
 {
     uint32_t accountId          = auth->accountId;
-    R(const char*) sessionKey   = auth->sessionKey;
-    R(CharSelectClient**) array = array_data_type(charSelect->unauthedClients, CharSelectClient*);
+    const char* sessionKey      = auth->sessionKey;
+    CharSelectClient** array    = array_data_type(charSelect->unauthedClients, CharSelectClient*);
     uint32_t n                  = array_count(charSelect->unauthedClients);
     uint32_t i;
     
     // Check if there's an unauthed client waiting for this
     for (i = 0; i < n; i++)
     {
-        R(CharSelectClient*) client = array[i];
+        CharSelectClient* client = array[i];
         
         if (char_select_client_account_id(client) == accountId && strcmp(char_select_client_session_key(client), sessionKey) == 0)
         {
@@ -354,18 +354,18 @@ void char_select_handle_client_auth(R(CharSelect*) charSelect, R(CharSelectAuth*
     array_push_back(B(charSelect), &charSelect->unclaimedAuths, auth);
 }
 
-void char_select_handle_unauthed_client(R(CharSelect*) charSelect, R(CharSelectClient*) client)
+void char_select_handle_unauthed_client(CharSelect* charSelect, CharSelectClient* client)
 {
     uint32_t accountId          = char_select_client_account_id(client);
-    R(const char*) sessionKey   = char_select_client_session_key(client);
-    R(CharSelectAuth*) array    = array_data_type(charSelect->unclaimedAuths, CharSelectAuth);
+    const char* sessionKey      = char_select_client_session_key(client);
+    CharSelectAuth* array       = array_data_type(charSelect->unclaimedAuths, CharSelectAuth);
     uint32_t n                  = array_count(charSelect->unclaimedAuths);
     uint32_t i;
     
     // Check if we've already received an auth for this client
     for (i = 0; i < n; i++)
     {
-        R(CharSelectAuth*) auth = &array[i];
+        CharSelectAuth* auth = &array[i];
         
         if (auth->accountId == accountId && strcmp(auth->sessionKey, sessionKey) == 0)
         {
@@ -379,9 +379,9 @@ void char_select_handle_unauthed_client(R(CharSelect*) charSelect, R(CharSelectC
     array_push_back(B(charSelect), &charSelect->unauthedClients, (void*)&client);
 }
 
-void char_select_remove_client_from_unauthed_list(R(CharSelect*) charSelect, R(CharSelectClient*) client)
+void char_select_remove_client_from_unauthed_list(CharSelect* charSelect, CharSelectClient* client)
 {
-    R(CharSelectClient**) array = array_data_type(charSelect->unauthedClients, CharSelectClient*);
+    CharSelectClient** array    = array_data_type(charSelect->unauthedClients, CharSelectClient*);
     uint32_t n                  = array_count(charSelect->unauthedClients);
     uint32_t i;
     
@@ -395,11 +395,11 @@ void char_select_remove_client_from_unauthed_list(R(CharSelect*) charSelect, R(C
     }
 }
 
-static void char_select_client_zone_in_timeout_callback(R(Timer*) timer)
+static void char_select_client_zone_in_timeout_callback(Timer* timer)
 {
-    R(CharSelectClient*) client                 = timer_userdata_type(timer, CharSelectClient);
-    R(CharSelect*) charSelect                   = (CharSelect*)protocol_handler_basic(char_select_client_handler(client));
-    R(CharSelectClientAttemptingZoneIn*) array  = array_data_type(charSelect->clientsAttemptingToZoneIn, CharSelectClientAttemptingZoneIn);
+    CharSelectClient* client                    = timer_userdata_type(timer, CharSelectClient);
+    CharSelect* charSelect                      = (CharSelect*)protocol_handler_basic(char_select_client_handler(client));
+    CharSelectClientAttemptingZoneIn* array     = array_data_type(charSelect->clientsAttemptingToZoneIn, CharSelectClientAttemptingZoneIn);
     uint32_t n                                  = array_count(charSelect->clientsAttemptingToZoneIn);
     uint32_t i;
     
@@ -417,7 +417,7 @@ static void char_select_client_zone_in_timeout_callback(R(Timer*) timer)
     timer_destroy(timer);
 }
 
-void char_select_send_client_zone_in_request(R(CharSelect*) charSelect, R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(const char*) charName)
+void char_select_send_client_zone_in_request(CharSelect* charSelect, CharSelectClient* client, ProtocolHandler* handler, const char* charName)
 {
     CharSelectClientAttemptingZoneIn record;
     Server_ClientZoning zoning;
@@ -443,10 +443,10 @@ void char_select_send_client_zone_in_request(R(CharSelect*) charSelect, R(CharSe
         char_select_client_zone_in_timeout_callback, client, true);
 }
 
-void char_select_get_starting_zone_and_loc(R(CharSelect*) charSelect, uint16_t race, uint8_t class, uint8_t gender, bool isTrilogy,
-        R(int*) zoneId, R(float*) x, R(float*) y, R(float*) z)
+void char_select_get_starting_zone_and_loc(CharSelect* charSelect, uint16_t race, uint8_t class, uint8_t gender, bool isTrilogy,
+        int* zoneId, float* x, float* y, float* z)
 {
-    R(lua_State*) L = charSelect->L;
+    lua_State* L = charSelect->L;
     
     lua_getglobal(L, "char_select_get_starting_zone_and_loc");
     

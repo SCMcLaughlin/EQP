@@ -21,11 +21,11 @@ STRUCT_DEFINE(NetworkClient)
     uint32_t    accountId;
 };
 
-void    network_client_init(R(UdpSocket*) sock, R(UdpClient*) udpClient, R(NetworkClient*) client, uint32_t index);
-void    network_client_deinit(R(NetworkClient*) client);
+void    network_client_init(UdpSocket* sock, UdpClient* udpClient, NetworkClient* client, uint32_t index);
+void    network_client_deinit(NetworkClient* client);
 
-int     network_client_send_no_increment(R(NetworkClient*) client, R(const void*) data, uint32_t len);
-int     network_client_send(R(NetworkClient*) client, R(const void*) data, uint32_t len);
+int     network_client_send_no_increment(NetworkClient* client, const void* data, uint32_t len);
+int     network_client_send(NetworkClient* client, const void* data, uint32_t len);
 
 #define network_client_ip_address(cli) (&(cli)->address)
 #define network_client_basic(cli) ((cli)->basic)
@@ -38,7 +38,7 @@ int     network_client_send(R(NetworkClient*) client, R(const void*) data, uint3
 #define network_client_set_account_id(cli, id) ((cli)->accountId = (id))
 
 #define network_client_update_udp_client_index(cli, i) ((cli)->udpClientIndex = (i))
-void    network_client_flag_connection_as_dead(R(NetworkClient*) client);
+void    network_client_flag_connection_as_dead(NetworkClient* client);
 #define network_client_increment_packets_received(cli) ((cli)->packetsReceived++)
 
 #endif//EQP_NETWORK_CLIENT_H

@@ -22,21 +22,21 @@ STRUCT_DEFINE(IpcSet)
     ShmViewer       shmViewerLogWriter;
 };
 
-void    ipc_set_open(R(Basic*) basic, R(IpcSet*) ipcSet, int sourceId, R(const char*) ipcPath, R(const char*) masterIpcPath, R(const char*) logWriterIpcPath);
-void    ipc_set_deinit(R(IpcSet*) ipcSet);
+void    ipc_set_open(Basic* basic, IpcSet* ipcSet, int sourceId, const char* ipcPath, const char* masterIpcPath, const char* logWriterIpcPath);
+void    ipc_set_deinit(IpcSet* ipcSet);
 
 /*
     This is a special forward declaration -- no common implementation is provided, each binary 
     that links to non_master needs to provide its own implementation.
 */
-void    ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet);
+void    ipc_set_handle_packet(Basic* basic, IpcPacket* packet);
 
 // Returns true if ServerOp_Shutdown is received
-int     ipc_set_receive(R(Basic*) basic, R(IpcSet*) ipcSet);
-int     ipc_set_send(R(Basic*) basic, R(IpcSet*) ipcSet, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data);
-void    ipc_set_keep_alive(R(Basic*) basic, R(IpcSet*) ipcSet, int sourceId);
+int     ipc_set_receive(Basic* basic, IpcSet* ipcSet);
+int     ipc_set_send(Basic* basic, IpcSet* ipcSet, ServerOp opcode, int sourceId, uint32_t length, const void* data);
+void    ipc_set_keep_alive(Basic* basic, IpcSet* ipcSet, int sourceId);
 
-void    ipc_set_log_file_control(R(Basic*) basic, R(IpcSet*) ipcSet, int sourceId, int open);
+void    ipc_set_log_file_control(Basic* basic, IpcSet* ipcSet, int sourceId, int open);
 #define ipc_set_log_file_open(basic, set, sourceId) ipc_set_log_file_control((basic), (set), (sourceId), true)
 #define ipc_set_log_file_close(basic, set, sourceId) ipc_set_log_file_control((basic), (set), (sourceId), false)
 

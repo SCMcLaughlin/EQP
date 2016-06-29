@@ -44,14 +44,14 @@ STRUCT_DEFINE(ServerList)
     Array*  array;
 };
 
-void        server_list_init(R(Basic*) basic, R(ServerList*) list);
-void        server_list_deinit(R(ServerList*) list);
+void        server_list_init(Basic* basic, ServerList* list);
+void        server_list_deinit(ServerList* list);
 
-uint32_t    server_list_add(R(ServerList*) list, R(ServerListing*) server);
-void        server_list_remove_by_index(R(ServerList*) list, uint32_t index);
-void        server_list_update_by_index(R(ServerList*) list, uint32_t index, int playerCount, int status);
+uint32_t    server_list_add(ServerList* list, ServerListing* server);
+void        server_list_remove_by_index(ServerList* list, uint32_t index);
+void        server_list_update_by_index(ServerList* list, uint32_t index, int playerCount, int status);
 
-void        server_list_send_client_login_request_by_ip_address(R(Login*) login, R(const char*) ipAddress, uint32_t accountId);
+void        server_list_send_client_login_request_by_ip_address(Login* login, const char* ipAddress, uint32_t accountId);
 
 #define     server_list_count(list) array_count((list)->array)
 #define     server_list_data(list) array_data_type((list)->array, ServerListing)

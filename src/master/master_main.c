@@ -3,7 +3,7 @@
 #include "eqp_string.h"
 #include "terminal.h"
 
-int master_main(R(Master*) M)
+int master_main(Master* M)
 {
     ExceptionScope exScope;
     int volatile ret = 0;

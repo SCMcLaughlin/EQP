@@ -3,7 +3,7 @@
 #include "eqp_basic.h"
 #include "protocol_handler.h"
 
-void udp_client_init(R(Basic*) basic, R(UdpClient*) client, uint32_t ip, uint16_t port)
+void udp_client_init(Basic* basic, UdpClient* client, uint32_t ip, uint16_t port)
 {
     client->ip      = ip;
     client->port    = port;
@@ -11,7 +11,7 @@ void udp_client_init(R(Basic*) basic, R(UdpClient*) client, uint32_t ip, uint16_
     client->handler = protocol_handler_create(basic);
 }
 
-void udp_client_deinit(R(UdpClient*) client)
+void udp_client_deinit(UdpClient* client)
 {
     if (client->handler)
     {
@@ -20,7 +20,7 @@ void udp_client_deinit(R(UdpClient*) client)
     }
 }
 
-void udp_client_update_index(R(UdpClient*) client, uint32_t index)
+void udp_client_update_index(UdpClient* client, uint32_t index)
 {
     protocol_handler_update_index(client->handler, index);
 }

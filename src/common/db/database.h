@@ -26,18 +26,18 @@ STRUCT_DEFINE(Database)
     atomic_uint nextQueryId;
 };
 
-EQP_API Database*   db_create(R(Core*) core);
-EQP_API void        db_destroy(R(Database*) db);
+EQP_API Database*   db_create(Core* core);
+EQP_API void        db_destroy(Database* db);
 
-void                db_init(R(Core*) core, R(Database*) db);
-void                db_deinit(R(Database*) db);
-EQP_API void        db_open(R(Database*) db, R(const char*) dbPath, R(const char*) schemaPath);
+void                db_init(Core* core, Database* db);
+void                db_deinit(Database* db);
+EQP_API void        db_open(Database* db, const char* dbPath, const char* schemaPath);
 
-EQP_API void        db_prepare(R(Database*) db, R(Query*) query, R(const char*) sql, int len, QueryCallback callback);
+EQP_API void        db_prepare(Database* db, Query* query, const char* sql, int len, QueryCallback callback);
 #define             db_prepare_literal(db, query, sql, callback) db_prepare(db, query, sql, sizeof(sql) - 1, callback)
-void                db_exec(R(Database*) db, R(const char*)sql, R(const char*) exceptionFormat);
+void                db_exec(Database* db, const char*sql, const char* exceptionFormat);
 
-EQP_API void        db_schedule(R(Database*) db, R(Query*) query);
+EQP_API void        db_schedule(Database* db, Query* query);
 
 #define             db_get_core(db) ((db)->core)
 #define             db_get_sqlite(db) ((db)->sqlite)

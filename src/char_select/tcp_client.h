@@ -42,12 +42,12 @@ STRUCT_DEFINE(TcpClient)
     Timer*              timer;  // For reconnection when not connected, or status updates when connected
 };
 
-void    tcp_client_init(R(CharSelect*) charSelect, R(TcpClient*) client, R(LoginServerConfig*) config);
-void    tcp_client_deinit(R(TcpClient*) client);
+void    tcp_client_init(CharSelect* charSelect, TcpClient* client, LoginServerConfig* config);
+void    tcp_client_deinit(TcpClient* client);
 
-void    tcp_client_start_connect_cycle(R(TcpClient*) client, int immediate);
-void    tcp_client_restart_connection(R(TcpClient*) client);
-void    tcp_client_handle_packet(R(TcpClient*) client);
+void    tcp_client_start_connect_cycle(TcpClient* client, int immediate);
+void    tcp_client_restart_connection(TcpClient* client);
+void    tcp_client_handle_packet(TcpClient* client);
 
 #define tcp_client_fd(cli) ((cli)->socketFd)
 #define tcp_client_buffered(cli) ((cli)->buffered)

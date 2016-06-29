@@ -28,24 +28,24 @@ STRUCT_DEFINE(ZoneClusterBySourceId)
     ZoneCluster*    zoneCluster;
 };
 
-ZoneCluster*    zone_cluster_create(R(MasterIpcThread*) ipcThread, uint16_t id, uint16_t port, uint16_t maxZones);
+ZoneCluster*    zone_cluster_create(MasterIpcThread* ipcThread, uint16_t id, uint16_t port, uint16_t maxZones);
 #define         zone_cluster_destroy(zc) free(zc)
 
-void            zone_cluster_start_zone(R(ZoneCluster*) zc, int sourceId);
+void            zone_cluster_start_zone(ZoneCluster* zc, int sourceId);
 
-void            zone_cluster_ipc_send(R(ZoneCluster*) zc, ServerOp opcode, int sourceId, uint32_t length, R(const void*) data);
-void            zone_cluster_inform_of_client_zoning_in(R(ZoneCluster*) zc, R(Client*) client, int sourceId);
+void            zone_cluster_ipc_send(ZoneCluster* zc, ServerOp opcode, int sourceId, uint32_t length, const void* data);
+void            zone_cluster_inform_of_client_zoning_in(ZoneCluster* zc, Client* client, int sourceId);
 
 #define         zone_cluster_proc(zc) (&(zc)->proc)
 #define         zone_cluster_source_id(zc) (((int)((zc)->id)) + EQP_SOURCE_ID_ZONE_CLUSTER_OFFSET)
 #define         zone_cluster_port(zc) ((zc)->portHostByteOrder)
 #define         zone_cluster_id(zc) ((zc)->id)
 
-int             zone_cluster_has_free_space(R(ZoneCluster*) zc);
+int             zone_cluster_has_free_space(ZoneCluster* zc);
 
 #define         zone_cluster_increment_reserved_zones(zc) ((zc)->reservedZones++)
 #define         zone_cluster_increment_zone_count(zc) ((zc)->zoneCount++)
 
-EQP_API void    zone_cluster_set_max_zones(R(ZoneCluster*) zc, uint16_t maxZones);
+EQP_API void    zone_cluster_set_max_zones(ZoneCluster* zc, uint16_t maxZones);
 
 #endif//EQP_ZONE_CLUSTER_H

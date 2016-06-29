@@ -2,11 +2,11 @@
 #include "zone_cluster_ipc.h"
 #include "zone_cluster.h"
 
-void ipc_set_handle_packet(R(Basic*) basic, R(IpcPacket*) packet)
+void ipc_set_handle_packet(Basic* basic, IpcPacket* packet)
 {
-    R(ZC*) zc           = (ZC*)basic;
-    ServerOp opcode     = ipc_packet_opcode(packet);
-    int sourceId        = ipc_packet_source_id(packet);
+    ZC* zc          = (ZC*)basic;
+    ServerOp opcode = ipc_packet_opcode(packet);
+    int sourceId    = ipc_packet_source_id(packet);
     
     switch (opcode)
     {

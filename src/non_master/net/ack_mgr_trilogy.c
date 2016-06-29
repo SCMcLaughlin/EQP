@@ -2,7 +2,7 @@
 #include "ack_mgr_trilogy.h"
 #include "udp_socket.h"
 
-void ack_mgr_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(AckMgrTrilogy*) ackMgr, uint32_t index)
+void ack_mgr_trilogy_init(UdpSocket* sock, UdpClient* client, AckMgrTrilogy* ackMgr, uint32_t index)
 {
     network_client_trilogy_init(sock, client, &ackMgr->client, index);
     
@@ -15,19 +15,19 @@ void ack_mgr_trilogy_init(R(UdpSocket*) sock, R(UdpClient*) client, R(AckMgrTril
     ackMgr->inputPackets        = array_create_type(udp_socket_basic(sock), InputPacketTrilogy);
 }
 
-void ack_mgr_trilogy_deinit(R(AckMgrTrilogy*) ackMgr)
+void ack_mgr_trilogy_deinit(AckMgrTrilogy* ackMgr)
 {
     network_client_trilogy_deinit(&ackMgr->client);
     
     if (ackMgr->inputPackets)
     {
-        R(InputPacketTrilogy*) array    = array_data_type(ackMgr->inputPackets, InputPacketTrilogy);
-        uint32_t n                      = array_count(ackMgr->inputPackets);
+        InputPacketTrilogy* array   = array_data_type(ackMgr->inputPackets, InputPacketTrilogy);
+        uint32_t n                  = array_count(ackMgr->inputPackets);
         uint32_t i;
         
         for (i = 0; i < n; i++)
         {
-            R(InputPacketTrilogy*) packet = &array[i];
+            InputPacketTrilogy* packet = &array[i];
             
             if (packet->data)
             {
@@ -41,7 +41,7 @@ void ack_mgr_trilogy_deinit(R(AckMgrTrilogy*) ackMgr)
     }
 }
 
-static uint16_t ack_mgr_trilogy_complete_input_packet(R(Basic*) basic, R(void*) clientObject, R(InputPacketTrilogy*) packet)
+static uint16_t ack_mgr_trilogy_complete_input_packet(Basic* basic, void* clientObject, InputPacketTrilogy* packet)
 {
     Aligned w;
     aligned_init(basic, &w, packet->data, packet->length);
@@ -51,12 +51,12 @@ static uint16_t ack_mgr_trilogy_complete_input_packet(R(Basic*) basic, R(void*) 
     return packet->ackRequest + 1;
 }
 
-static uint16_t ack_mgr_trilogy_complete_input_fragments(R(Basic*) basic, R(void*) clientObject, R(InputPacketTrilogy*) array, uint32_t length, uint32_t i, uint32_t n)
+static uint16_t ack_mgr_trilogy_complete_input_fragments(Basic* basic, void* clientObject, InputPacketTrilogy* array, uint32_t length, uint32_t i, uint32_t n)
 {
     Aligned write;
-    R(Aligned*) w = &write;
-    R(InputPacketTrilogy*) packet;
-    R(byte*) data   = eqp_alloc_type_bytes(basic, length, byte);
+    Aligned* w = &write;
+    InputPacketTrilogy* packet;
+    byte* data      = eqp_alloc_type_bytes(basic, length, byte);
     uint16_t opcode = array[i].opcode;
     
     aligned_init(basic, w, data, length);
@@ -77,11 +77,11 @@ static uint16_t ack_mgr_trilogy_complete_input_fragments(R(Basic*) basic, R(void
     return packet->ackRequest + 1;
 }
 
-void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void*) clientObject, uint16_t opcode, uint16_t ackRequest, uint16_t fragCount)
+void ack_mgr_trilogy_recv_packet(AckMgrTrilogy* ackMgr, Aligned* a, void* clientObject, uint16_t opcode, uint16_t ackRequest, uint16_t fragCount)
 {
     // Working from the assumption that the client doesn't do anything weird like 
     // interleaving different fragmented packets within sequential ackRequest sequences...
-    R(Basic*) basic;
+    Basic* basic;
     uint16_t nextAck = ack_mgr_trilogy_next_ack_request_expected(ackMgr);
     uint32_t n;
     uint32_t diff;
@@ -89,7 +89,7 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
     uint32_t length;
     uint32_t frags;
     InputPacketTrilogy input;
-    R(InputPacketTrilogy*) ptr;
+    InputPacketTrilogy* ptr;
     
     if (ackRequest == nextAck && fragCount == 0)
     {
@@ -147,7 +147,7 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
     
     while (i < n)
     {
-        R(InputPacketTrilogy*) packet = &ptr[i];
+        InputPacketTrilogy* packet = &ptr[i];
         
         if (packet->ackRequest == 0)
             break;
@@ -186,7 +186,7 @@ void ack_mgr_trilogy_recv_packet(R(AckMgrTrilogy*) ackMgr, R(Aligned*) a, R(void
     }
 }
 
-void ack_mgr_trilogy_schedule_packet(R(AckMgrTrilogy*) ackMgr, R(PacketTrilogy*) packet, int noAckRequest)
+void ack_mgr_trilogy_schedule_packet(AckMgrTrilogy* ackMgr, PacketTrilogy* packet, int noAckRequest)
 {
     OutputPacketTrilogy wrapper;
     uint16_t header     = 0;

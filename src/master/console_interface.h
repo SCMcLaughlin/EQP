@@ -30,9 +30,9 @@ STRUCT_DEFINE(Console)
     char                replyCharName[32];
 };
 
-int console_receive(R(MasterIpcThread*) ipcThread, R(Master*) M, R(ChildProcess*) proc, int sourceId, R(IpcPacket*) packet);
+int console_receive(MasterIpcThread* ipcThread, Master* M, ChildProcess* proc, int sourceId, IpcPacket* packet);
 
-EQP_API void console_reply(R(Console*) console, R(const char*) msg, uint32_t length);
-EQP_API void console_finish(R(Console*) console);
+EQP_API void console_reply(Console* console, const char* msg, uint32_t length);
+EQP_API void console_finish(Console* console);
 
 #endif//EQP_CONSOLE_INTERFACE_H

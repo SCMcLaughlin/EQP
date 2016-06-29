@@ -42,10 +42,10 @@ STRUCT_DEFINE(ClientMgr)
     MasterIpcThread*    ipcThread;
 };
 
-void        client_mgr_init(R(MasterIpcThread*) ipcThread, R(ClientMgr*) mgr, R(lua_State*) L);
-void        client_mgr_deinit(R(ClientMgr*) mgr);
+void        client_mgr_init(MasterIpcThread* ipcThread, ClientMgr* mgr, lua_State* L);
+void        client_mgr_deinit(ClientMgr* mgr);
 
-void        client_mgr_handle_zone_in_from_char_select(R(ClientMgr*) mgr, R(IpcPacket*) packet);
+void        client_mgr_handle_zone_in_from_char_select(ClientMgr* mgr, IpcPacket* packet);
 
 #define     client_mgr_get_or_start_zone_cluster(mgr, sourceId) zc_mgr_get_or_start(&(mgr)->zoneClusterMgr, (sourceId))
 #define     client_mgr_get_zone_cluster(mgr, sourceId) zc_mgr_get(&(mgr)->zoneClusterMgr, (sourceId))

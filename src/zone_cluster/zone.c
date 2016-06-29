@@ -2,7 +2,7 @@
 #include "zone.h"
 #include "zone_cluster.h"
 
-Zone* zone_create(R(ZC*) zc, int sourceId, int zoneId, int instId)
+Zone* zone_create(ZC* zc, int sourceId, int zoneId, int instId)
 {
     Zone* zone = eqp_alloc_type(B(zc), Zone);
     uint32_t i;
@@ -34,7 +34,7 @@ Zone* zone_create(R(ZC*) zc, int sourceId, int zoneId, int instId)
     return zone;
 }
 
-void zone_destroy(R(ZC*) zc, R(Zone*) zone)
+void zone_destroy(ZC* zc, Zone* zone)
 {
     if (zone->mobsByEntityId)
     {
@@ -53,11 +53,11 @@ void zone_destroy(R(ZC*) zc, R(Zone*) zone)
     free(zone);
 }
 
-static void zone_spawn_mob(R(ZC*) zc, R(Zone*) zone, R(Mob*) mob)
+static void zone_spawn_mob(ZC* zc, Zone* zone, Mob* mob)
 {
     MobByPosition pos;
-    R(Mob**) entityArray    = array_data_type(zone->mobsByEntityId, Mob*);
-    uint32_t n              = array_count(zone->mobsByEntityId);
+    Mob** entityArray   = array_data_type(zone->mobsByEntityId, Mob*);
+    uint32_t n          = array_count(zone->mobsByEntityId);
     uint32_t i;
     
     for (i = 0; i < n; i++)
@@ -101,35 +101,76 @@ found_space_entity:
     mob_set_zone_index(mob, n);
 }
 
-void zone_spawn_client(R(ZC*) zc, R(Zone*) zone, R(Client*) client)
+void zone_spawn_client(ZC* zc, Zone* zone, Client* client)
 {
     ClientListing listing;
     
     zone_spawn_mob(zc, zone, &client->mob);
     
     listing.expansionId = client_expansion(client);
+    listing.isLinkdead  = false;
     listing.client      = client;
     
     client_set_zone_index(client, array_count(zone->clientList));
     array_push_back(B(zc), &zone->clientList, &listing);
 }
 
-void zone_broadcast_packet(R(Zone*) zone, R(PacketBroadcast*) packetBroadcast, R(Client*) ignore)
+void zone_remove_client(Zone* zone, Client* client)
 {
-    R(ClientListing*) array = array_data_type(zone->clientList, ClientListing);
+    int cIndex      = client_zone_index(client);
+    int mIndex      = mob_zone_index(&client->mob);
+    int entityId    = client_entity_id(client);
+    
+    if (array_swap_and_pop(zone->clientList, cIndex))
+    {
+        ClientListing* listing = array_get_type(zone->clientList, cIndex, ClientListing);
+        client_set_zone_index(listing->client, cIndex);
+    }
+    
+    if (array_swap_and_pop(zone->mobsByPosition, mIndex))
+    {
+        MobByPosition* pos = array_get_type(zone->mobsByPosition, mIndex, MobByPosition);
+        mob_set_zone_index(pos->mob, mIndex);
+    }
+    
+    if (entityId)
+    {
+        Mob** ent   = array_get_type(zone->mobsByEntityId, entityId - 1, Mob*);
+        *ent        = NULL;
+    }
+    
+    //fixme: broadcast despawn (add zone_despawn_mob?), and send the client whatever they need for removal
+}
+
+void zone_mark_client_as_linkdead(Zone* zone, Client* client)
+{
+    int index               = client_zone_index(client);
+    ClientListing* listing  = array_get_type(zone->clientList, index, ClientListing);
+    
+    if (!listing)
+        return;
+    
+    listing->isLinkdead = true;
+    
+    //fixme: broadcast this client's linkdead status
+}
+
+void zone_broadcast_packet(Zone* zone, PacketBroadcast* packetBroadcast, Client* ignore)
+{
+    ClientListing* array    = array_data_type(zone->clientList, ClientListing);
     uint32_t n              = array_count(zone->clientList);
     uint32_t i;
     
     for (i = 0; i < n; i++)
     {
-        R(ClientListing*) listing = &array[i];
+        ClientListing* listing = &array[i];
         
-        if (listing->client == ignore)
+        if (listing->client == ignore || listing->isLinkdead)
             continue;
         
         if (listing->expansionId == ExpansionId_Trilogy)
         {
-            R(PacketTrilogy*) packet = packet_broadcast_get_trilogy(packetBroadcast);
+            PacketTrilogy* packet = packet_broadcast_get_trilogy(packetBroadcast);
             
             if (packet)
                 client_trilogy_schedule_packet_broadcast(listing->client, packet);
@@ -143,27 +184,27 @@ void zone_broadcast_packet(R(Zone*) zone, R(PacketBroadcast*) packetBroadcast, R
 
 /* LuaJIT API */
 
-int zone_get_source_id(R(Zone*) zone)
+int zone_get_source_id(Zone* zone)
 {
     return zone->sourceId;
 }
 
-uint16_t zone_get_zone_id(R(Zone*) zone)
+uint16_t zone_get_zone_id(Zone* zone)
 {
     return zone->zoneId;
 }
 
-uint16_t zone_get_instance_id(R(Zone*) zone)
+uint16_t zone_get_instance_id(Zone* zone)
 {
     return zone->instanceId;
 }
 
-const char* zone_get_short_name(R(Zone*) zone)
+const char* zone_get_short_name(Zone* zone)
 {
     return zone_short_name_by_id(zone->zoneId);
 }
 
-const char* zone_get_long_name(R(Zone*) zone)
+const char* zone_get_long_name(Zone* zone)
 {
     return zone_long_name_by_id(zone->zoneId);
 }

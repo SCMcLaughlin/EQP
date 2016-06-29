@@ -3,7 +3,7 @@
 #include "eqp_string.h"
 #include "terminal.h"
 
-int zone_cluster_main(R(ZC*) zc, R(const char**) argv)
+int zone_cluster_main(ZC* zc, const char** argv)
 {
     ExceptionScope exScope;
     int volatile ret = 0;

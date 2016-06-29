@@ -104,12 +104,12 @@ STRUCT_DEFINE(InventoryIterator)
     InventorySlot*  slot;
 };
 
-void    inventory_init(R(Basic*) basic, R(Inventory*) inv);
-void    inventory_deinit(R(Inventory*) inv);
+void    inventory_init(Basic* basic, Inventory* inv);
+void    inventory_deinit(Inventory* inv);
 
-void    inventory_add_from_database(R(Basic*) basic, R(Inventory*) inv, R(InventorySlot*) slot);
+void    inventory_add_from_database(Basic* basic, Inventory* inv, InventorySlot* slot);
 
-void    inventory_iterator_init(R(InventoryIterator*) itr, uint32_t slotFrom, uint32_t slotTo);
-int     inventory_iterate_no_augs(R(Inventory*) inv, R(InventoryIterator*) itr);
+void    inventory_iterator_init(InventoryIterator* itr, uint32_t slotFrom, uint32_t slotTo);
+int     inventory_iterate_no_augs(Inventory* inv, InventoryIterator* itr);
 
 #endif//EQP_INVENTORY_H

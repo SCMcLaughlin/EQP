@@ -62,7 +62,7 @@ typedef _Bool bool;
     typedef enum name name;     \
     enum name
     
-#define R(ptrType) ptrType restrict
+#define ptrType ptrType     restrict
 
 #define sizeof_field(type, name) sizeof(((type*)0)->name)
 

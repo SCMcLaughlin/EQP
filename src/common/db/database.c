@@ -3,31 +3,30 @@
 #include "eqp_core.h"
 #include "eqp_string.h"
 
-Database* db_create(R(Core*) core)
+Database* db_create(Core* core)
 {
-    R(Database*) db = eqp_alloc_type(B(core), Database);
+    Database* db = eqp_alloc_type(B(core), Database);
     db_init(core, db);
     return db;
 }
 
-void db_destroy(R(Database*) db)
+void db_destroy(Database* db)
 {
     if (!db) return;
     db_deinit(db);
     free(db);
 }
 
-void db_init(R(Core*) core, R(Database*) db)
+void db_init(Core* core, Database* db)
 {
     db->core        = core;
     db->sqlite      = NULL;
     db->dbThread    = core_db_thread(core);
     db->dbPath      = NULL;
     atomic_init(&db->nextQueryId, 1);
-    //db->nextQueryId = 0;
 }
 
-void db_deinit(R(Database*) db)
+void db_deinit(Database* db)
 {
     sqlite3_close_v2(db->sqlite);
     
@@ -38,9 +37,9 @@ void db_deinit(R(Database*) db)
     }
 }
 
-static void db_create_from_schema(R(Database*) db, R(const char*) dbPath, R(const char*) schemaPath)
+static void db_create_from_schema(Database* db, const char* dbPath, const char* schemaPath)
 {
-    R(FILE*) volatile schema;
+    FILE* volatile schema;
     
     int rc = sqlite3_open_v2(
         dbPath,
@@ -60,8 +59,8 @@ static void db_create_from_schema(R(Database*) db, R(const char*) dbPath, R(cons
     if (schema)
     {
         ExceptionScope exScope;
-        R(Core*) volatile core  = db->core;
-        R(String*) volatile str = NULL;
+        Core* volatile core     = db->core;
+        String* volatile str    = NULL;
         
         switch (exception_try(B(core), &exScope))
         {
@@ -80,14 +79,15 @@ static void db_create_from_schema(R(Database*) db, R(const char*) dbPath, R(cons
             
             break;
             
-        default: break;
+        default:
+            break;
         }
         
         exception_end_try_with_finally(B(core));
     }
 }
 
-void db_open(R(Database*) db, R(const char*) dbPath, R(const char*) schemaPath)
+void db_open(Database* db, const char* dbPath, const char* schemaPath)
 {
     int rc = sqlite3_open_v2(
         dbPath,
@@ -108,7 +108,7 @@ void db_open(R(Database*) db, R(const char*) dbPath, R(const char*) schemaPath)
     log_format(B(db->core), LogInfo, "Database file '%s' opened and initialized", dbPath);
 }
 
-void db_prepare(R(Database*) db, R(Query*) query, R(const char*) sql, int len, QueryCallback callback)
+void db_prepare(Database* db, Query* query, const char* sql, int len, QueryCallback callback)
 {
     PerfTimer timer;
     sqlite3_stmt* stmt;
@@ -134,7 +134,7 @@ void db_prepare(R(Database*) db, R(Query*) query, R(const char*) sql, int len, Q
     exception_throw_format(B(db->core), ErrorSql, "[db_prepare] Could not prepare query\nReason: %s\nSQL: %s", sqlite3_errstr(rc), sql);
 }
 
-void db_exec(R(Database*) db, R(const char*)sql, R(const char*) exceptionFormat)
+void db_exec(Database* db, const char*sql, const char* exceptionFormat)
 {
     char* errmsg = NULL;
     int rc;
@@ -144,7 +144,7 @@ void db_exec(R(Database*) db, R(const char*)sql, R(const char*) exceptionFormat)
     if (errmsg)
     {
         ExceptionScope exScope;
-        R(Basic*) volatile basic = B(db->core);
+        Basic* volatile basic = B(db->core);
         
         switch (exception_try(basic, &exScope))
         {
@@ -175,7 +175,7 @@ void db_exec(R(Database*) db, R(const char*)sql, R(const char*) exceptionFormat)
     }
 }
 
-void db_schedule(R(Database*) db, R(Query*) query)
+void db_schedule(Database* db, Query* query)
 {
     db_thread_schedule_query(B(db->core), db->dbThread, query);
 }

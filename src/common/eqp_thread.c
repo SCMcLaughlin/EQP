@@ -3,7 +3,7 @@
 #include "eqp_string.h"
 #include "eqp_log.h"
 
-static void thread_init(R(Thread*) thread, R(Basic*) basic, ThreadProc func)
+static void thread_init(Thread* thread, Basic* basic, ThreadProc func)
 {
     basic_copy(B(thread), basic);
     thread->func = func;
@@ -13,9 +13,9 @@ static void thread_init(R(Thread*) thread, R(Basic*) basic, ThreadProc func)
 }
 
 #ifdef EQP_LINUX
-static void* thread_proc_wrapper(R(void*) thread)
+static void* thread_proc_wrapper(void* thread)
 #else
-static void thread_proc_wrapper(R(void*) thread)
+static void thread_proc_wrapper(void* thread)
 #endif
 {
     ExceptionScope exScope;
@@ -46,7 +46,7 @@ static void thread_proc_wrapper(R(void*) thread)
 #endif
 }
 
-void thread_start_and_detach(R(Basic*) basic, R(Thread*) thread, ThreadProc func)
+void thread_start_and_detach(Basic* basic, Thread* thread, ThreadProc func)
 {
 #ifdef EQP_LINUX
     pthread_t pthread;
@@ -65,13 +65,13 @@ void thread_start_and_detach(R(Basic*) basic, R(Thread*) thread, ThreadProc func
 #endif
 }
 
-void thread_send_stop_signal(R(Basic*) basic, R(Thread*) thread)
+void thread_send_stop_signal(Basic* basic, Thread* thread)
 {
     atomic_mutex_unlock(&thread->mutexShouldContinue);
     thread_trigger(basic, thread);
 }
 
-void thread_wait_until_stopped(R(Thread*) thread)
+void thread_wait_until_stopped(Thread* thread)
 {
     for (;;)
     {

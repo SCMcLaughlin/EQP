@@ -6,6 +6,6 @@
 #include "eqp_core.h"
 #include "eqp_string.h"
 
-uint64_t    file_calc_size(R(FILE*) fp);
+uint64_t    file_calc_size(FILE* fp);
 
 #endif//EQP_FILE_H

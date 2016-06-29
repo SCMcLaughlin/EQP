@@ -2,40 +2,39 @@
 #include "client_packet_trilogy_output.h"
 #include "zone_cluster.h"
 
-void client_trilogy_schedule_packet_individual(R(Client*) client, R(PacketTrilogy*) packet)
+void client_trilogy_schedule_packet_individual(Client* client, PacketTrilogy* packet)
 {
-    R(ProtocolHandler*) handler = client_handler(client);
+    ProtocolHandler* handler = client_handler(client);
     packet_trilogy_fragmentize(packet);
     protocol_handler_trilogy_schedule_packet(&handler->trilogy, packet);
 }
 
-void client_trilogy_schedule_packet_broadcast(R(Client*) client, R(PacketTrilogy*) packet)
+void client_trilogy_schedule_packet_broadcast(Client* client, PacketTrilogy* packet)
 {
-    R(ProtocolHandler*) handler = client_handler(client);
+    ProtocolHandler* handler = client_handler(client);
     packet_trilogy_grab(packet);
     protocol_handler_trilogy_schedule_packet(&handler->trilogy, packet);
 }
 
-void client_trilogy_send_zero_length_packet(R(Client*) client, uint16_t opcode)
+void client_trilogy_send_zero_length_packet(Client* client, uint16_t opcode)
 {
-    R(PacketTrilogy*) packet = packet_trilogy_create(B(client_zone_cluster(client)), opcode, 0);
+    PacketTrilogy* packet = packet_trilogy_create(B(client_zone_cluster(client)), opcode, 0);
     client_trilogy_schedule_packet_individual(client, packet);
 }
 
-void client_trilogy_send_zeroed_packet_var_length(R(Client*) client, uint16_t opcode, uint32_t length)
+void client_trilogy_send_zeroed_packet_var_length(Client* client, uint16_t opcode, uint32_t length)
 {
-    R(PacketTrilogy*) packet = packet_trilogy_create(B(client_zone_cluster(client)), opcode, length);
+    PacketTrilogy* packet = packet_trilogy_create(B(client_zone_cluster(client)), opcode, length);
     memset(packet_trilogy_data(packet), 0, length);
     client_trilogy_schedule_packet_individual(client, packet);
 }
 
-void client_trilogy_send_keep_alive(R(Timer*) timer)
+void client_trilogy_send_keep_alive(ProtocolHandler* handler)
 {
-    R(ProtocolHandler*) handler = timer_userdata_type(timer, ProtocolHandler);
     protocol_handler_trilogy_send_keep_alive_ack(&handler->trilogy);
 }
 
-static void client_trilogy_player_profile_obfuscate(R(byte*) buffer, uint32_t len)
+static void client_trilogy_player_profile_obfuscate(byte* buffer, uint32_t len)
 {
     uint32_t* ptr   = (uint32_t*)buffer;
     uint32_t cur    = 0x65e7;
@@ -58,12 +57,12 @@ static void client_trilogy_player_profile_obfuscate(R(byte*) buffer, uint32_t le
     }
 }
 
-static void client_trilogy_send_player_profile_compress_and_obfuscate(R(Client*) client, R(Trilogy_PlayerProfile*) pp)
+static void client_trilogy_send_player_profile_compress_and_obfuscate(Client* client, Trilogy_PlayerProfile* pp)
 {
     byte buffer[sizeof(Trilogy_PlayerProfile)];
     unsigned long length    = sizeof(buffer);
-    R(ZC*) zc               = client_zone_cluster(client);
-    R(PacketTrilogy*) packet;
+    ZC* zc                  = client_zone_cluster(client);
+    PacketTrilogy* packet;
     int rc;
     
     rc = compress2(buffer, &length, (const byte*)pp, sizeof(Trilogy_PlayerProfile), Z_BEST_COMPRESSION);
@@ -79,14 +78,14 @@ static void client_trilogy_send_player_profile_compress_and_obfuscate(R(Client*)
     client_trilogy_schedule_packet_individual(client, packet);
 }
 
-void client_trilogy_send_player_profile(R(Client*) client)
+void client_trilogy_send_player_profile(Client* client)
 {
     Trilogy_PlayerProfile pp;
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w = &write;
     InventoryIterator invItr;
-    R(Inventory*) inv   = &client->inventory;
-    uint64_t time       = clock_milliseconds();
+    Inventory* inv  = &client->inventory;
+    uint64_t time   = clock_milliseconds();
     uint32_t reset;
     uint32_t i;
     
@@ -155,7 +154,7 @@ void client_trilogy_send_player_profile(R(Client*) client)
     
     while (inventory_iterate_no_augs(inv, &invItr))
     {
-        R(InventorySlot*) slot = invItr.slot;
+        InventorySlot* slot = invItr.slot;
         
         aligned_advance(w, sizeof(uint16_t) * (slot->slotId - 1)); // No charm slot
         aligned_write_uint16(w, slot->itemId);
@@ -182,7 +181,7 @@ void client_trilogy_send_player_profile(R(Client*) client)
     
     while (inventory_iterate_no_augs(inv, &invItr))
     {
-        R(InventorySlot*) slot = invItr.slot;
+        InventorySlot* slot = invItr.slot;
         
         aligned_advance(w, sizeof(Trilogy_PPItem) * (slot->slotId - 1)); // No charm slot
         
@@ -211,7 +210,7 @@ void client_trilogy_send_player_profile(R(Client*) client)
     
     while (inventory_iterate_no_augs(inv, &invItr))
     {
-        R(InventorySlot*) slot = invItr.slot;
+        InventorySlot* slot = invItr.slot;
         
         aligned_advance(w, sizeof(uint16_t) * (slot->slotId - InvSlot_BagsSlotsIncludingCursorBegin));
         aligned_write_uint16(w, slot->itemId);
@@ -235,7 +234,7 @@ void client_trilogy_send_player_profile(R(Client*) client)
     
     while (inventory_iterate_no_augs(inv, &invItr))
     {
-        R(InventorySlot*) slot = invItr.slot;
+        InventorySlot* slot = invItr.slot;
         
         aligned_advance(w, sizeof(Trilogy_PPItem) * (slot->slotId - InvSlot_BagsSlotsIncludingCursorBegin));
         
@@ -252,7 +251,7 @@ void client_trilogy_send_player_profile(R(Client*) client)
     
     if (!client_spellbook_is_empty(client))
     {
-        R(SpellbookSlot*) array = array_data_type(client->spellbook.knownSpells, SpellbookSlot);
+        SpellbookSlot* array    = array_data_type(client->spellbook.knownSpells, SpellbookSlot);
         uint32_t n              = array_count(client->spellbook.knownSpells);
         reset                   = aligned_position(w);
         
@@ -374,7 +373,7 @@ void client_trilogy_send_player_profile(R(Client*) client)
     
     while (inventory_iterate_no_augs(inv, &invItr))
     {
-        R(InventorySlot*) slot = invItr.slot;
+        InventorySlot* slot = invItr.slot;
         
         aligned_advance(w, sizeof(Trilogy_PPItem) * (slot->slotId - InvSlot_BankBegin));
         
@@ -401,7 +400,7 @@ void client_trilogy_send_player_profile(R(Client*) client)
     
     while (inventory_iterate_no_augs(inv, &invItr))
     {
-        R(InventorySlot*) slot = invItr.slot;
+        InventorySlot* slot = invItr.slot;
         
         aligned_advance(w, sizeof(Trilogy_PPItem) * (slot->slotId - InvSlot_BankBagSlotsBegin));
         
@@ -462,7 +461,7 @@ void client_trilogy_send_player_profile(R(Client*) client)
     
     while (inventory_iterate_no_augs(inv, &invItr))
     {
-        R(InventorySlot*) slot = invItr.slot;
+        InventorySlot* slot = invItr.slot;
         
         aligned_advance(w, sizeof(uint16_t) * (slot->slotId - InvSlot_BankBegin));
         aligned_write_uint16(w, slot->itemId);
@@ -479,7 +478,7 @@ void client_trilogy_send_player_profile(R(Client*) client)
     
     while (inventory_iterate_no_augs(inv, &invItr))
     {
-        R(InventorySlot*) slot = invItr.slot;
+        InventorySlot* slot = invItr.slot;
         
         aligned_advance(w, sizeof(uint16_t) * (slot->slotId - InvSlot_BankBagSlotsBegin));
         aligned_write_uint16(w, slot->itemId);
@@ -584,12 +583,12 @@ void client_trilogy_send_player_profile(R(Client*) client)
     client_trilogy_send_player_profile_compress_and_obfuscate(client, &pp);
 }
 
-void client_trilogy_send_zone_entry(R(Client*) client)
+void client_trilogy_send_zone_entry(Client* client)
 {
-    R(PacketTrilogy*) packet;
+    PacketTrilogy* packet;
     Aligned write;
-    R(Aligned*) w   = &write;
-    R(ZC*) zc       = client_zone_cluster(client);
+    Aligned* w  = &write;
+    ZC* zc      = client_zone_cluster(client);
     
     packet = packet_trilogy_create(B(zc), TrilogyOp_ZoneEntry, sizeof(Trilogy_ZoneEntry));
     aligned_init(B(zc), w, packet_trilogy_data(packet), packet_trilogy_length(packet));
@@ -683,9 +682,9 @@ void client_trilogy_send_zone_entry(R(Client*) client)
     client_trilogy_schedule_packet_individual(client, packet);
 }
 
-PacketTrilogy* client_trilogy_make_op_weather(R(ZC*) zc, int weatherType, int intensity)
+PacketTrilogy* client_trilogy_make_op_weather(ZC* zc, int weatherType, int intensity)
 {
-    R(PacketTrilogy*) packet = packet_trilogy_create(B(zc), TrilogyOp_Weather, sizeof(Trilogy_Weather));
+    PacketTrilogy* packet = packet_trilogy_create(B(zc), TrilogyOp_Weather, sizeof(Trilogy_Weather));
     Aligned w;
     
     aligned_init(B(zc), &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
@@ -697,11 +696,11 @@ PacketTrilogy* client_trilogy_make_op_weather(R(ZC*) zc, int weatherType, int in
     return packet;
 }
 
-PacketTrilogy* client_trilogy_make_op_zone_info(R(ZC*) zc, R(Zone*) zone)
+PacketTrilogy* client_trilogy_make_op_zone_info(ZC* zc, Zone* zone)
 {
-    R(PacketTrilogy*) packet = packet_trilogy_create(B(zc), TrilogyOp_ZoneInfo, sizeof(Trilogy_ZoneInfo));
+    PacketTrilogy* packet = packet_trilogy_create(B(zc), TrilogyOp_ZoneInfo, sizeof(Trilogy_ZoneInfo));
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w = &write;
     
     aligned_init(B(zc), w, packet_trilogy_data(packet), packet_trilogy_length(packet));
     
@@ -791,11 +790,11 @@ PacketTrilogy* client_trilogy_make_op_zone_info(R(ZC*) zc, R(Zone*) zone)
     return packet;
 }
 
-PacketTrilogy* client_trilogy_make_op_spawn_appearance(R(ZC*) zc, uint16_t entityId, uint16_t type, uint32_t value)
+PacketTrilogy* client_trilogy_make_op_spawn_appearance(ZC* zc, uint16_t entityId, uint16_t type, uint32_t value)
 {
-    R(PacketTrilogy*) packet = packet_trilogy_create(B(zc), TrilogyOp_ZoneInfo, sizeof(Trilogy_ZoneInfo));
+    PacketTrilogy* packet = packet_trilogy_create(B(zc), TrilogyOp_ZoneInfo, sizeof(Trilogy_ZoneInfo));
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w = &write;
     
     aligned_init(B(zc), w, packet_trilogy_data(packet), packet_trilogy_length(packet));
     
@@ -813,7 +812,7 @@ PacketTrilogy* client_trilogy_make_op_spawn_appearance(R(ZC*) zc, uint16_t entit
     return packet;
 }
 
-static void client_trilogy_spawn_obfuscate(R(byte*) data, uint32_t length)
+static void client_trilogy_spawn_obfuscate(byte* data, uint32_t length)
 {
     uint32_t* ptr   = (uint32_t*)data;
     uint32_t cur    = 0;
@@ -831,12 +830,12 @@ static void client_trilogy_spawn_obfuscate(R(byte*) data, uint32_t length)
     }
 }
 
-PacketTrilogy* client_trilogy_make_op_spawn(R(ZC*) zc, R(Mob*) spawningMob)
+PacketTrilogy* client_trilogy_make_op_spawn(ZC* zc, Mob* spawningMob)
 {
-    R(PacketTrilogy*) packet = packet_trilogy_create(B(zc), TrilogyOp_Spawn, sizeof(Trilogy_Spawn));
+    PacketTrilogy* packet = packet_trilogy_create(B(zc), TrilogyOp_Spawn, sizeof(Trilogy_Spawn));
     Aligned write;
-    R(Aligned*) w   = &write;
-    int mobType     = mob_get_type(spawningMob);
+    Aligned* w  = &write;
+    int mobType = mob_get_type(spawningMob);
     int temp;
     
     aligned_init(B(zc), w, packet_trilogy_data(packet), packet_trilogy_length(packet));

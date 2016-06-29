@@ -3,26 +3,26 @@
 #include "master_ipc.h"
 #include "eqp_master.h"
 
-static void client_mgr_motd_callback(R(Query*) query)
+static void client_mgr_motd_callback(Query* query)
 {
-    R(ClientMgr*) mgr               = query_userdata_type(query, ClientMgr);
-    R(MasterIpcThread*) ipcThread   = mgr->ipcThread;
+    ClientMgr* mgr              = query_userdata_type(query, ClientMgr);
+    MasterIpcThread* ipcThread  = mgr->ipcThread;
     
     client_mgr_lock(mgr);
     
     while (query_select(query))
     {
         uint32_t len;
-        R(const char*) motd     = query_get_string(query, 1, &len);
+        const char* motd        = query_get_string(query, 1, &len);
         mgr->messageOfTheDay    = string_create_from_cstr(B(ipcThread), motd, len);
     }
     
     client_mgr_unlock(mgr);
 }
 
-static void client_mgr_base_time_callback(R(Query*) query)
+static void client_mgr_base_time_callback(Query* query)
 {
-    R(ClientMgr*) mgr = query_userdata_type(query, ClientMgr);
+    ClientMgr* mgr = query_userdata_type(query, ClientMgr);
     
     client_mgr_lock(mgr);
     
@@ -34,10 +34,10 @@ static void client_mgr_base_time_callback(R(Query*) query)
     client_mgr_unlock(mgr);
 }
 
-void client_mgr_init(R(MasterIpcThread*) ipcThread, R(ClientMgr*) mgr, R(lua_State*) L)
+void client_mgr_init(MasterIpcThread* ipcThread, ClientMgr* mgr, lua_State* L)
 {
     Query query;
-    R(Database*) db = master_ipc_thread_db(ipcThread);
+    Database* db = master_ipc_thread_db(ipcThread);
     
     mgr->ipcThread      = ipcThread;
     mgr->clientsByName  = hash_table_create_type(B(ipcThread), Client*);
@@ -69,7 +69,7 @@ void client_mgr_init(R(MasterIpcThread*) ipcThread, R(ClientMgr*) mgr, R(lua_Sta
     client_mgr_unlock(mgr);
 }
 
-void client_mgr_deinit(R(ClientMgr*) mgr)
+void client_mgr_deinit(ClientMgr* mgr)
 {
     if (mgr->remoteAddress)
     {
@@ -104,25 +104,25 @@ void client_mgr_deinit(R(ClientMgr*) mgr)
     zc_mgr_deinit(&mgr->zoneClusterMgr);
 }
 
-static void client_mgr_ipc_char_select(R(ClientMgr*) mgr, ServerOp opcode, uint32_t length, R(const void*) data)
+static void client_mgr_ipc_char_select(ClientMgr* mgr, ServerOp opcode, uint32_t length, const void* data)
 {
-    R(MasterIpcThread*) ipcThread   = mgr->ipcThread;
-    R(ChildProcess*) proc           = master_get_child_process(master_ipc_thread_master(ipcThread), EQP_SOURCE_ID_CHAR_SELECT);
+    MasterIpcThread* ipcThread  = mgr->ipcThread;
+    ChildProcess* proc          = master_get_child_process(master_ipc_thread_master(ipcThread), EQP_SOURCE_ID_CHAR_SELECT);
     
     proc_ipc_send(B(ipcThread), proc, opcode, EQP_SOURCE_ID_MASTER, length, data);
 }
 
-static void client_mgr_add_client_from_char_select(R(ClientMgr*) mgr, R(Client*) client)
+static void client_mgr_add_client_from_char_select(ClientMgr* mgr, Client* client)
 {
     byte buf[EQP_IPC_PACKET_MAX_SIZE];
-    R(Server_ZoneAddress*) zoneAddr = (Server_ZoneAddress*)buf;
-    R(Basic*) basic                 = B(mgr->ipcThread);
-    R(String*) motd                 = mgr->messageOfTheDay;
+    Server_ZoneAddress* zoneAddr    = (Server_ZoneAddress*)buf;
+    Basic* basic                    = B(mgr->ipcThread);
+    String* motd                    = mgr->messageOfTheDay;
     uint32_t motdLen                = string_length(motd);
     uint32_t length                 = sizeof(Server_ZoneAddress);
     int zoneSourceId                = client_zone_source_id(client);
     ClientByIds byIds;
-    R(ZoneCluster*) zc;
+    ZoneCluster* zc;
     
     if ((motdLen + length) > sizeof(buf))
         motdLen = sizeof(buf) - length - 1;
@@ -159,11 +159,11 @@ static void client_mgr_add_client_from_char_select(R(ClientMgr*) mgr, R(Client*)
     hash_table_set_by_cstr(basic, &mgr->clientsByName, client_name(client), strlen(client_name(client)), (void*)&client);
 }
 
-static void client_mgr_from_char_select_callback(R(Query*) query)
+static void client_mgr_from_char_select_callback(Query* query)
 {
-    R(Client*) client   = query_userdata_type(query, Client);
-    R(ClientMgr*) mgr   = client_client_mgr(client);
-    int isValid         = false;
+    Client* client  = query_userdata_type(query, Client);
+    ClientMgr* mgr  = client_client_mgr(client);
+    int isValid     = false;
     
     client_mgr_lock(mgr);
     
@@ -196,11 +196,11 @@ static void client_mgr_from_char_select_callback(R(Query*) query)
     client_mgr_unlock(mgr);
 }
 
-void client_mgr_handle_zone_in_from_char_select(R(ClientMgr*) mgr, R(IpcPacket*) packet)
+void client_mgr_handle_zone_in_from_char_select(ClientMgr* mgr, IpcPacket* packet)
 {
-    R(Server_ClientZoning*) zoning;
-    R(Database*) db;
-    R(Client*) client;
+    Server_ClientZoning* zoning;
+    Database* db;
+    Client* client;
     Query query;
     
     if (ipc_packet_length(packet) < sizeof(Server_ClientZoning))

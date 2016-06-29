@@ -2,7 +2,7 @@
 #include "define.h"
 #include "log_writer.h"
 
-int log_main(R(LogWriter*) logWriter, R(const char*) ipcPath)
+int log_main(LogWriter* logWriter, const char* ipcPath)
 {
     ExceptionScope exScope;
     int volatile ret = 0;

@@ -18,7 +18,6 @@
 
 #define EQP_CLIENT_ZONE_IN_EXPECTED_TIMEOUT TIMER_SECONDS(30)
 #define EQP_CLIENT_ZONE_IN_NO_AUTH_TIMEOUT  TIMER_SECONDS(30)
-#define EQP_CLIENT_KEEP_ALIVE_DELAY_MS      500
 
 STRUCT_DECLARE(ZC);
 STRUCT_DECLARE(Zone);
@@ -93,24 +92,23 @@ STRUCT_DEFINE(Client)
     String*     accountName;
     uint32_t    accountId;
     uint32_t    ipAddress;
-    
-    Timer       timerKeepAlive; //fixme: would make more sense to have one timer in ZC that iterates over all active clients for keep alive?
 };
 
-Client* client_create(R(ZC*) zc, R(Zone*) zone, R(Server_ClientZoning*) zoning);
+Client* client_create(ZC* zc, Zone* zone, Server_ClientZoning* zoning);
 #define client_grab(cli) atomic_fetch_add(&(cli)->refCount, 1)
-void    client_drop(R(Client*) client);
+void    client_drop(Client* client);
 
-void    client_catch_up_with_loading_progress(R(Client*) client);
-void    client_check_loading_finished(R(Client*) client);
-void    client_fill_in_missing_bind_points(R(Client*) client);
+void    client_catch_up_with_loading_progress(Client* client);
+void    client_check_loading_finished(Client* client);
+void    client_fill_in_missing_bind_points(Client* client);
 
 #define client_set_zone_index(cli, index) ((cli)->zoneClientIndex = (index))
 #define client_zone_index(cli) ((cli)->zoneClientIndex)
+#define client_set_linkdead(cli) ((cli)->isLinkdead = true)
 
 #define client_guild_id(cli) ((cli)->guildId)
 
-#define client_set_handler(cli, handler) ((cli)->handler = (handler))
+#define client_set_handler(cli, h) ((cli)->handler = (h))
 #define client_handler(cli) ((cli)->handler)
 #define client_expansion(cli) ((cli)->expansion)
 #define client_name(cli) mob_name(&(cli)->mob)
@@ -167,14 +165,14 @@ void    client_fill_in_missing_bind_points(R(Client*) client);
 #define client_primary_model_id(cli) mob_primary_model_id(&(cli)->mob)
 #define client_secondary_model_id(cli) mob_secondary_model_id(&(cli)->mob)
 
-EQP_API int         client_is_pvp(R(Client*) client);
-EQP_API int         client_is_gm(R(Client*) client);
-EQP_API int         client_is_afk(R(Client*) client);
-EQP_API int         client_is_linkdead(R(Client*) client);
-EQP_API uint8_t     client_anon_setting(R(Client*) client);
-EQP_API uint8_t     client_guild_rank(R(Client*) client);
-EQP_API const char* client_surname_cstr(R(Client*) client);
+EQP_API int         client_is_pvp(Client* client);
+EQP_API int         client_is_gm(Client* client);
+EQP_API int         client_is_afk(Client* client);
+EQP_API int         client_is_linkdead(Client* client);
+EQP_API uint8_t     client_anon_setting(Client* client);
+EQP_API uint8_t     client_guild_rank(Client* client);
+EQP_API const char* client_surname_cstr(Client* client);
 
-EQP_API void        client_set_bind_point(R(Client*) client, uint32_t bindId, int zoneId, float x, float y, float z, float heading);
+EQP_API void        client_set_bind_point(Client* client, uint32_t bindId, int zoneId, float x, float y, float z, float heading);
 
 #endif//EQP_CLIENT_H

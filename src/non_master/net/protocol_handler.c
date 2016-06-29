@@ -4,7 +4,7 @@
 #include "eqp_alloc.h"
 #include "udp_socket.h"
 
-ProtocolHandler* protocol_handler_create(R(Basic*) basic)
+ProtocolHandler* protocol_handler_create(Basic* basic)
 {
     ProtocolHandler* handler = eqp_alloc_type(basic, ProtocolHandler);
     memset(handler, 0, sizeof(ProtocolHandler));
@@ -15,7 +15,7 @@ ProtocolHandler* protocol_handler_create(R(Basic*) basic)
     return handler;
 }
 
-void protocol_handler_drop(R(ProtocolHandler*) handler)
+void protocol_handler_drop(ProtocolHandler* handler)
 {
     int isTrilogy;
     
@@ -32,9 +32,9 @@ void protocol_handler_drop(R(ProtocolHandler*) handler)
     free(handler);
 }
 
-Basic* protocol_handler_basic(R(ProtocolHandler*) handler)
+Basic* protocol_handler_basic(ProtocolHandler* handler)
 {
-    R(Basic*) basic;
+    Basic* basic;
     
     if (handler->isTrilogy == 0)
         basic = protocol_handler_standard_basic(&handler->standard);
@@ -44,7 +44,7 @@ Basic* protocol_handler_basic(R(ProtocolHandler*) handler)
     return basic;
 }
 
-void protocol_handler_update_index(R(ProtocolHandler*) handler, uint32_t index)
+void protocol_handler_update_index(ProtocolHandler* handler, uint32_t index)
 {
     if (handler->isTrilogy == 0)
         protocol_handler_standard_update_index(&handler->standard, index);
@@ -52,9 +52,9 @@ void protocol_handler_update_index(R(ProtocolHandler*) handler, uint32_t index)
         protocol_handler_trilogy_update_index(&handler->trilogy, index);
 }
 
-void* protocol_handler_client_object(R(ProtocolHandler*) handler)
+void* protocol_handler_client_object(ProtocolHandler* handler)
 {
-    R(void*) clientObject;
+    void* clientObject;
     
     if (handler->isTrilogy == 0)
         clientObject = protocol_handler_standard_client_object(&handler->standard);
@@ -64,9 +64,9 @@ void* protocol_handler_client_object(R(ProtocolHandler*) handler)
     return clientObject;
 }
 
-IpAddress* protocol_handler_ip_address(R(ProtocolHandler*) handler)
+IpAddress* protocol_handler_ip_address(ProtocolHandler* handler)
 {
-    R(IpAddress*) ip;
+    IpAddress* ip;
     
     //if (handler->isTrilogy == 0)
     //    ip = protocol_handler_standard_ip_address(&handler->standard);
@@ -76,7 +76,7 @@ IpAddress* protocol_handler_ip_address(R(ProtocolHandler*) handler)
     return ip;
 }
 
-void protocol_handler_set_client_object(R(ProtocolHandler*) handler, R(void*) clientObject)
+void protocol_handler_set_client_object(ProtocolHandler* handler, void* clientObject)
 {
     //if (handler->isTrilogy == 0)
     //    protocol_handler_standard_set_client_object(&handler->standard, clientObject);
@@ -84,7 +84,7 @@ void protocol_handler_set_client_object(R(ProtocolHandler*) handler, R(void*) cl
         protocol_handler_trilogy_set_client_object(&handler->trilogy, clientObject);
 }
 
-void protocol_handler_recv(R(ProtocolHandler*) handler, R(byte*) data, int len)
+void protocol_handler_recv(ProtocolHandler* handler, byte* data, int len)
 {
     if (handler->isTrilogy == 0)
         protocol_handler_standard_recv(&handler->standard, data, len);
@@ -92,7 +92,7 @@ void protocol_handler_recv(R(ProtocolHandler*) handler, R(byte*) data, int len)
         protocol_handler_trilogy_recv(&handler->trilogy, data, len);
 }
 
-void protocol_handler_check_first_packet(R(UdpSocket*) sock, R(UdpClient*) client, R(ProtocolHandler*) handler, R(byte*) data, int len, uint32_t index)
+void protocol_handler_check_first_packet(UdpSocket* sock, UdpClient* client, ProtocolHandler* handler, byte* data, int len, uint32_t index)
 {
     Aligned a;
     uint16_t header;
@@ -117,7 +117,7 @@ void protocol_handler_check_first_packet(R(UdpSocket*) sock, R(UdpClient*) clien
     protocol_handler_standard_init(sock, client, handler, index);
 }
 
-void protocol_handler_send_queued(R(ProtocolHandler*) handler)
+void protocol_handler_send_queued(ProtocolHandler* handler)
 {
     /*if (handler->isTrilogy == 0)
         protocol_handler_standard_send_queued(&handler->standard);
@@ -125,7 +125,7 @@ void protocol_handler_send_queued(R(ProtocolHandler*) handler)
         protocol_handler_trilogy_send_queued(&handler->trilogy);
 }
 
-void protocol_handler_schedule_packet_opt(R(ProtocolHandler*) handler, R(void*) packet, int noAckRequest)
+void protocol_handler_schedule_packet_opt(ProtocolHandler* handler, void* packet, int noAckRequest)
 {
     /*if (handler->isTrilogy == 0)
         protocol_handler_standard_schedule_packet_opt(&handler->standard, (Packet*)packet, noAckRequest);
@@ -133,7 +133,7 @@ void protocol_handler_schedule_packet_opt(R(ProtocolHandler*) handler, R(void*) 
         protocol_handler_trilogy_schedule_packet_opt(&handler->trilogy, (PacketTrilogy*)packet, noAckRequest);
 }
 
-void protocol_handler_send_disconnect(R(ProtocolHandler*) handler)
+void protocol_handler_send_disconnect(ProtocolHandler* handler)
 {
     /*if (handler->isTrilogy == 0)
         protocol_handler_standard_send_disconnect(&handler->standard);

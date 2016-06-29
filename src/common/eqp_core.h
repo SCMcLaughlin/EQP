@@ -27,8 +27,8 @@ STRUCT_DEFINE(Core)
 
 #define C(obj) ((Core*)(obj))
 
-void    core_init(R(Core*) core, int sourceId, R(IpcBuffer*) logIpc);
-void    core_deinit(R(Core*) core);
+void    core_init(Core* core, int sourceId, IpcBuffer* logIpc);
+void    core_deinit(Core* core);
 
 #define core_is_master(core) ((core)->isMaster)
 

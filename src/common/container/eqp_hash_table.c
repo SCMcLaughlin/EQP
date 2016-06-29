@@ -28,11 +28,11 @@ STRUCT_DEFINE(HashTable)
     byte        data[0];    // Aligned on a 16-byte boundary
 };
 
-HashTable* hash_table_create(R(Basic*) basic, size_t elementSize)
+HashTable* hash_table_create(Basic* basic, size_t elementSize)
 {
     uint32_t entSize = elementSize + sizeof(HashTable_Entry);
     uint32_t initSize;
-    R(HashTable*) tbl;
+    HashTable* tbl;
     uint32_t i;
     
     if (entSize%8 != 0)
@@ -50,7 +50,7 @@ HashTable* hash_table_create(R(Basic*) basic, size_t elementSize)
     
     for (i = 0; i < DEFAULT_CAPACITY; i++)
     {
-        R(HashTable_Entry*) ent = (HashTable_Entry*)&tbl->data[entSize * i];
+        HashTable_Entry* ent = (HashTable_Entry*)&tbl->data[entSize * i];
         
         ent->next = NEXT_INVALID;
     }
@@ -58,16 +58,16 @@ HashTable* hash_table_create(R(Basic*) basic, size_t elementSize)
     return tbl;
 }
 
-void hash_table_destroy(R(HashTable*) tbl)
+void hash_table_destroy(HashTable* tbl)
 {
     uint32_t entSize    = tbl->entSize;
-    R(byte*) data       = tbl->data;
+    byte* data          = tbl->data;
     uint32_t n          = tbl->capacity;
     uint32_t i;
     
     for (i = 0; i < n; i++)
     {
-        R(HashTable_Entry*) ent = (HashTable_Entry*)data;
+        HashTable_Entry* ent = (HashTable_Entry*)data;
         
         if (ent->key)
             string_destroy(ent->key);
@@ -78,7 +78,7 @@ void hash_table_destroy(R(HashTable*) tbl)
     free(tbl);
 }
 
-static uint32_t hash_table_calc_hash(R(const char*) key, uint32_t length)
+static uint32_t hash_table_calc_hash(const char* key, uint32_t length)
 {
     uint32_t h      = length;
     uint32_t step   = (length >> 5) + 1;
@@ -92,7 +92,7 @@ static uint32_t hash_table_calc_hash(R(const char*) key, uint32_t length)
     return h;
 }
 
-static void hash_table_advance_free_index(R(HashTable*) tbl)
+static void hash_table_advance_free_index(HashTable* tbl)
 {
     uint32_t freeIndex  = tbl->freeIndex;
     uint32_t capacity   = tbl->capacity;
@@ -100,7 +100,7 @@ static void hash_table_advance_free_index(R(HashTable*) tbl)
     
     while (++freeIndex != capacity)
     {
-        R(HashTable_Entry*) ent = (HashTable_Entry*)&tbl->data[freeIndex * size];
+        HashTable_Entry* ent = (HashTable_Entry*)&tbl->data[freeIndex * size];
         
         if (ent->key == NULL)
         {
@@ -112,28 +112,28 @@ static void hash_table_advance_free_index(R(HashTable*) tbl)
     tbl->freeIndex = FREE_INDEX_INVALID;
 }
 
-static void hash_table_do_insert(R(Basic*) basic, R(HashTable_Entry*) ent, R(const char*) key, uint32_t length, R(void*) value, uint32_t hash, uint32_t elemSize)
+static void hash_table_do_insert(Basic* basic, HashTable_Entry* ent, const char* key, uint32_t length, void* value, uint32_t hash, uint32_t elemSize)
 {
     ent->key    = string_create_from_cstr(basic, key, length);
     ent->hash   = hash;
     memcpy(ent->data, value, elemSize);
 }
 
-static void hash_table_entry_copy(R(HashTable_Entry*) newEnt, R(HashTable_Entry*) oldEnt, uint32_t elemSize)
+static void hash_table_entry_copy(HashTable_Entry* newEnt, HashTable_Entry* oldEnt, uint32_t elemSize)
 {
     newEnt->key     = oldEnt->key;
     newEnt->hash    = oldEnt->hash;
     memcpy(newEnt->data, oldEnt->data, elemSize);
 }
 
-static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable*) oldTbl)
+static void hash_table_realloc(Basic* basic, HashTable** ptbl, HashTable* oldTbl)
 {
     uint32_t n              = oldTbl->capacity;
     uint32_t newCap         = n * 2;
     uint32_t elemSize       = oldTbl->elemSize;
     uint32_t entSize        = oldTbl->entSize;
     uint32_t initSize       = sizeof(HashTable) + (entSize * newCap);
-    R(HashTable*) newTbl    = eqp_alloc_type_bytes(basic, initSize, HashTable);
+    HashTable* newTbl       = eqp_alloc_type_bytes(basic, initSize, HashTable);
     uint32_t newFreeIndex   = 0;
     uint32_t i;
     
@@ -145,7 +145,7 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
     
     for (i = 0; i < newCap; i++)
     {
-        R(HashTable_Entry*) ent = (HashTable_Entry*)&newTbl->data[entSize * i];
+        HashTable_Entry* ent = (HashTable_Entry*)&newTbl->data[entSize * i];
         
         ent->next = NEXT_INVALID;
     }
@@ -154,9 +154,9 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
     
     for (i = 0; i < n; i++)
     {
-        R(HashTable_Entry*) oldEnt  = (HashTable_Entry*)&oldTbl->data[entSize * i];
-        uint32_t pos                = oldEnt->hash & newCap;
-        R(HashTable_Entry*) newEnt  = (HashTable_Entry*)&newTbl->data[entSize * pos];
+        HashTable_Entry* oldEnt = (HashTable_Entry*)&oldTbl->data[entSize * i];
+        uint32_t pos            = oldEnt->hash & newCap;
+        HashTable_Entry* newEnt = (HashTable_Entry*)&newTbl->data[entSize * pos];
         
         if (newEnt->key == NULL)
         {
@@ -172,7 +172,7 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
             
             if (mainPos != pos)
             {
-                R(HashTable_Entry*) mainEnt;
+                HashTable_Entry* mainEnt;
                 memcpy(&newTbl->data[entSize * newFreeIndex], newEnt, entSize);
                 mainEnt = (HashTable_Entry*)&newTbl->data[entSize * mainPos];
                 
@@ -186,7 +186,7 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
             }
             else
             {
-                R(HashTable_Entry*) freeEnt;
+                HashTable_Entry* freeEnt;
                 
                 while (newEnt->next != NEXT_INVALID)
                 {
@@ -202,7 +202,7 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
         // If we reach here, advance the new free index
         for (;;)
         {
-            R(HashTable_Entry*) ent = (HashTable_Entry*)&newTbl->data[entSize * (++newFreeIndex)];
+            HashTable_Entry* ent = (HashTable_Entry*)&newTbl->data[entSize * (++newFreeIndex)];
             
             if (ent->key == NULL)
                 break;
@@ -214,14 +214,14 @@ static void hash_table_realloc(R(Basic*) basic, R(HashTable**) ptbl, R(HashTable
     *ptbl = newTbl;
 }
 
-static int hash_table_do_set(R(Basic*) basic, R(HashTable**) ptbl, R(const char*) key, uint32_t length, R(void*) value, uint32_t hash)
+static int hash_table_do_set(Basic* basic, HashTable** ptbl, const char* key, uint32_t length, void* value, uint32_t hash)
 {
-    R(HashTable*) tbl       = *ptbl;
+    HashTable* tbl          = *ptbl;
     uint32_t freeIndex      = tbl->freeIndex;
     uint32_t capMinusOne    = tbl->capacity - 1;
     uint32_t pos            = hash & capMinusOne;
     uint32_t entSize        = tbl->entSize;
-    R(HashTable_Entry*) ent = (HashTable_Entry*)&tbl->data[pos * entSize];
+    HashTable_Entry* ent    = (HashTable_Entry*)&tbl->data[pos * entSize];
     
     if (ent->key == NULL)
     {
@@ -238,7 +238,7 @@ static int hash_table_do_set(R(Basic*) basic, R(HashTable**) ptbl, R(const char*
         
         if (mainPos != pos)
         {
-            R(HashTable_Entry*) mainEnt;
+            HashTable_Entry* mainEnt;
             
             // Evict this entry to the free index
             memcpy(&tbl->data[freeIndex * entSize], ent, entSize);
@@ -286,19 +286,19 @@ ret_true:
     return true;
 }
 
-int hash_table_set_by_cstr(R(Basic*) basic, R(HashTable**) ptbl, R(const char*) key, uint32_t length, R(void*) value)
+int hash_table_set_by_cstr(Basic* basic, HashTable** ptbl, const char* key, uint32_t length, void* value)
 {
     uint32_t hash = hash_table_calc_hash(key, length);
     return hash_table_do_set(basic, ptbl, key, length, value, hash);
 }
 
-void* hash_table_get_by_cstr(R(HashTable*) tbl, R(const char*) key, uint32_t length)
+void* hash_table_get_by_cstr(HashTable* tbl, const char* key, uint32_t length)
 {
     uint32_t hash           = hash_table_calc_hash(key, length);
     uint32_t capMinusOne    = tbl->capacity - 1;
     uint32_t size           = tbl->entSize;
     uint32_t pos            = hash & capMinusOne;
-    R(HashTable_Entry*) ent = (HashTable_Entry*)&tbl->data[pos * size];
+    HashTable_Entry* ent    = (HashTable_Entry*)&tbl->data[pos * size];
     uint32_t mainPos;
     
     if (!ent->key)
@@ -324,15 +324,15 @@ ret_null:
     return NULL;
 }
 
-void hash_table_remove_by_cstr(R(HashTable*) tbl, R(const char*) key, uint32_t length)
+void hash_table_remove_by_cstr(HashTable* tbl, const char* key, uint32_t length)
 {
-    uint32_t hash               = hash_table_calc_hash(key, length);
-    uint32_t capMinusOne        = tbl->capacity - 1;
-    uint32_t entSize            = tbl->entSize;
-    uint32_t freeIndex          = tbl->freeIndex;
-    uint32_t pos                = hash & capMinusOne;
-    R(HashTable_Entry*) ent     = (HashTable_Entry*)&tbl->data[entSize * pos];
-    R(HashTable_Entry*) prev    = NULL;
+    uint32_t hash           = hash_table_calc_hash(key, length);
+    uint32_t capMinusOne    = tbl->capacity - 1;
+    uint32_t entSize        = tbl->entSize;
+    uint32_t freeIndex      = tbl->freeIndex;
+    uint32_t pos            = hash & capMinusOne;
+    HashTable_Entry* ent    = (HashTable_Entry*)&tbl->data[entSize * pos];
+    HashTable_Entry* prev   = NULL;
     uint32_t mainPos;
     
     if (!ent->key)

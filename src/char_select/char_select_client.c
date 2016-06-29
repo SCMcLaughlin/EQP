@@ -3,7 +3,7 @@
 #include "char_select_client_trilogy.h"
 #include "eqp_char_select.h"
 
-CharSelectClient* char_select_client_create(R(ProtocolHandler*) handler, int expansion)
+CharSelectClient* char_select_client_create(ProtocolHandler* handler, int expansion)
 {
     CharSelectClient* client = eqp_alloc_type(protocol_handler_basic(handler), CharSelectClient);
     
@@ -18,7 +18,7 @@ CharSelectClient* char_select_client_create(R(ProtocolHandler*) handler, int exp
     return client;
 }
 
-void char_select_client_drop(R(CharSelectClient*) client)
+void char_select_client_drop(CharSelectClient* client)
 {
     if (atomic_fetch_sub(&client->refCount, 1) > 1)
         return;
@@ -29,9 +29,9 @@ void char_select_client_drop(R(CharSelectClient*) client)
     free(client);
 }
 
-void client_on_disconnect(R(void*) vclient, int isLinkdead)
+void client_on_disconnect(void* vclient, int isLinkdead)
 {
-    R(CharSelectClient*) client = (CharSelectClient*)vclient;
+    CharSelectClient* client = (CharSelectClient*)vclient;
     
     if (client)
         char_select_client_drop(client);
@@ -39,7 +39,7 @@ void client_on_disconnect(R(void*) vclient, int isLinkdead)
     printf("DISCONNECTED (%s)\n", isLinkdead ? "timeout" : "explicit");
 }
 
-void char_select_client_set_auth(R(CharSelectClient*) client, R(CharSelectAuth*) auth)
+void char_select_client_set_auth(CharSelectClient* client, CharSelectAuth* auth)
 {
     client->auth = *auth;
     
@@ -51,11 +51,11 @@ void char_select_client_set_auth(R(CharSelectClient*) client, R(CharSelectAuth*)
     //    cs_client_standard_on_auth(client);
 }
 
-static void char_select_client_insert_account_id_callback(R(Query*) query)
+static void char_select_client_insert_account_id_callback(Query* query)
 {
-    R(CharSelectClient*) client = query_userdata_type(query, CharSelectClient);
-    R(Basic*) basic             = B(protocol_handler_basic(client->handler));
-    R(Database*) db             = core_db(C(basic));
+    CharSelectClient* client    = query_userdata_type(query, CharSelectClient);
+    Basic* basic                = B(protocol_handler_basic(client->handler));
+    Database* db                = core_db(C(basic));
     int64_t accountId           = query_last_insert_id(query);
     Query q;
     
@@ -80,10 +80,10 @@ static void char_select_client_insert_account_id_callback(R(Query*) query)
     db_schedule(db, &q);
 }
 
-static void char_select_client_query_account_id_callback(R(Query*) query)
+static void char_select_client_query_account_id_callback(Query* query)
 {
-    R(CharSelectClient*) client = query_userdata_type(query, CharSelectClient);
-    R(Database*) db;
+    CharSelectClient* client = query_userdata_type(query, CharSelectClient);
+    Database* db;
     Query q;
     
     while (query_select(query))
@@ -116,7 +116,7 @@ static void char_select_client_query_account_id_callback(R(Query*) query)
     db_schedule(db, &q);
 }
 
-void char_select_client_query_account_id(R(CharSelectClient*) client, R(CharSelect*) charSelect)
+void char_select_client_query_account_id(CharSelectClient* client, CharSelect* charSelect)
 {
     Query query;
     
@@ -132,10 +132,10 @@ void char_select_client_query_account_id(R(CharSelectClient*) client, R(CharSele
     db_schedule(core_db(C(charSelect)), &query);
 }
 
-static void char_select_client_query_character_name_callback(R(Query*) query)
+static void char_select_client_query_character_name_callback(Query* query)
 {
-    R(CharSelectClient*) client = query_userdata_type(query, CharSelectClient);
-    int taken = false;
+    CharSelectClient* client    = query_userdata_type(query, CharSelectClient);
+    int taken                   = false;
     
     while (query_select(query))
     {
@@ -150,7 +150,7 @@ static void char_select_client_query_character_name_callback(R(Query*) query)
     char_select_client_drop(client);
 }
 
-void char_select_client_query_character_name_taken(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) name)
+void char_select_client_query_character_name_taken(CharSelectClient* client, CharSelect* charSelect, const char* name)
 {
     Query query;
     
@@ -165,9 +165,9 @@ void char_select_client_query_character_name_taken(R(CharSelectClient*) client, 
     db_schedule(core_db(C(charSelect)), &query);
 }
 
-static void char_select_client_delete_character_callback(R(Query*) query)
+static void char_select_client_delete_character_callback(Query* query)
 {
-    R(CharSelectClient*) client = query_userdata_type(query, CharSelectClient);
+    CharSelectClient* client = query_userdata_type(query, CharSelectClient);
     
     if (query_affected_rows(query) != 0)
     {
@@ -183,7 +183,7 @@ static void char_select_client_delete_character_callback(R(Query*) query)
     char_select_client_drop(client);
 }
 
-void char_select_client_delete_character_by_name(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) name)
+void char_select_client_delete_character_by_name(CharSelectClient* client, CharSelect* charSelect, const char* name)
 {
     Query query;
     
@@ -201,7 +201,7 @@ void char_select_client_delete_character_by_name(R(CharSelectClient*) client, R(
     db_schedule(core_db(C(charSelect)), &query);
 }
 
-void char_select_client_on_zone_in_failure(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) zoneShortName)
+void char_select_client_on_zone_in_failure(CharSelectClient* client, CharSelect* charSelect, const char* zoneShortName)
 {
     if (client->expansion == ExpansionId_Trilogy)
         cs_client_trilogy_on_zone_in_failure(client, charSelect, zoneShortName);
@@ -209,7 +209,7 @@ void char_select_client_on_zone_in_failure(R(CharSelectClient*) client, R(CharSe
     //    cs_client_standard_on_zone_in_failure(client, charSelect, zoneShortName);
 }
 
-void char_select_client_on_zone_in_success(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(Server_ZoneAddress*) zoneAddr)
+void char_select_client_on_zone_in_success(CharSelectClient* client, CharSelect* charSelect, Server_ZoneAddress* zoneAddr)
 {
     if (client->expansion == ExpansionId_Trilogy)
         cs_client_trilogy_on_zone_in_success(client, charSelect, zoneAddr);

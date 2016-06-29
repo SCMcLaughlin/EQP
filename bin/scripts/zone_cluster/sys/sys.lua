@@ -26,6 +26,9 @@ local ZC    = require "ZoneCluster"
 --------------------------------------------------------------------------------
 local C             = ffi.C
 local setmetatable  = setmetatable
+local setfenv       = setfenv
+local xpcall        = xpcall
+local traceback     = debug.traceback
 --------------------------------------------------------------------------------
 
 --------------------------------------------------------------------------------
@@ -96,6 +99,22 @@ end
 
 function sys.createNPC(zone, ptr)
     return 0
+end
+
+function sys.eventCall(eventName, zone, obj, ...)
+    local func = obj[eventName]
+    
+    if not func then return end
+    
+    local env = obj:getPersonalEnvironment()
+    setfenv(func, env)
+    
+    local s, err = xpcall(func, traceback, zone, obj, ...)
+    
+    if not s then
+        --fixme: print error to zone
+        zone:log(err) --fixme: add identifying information before trace
+    end
 end
 
 function sys.nextTimerIndex()

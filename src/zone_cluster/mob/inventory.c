@@ -3,7 +3,7 @@
 
 #define CURSOR_INDEX 0
 
-void inventory_init(R(Basic*) basic, R(Inventory*) inv)
+void inventory_init(Basic* basic, Inventory* inv)
 {
     InventorySlot slot;
     
@@ -21,7 +21,7 @@ void inventory_init(R(Basic*) basic, R(Inventory*) inv)
     array_push_back(basic, &inv->slots, &slot);
 }
 
-void inventory_deinit(R(Inventory*) inv)
+void inventory_deinit(Inventory* inv)
 {
     if (inv->slots)
     {
@@ -40,7 +40,7 @@ void inventory_deinit(R(Inventory*) inv)
     }
 }
 
-static void inventory_add_to_cursor_queue_from_database(R(Basic*) basic, R(Inventory*) inv, R(InventorySlot*) slot)
+static void inventory_add_to_cursor_queue_from_database(Basic* basic, Inventory* inv, InventorySlot* slot)
 {
     if (!inv->cursorQueue)
         inv->cursorQueue = array_create_type(basic, InventorySlot);
@@ -48,14 +48,14 @@ static void inventory_add_to_cursor_queue_from_database(R(Basic*) basic, R(Inven
     array_push_back(basic, &inv->cursorQueue, slot);
 }
 
-void inventory_add_from_database(R(Basic*) basic, R(Inventory*) inv, R(InventorySlot*) slot)
+void inventory_add_from_database(Basic* basic, Inventory* inv, InventorySlot* slot)
 {
     uint16_t slotId = slot->slotId;
     int count;
     
     if (slotId == InvSlot_Cursor)
     {
-        R(InventorySlot*) cursor = array_get_type(inv->slots, 0, InventorySlot);
+        InventorySlot* cursor = array_get_type(inv->slots, 0, InventorySlot);
         
         // Do we already have something in the cursor slot?
         if (cursor->itemId)
@@ -88,7 +88,7 @@ void inventory_add_from_database(R(Basic*) basic, R(Inventory*) inv, R(Inventory
     array_push_back(basic, &inv->slots, slot);
 }
 
-void inventory_iterator_init(R(InventoryIterator*) itr, uint32_t slotFrom, uint32_t slotTo)
+void inventory_iterator_init(InventoryIterator* itr, uint32_t slotFrom, uint32_t slotTo)
 {
     if (slotFrom > slotTo)
     {
@@ -103,9 +103,9 @@ void inventory_iterator_init(R(InventoryIterator*) itr, uint32_t slotFrom, uint3
     itr->slot       = NULL;
 }
 
-int inventory_iterate_no_augs(R(Inventory*) inv, R(InventoryIterator*) itr)
+int inventory_iterate_no_augs(Inventory* inv, InventoryIterator* itr)
 {
-    R(InventorySlot*) array = array_data_type(inv->slots, InventorySlot);
+    InventorySlot* array    = array_data_type(inv->slots, InventorySlot);
     uint32_t n              = array_count(inv->slots);
     uint32_t i              = itr->index;
     uint32_t from;
@@ -119,8 +119,8 @@ int inventory_iterate_no_augs(R(Inventory*) inv, R(InventoryIterator*) itr)
     
     for (; i < n; i++)
     {
-        R(InventorySlot*) slot  = &array[i];
-        uint32_t slotId         = slot->slotId;
+        InventorySlot* slot = &array[i];
+        uint32_t slotId     = slot->slotId;
         
         if (slotId >= from && slotId <= to && slot->itemId && slot->augSlotId == 0)
         {

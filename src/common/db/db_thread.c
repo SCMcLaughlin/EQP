@@ -3,7 +3,7 @@
 #include "database.h"
 #include "eqp_string.h"
 
-void db_thread_init(R(Basic*) basic, R(DbThread*) dbThread)
+void db_thread_init(Basic* basic, DbThread* dbThread)
 {
     atomic_mutex_init(&dbThread->mutexInQueue);
     atomic_mutex_init(&dbThread->mutexOutQueue);
@@ -13,21 +13,21 @@ void db_thread_init(R(Basic*) basic, R(DbThread*) dbThread)
     dbThread->executeQueue  = array_create_type(basic, Query);
 }
 
-void db_thread_deinit(R(DbThread*) dbThread)
+void db_thread_deinit(DbThread* dbThread)
 {
     array_destroy(dbThread->inQueue);
     array_destroy(dbThread->outQueue);
     array_destroy(dbThread->executeQueue);
 }
 
-static void db_thread_read_newly_scheduled(R(DbThread*) dbThread)
+static void db_thread_read_newly_scheduled(DbThread* dbThread)
 {
     atomic_mutex_lock(&dbThread->mutexInQueue);
             
     if (!array_empty(dbThread->inQueue))
     {
-        uint32_t count      = array_count(dbThread->inQueue);
-        R(Query*) queries   = array_data_type(dbThread->inQueue, Query);
+        uint32_t count  = array_count(dbThread->inQueue);
+        Query* queries  = array_data_type(dbThread->inQueue, Query);
         uint32_t i;
         
         for (i = 0; i < count; i++)
@@ -41,11 +41,11 @@ static void db_thread_read_newly_scheduled(R(DbThread*) dbThread)
     atomic_mutex_unlock(&dbThread->mutexInQueue);
 }
 
-static void db_thread_execute_queries(R(DbThread*) dbThread)
+static void db_thread_execute_queries(DbThread* dbThread)
 {
-    Query* volatile queries     = array_data_type(dbThread->executeQueue, Query);
-    uint32_t volatile n         = array_count(dbThread->executeQueue);
-    uint32_t volatile i         = 0;
+    Query* volatile queries = array_data_type(dbThread->executeQueue, Query);
+    uint32_t volatile n     = array_count(dbThread->executeQueue);
+    uint32_t volatile i     = 0;
     
     while (i < n)
     {
@@ -90,9 +90,9 @@ static void db_thread_execute_queries(R(DbThread*) dbThread)
     }
 }
 
-void db_thread_main_loop(R(Thread*) thread)
+void db_thread_main_loop(Thread* thread)
 {
-    R(DbThread*) dbThread = (DbThread*)thread;
+    DbThread* dbThread = (DbThread*)thread;
     
     for (;;)
     {
@@ -114,9 +114,9 @@ void db_thread_main_loop(R(Thread*) thread)
     }
 }
 
-void db_thread_schedule_query(R(Basic*) basic, R(DbThread*) dbThread, R(Query*) query)
+void db_thread_schedule_query(Basic* basic, DbThread* dbThread, Query* query)
 {
-    R(AtomicMutex*) mutex = &dbThread->mutexInQueue;
+    AtomicMutex* mutex = &dbThread->mutexInQueue;
     
     atomic_mutex_lock(mutex);
     array_push_back(basic, &dbThread->inQueue, query);
@@ -128,9 +128,9 @@ void db_thread_schedule_query(R(Basic*) basic, R(DbThread*) dbThread, R(Query*) 
     thread_trigger(basic, T(dbThread));
 }
 
-void db_thread_execute_query_callbacks(R(DbThread*) dbThread)
+void db_thread_execute_query_callbacks(DbThread* dbThread)
 {
-    R(AtomicMutex*) mutex = &dbThread->mutexOutQueue;
+    AtomicMutex* mutex = &dbThread->mutexOutQueue;
     
     atomic_mutex_lock(mutex);
     

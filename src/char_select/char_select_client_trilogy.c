@@ -4,28 +4,28 @@
 
 #define WEARCHANGE_OP_SWITCH_CHAR   0x7fff
 
-void* client_create_from_new_connection_trilogy(R(ProtocolHandler*) handler)
+void* client_create_from_new_connection_trilogy(ProtocolHandler* handler)
 {
     return char_select_client_create(handler, ExpansionId_Trilogy);
 }
 
-static void cs_trilogy_schedule_packet(R(ProtocolHandler*) handler, R(PacketTrilogy*) packet)
+static void cs_trilogy_schedule_packet(ProtocolHandler* handler, PacketTrilogy* packet)
 {
     packet_trilogy_fragmentize(packet);
     protocol_handler_trilogy_schedule_packet(&handler->trilogy, packet);
 }
 
-static void cs_trilogy_echo_zero_length(R(ProtocolHandler*) handler, uint16_t opcode)
+static void cs_trilogy_echo_zero_length(ProtocolHandler* handler, uint16_t opcode)
 {
-    R(PacketTrilogy*) packet = packet_trilogy_create(protocol_handler_basic(handler), opcode, 0);
+    PacketTrilogy* packet = packet_trilogy_create(protocol_handler_basic(handler), opcode, 0);
     cs_trilogy_schedule_packet(handler, packet);
 }
 
-static void cs_trilogy_handle_op_login_info(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+static void cs_trilogy_handle_op_login_info(CharSelectClient* client, ProtocolHandler* handler, Aligned* a)
 {
-    R(Basic*) basic;
-    R(const char*) account;
-    R(const char*) sessionKey;
+    Basic* basic;
+    const char* account;
+    const char* sessionKey;
     
     if (aligned_remaining(a) == 0)
         return;
@@ -45,12 +45,12 @@ static void cs_trilogy_handle_op_login_info(R(CharSelectClient*) client, R(Proto
     char_select_handle_unauthed_client((CharSelect*)protocol_handler_basic(handler), client);
 }
 
-void cs_client_trilogy_on_auth(R(CharSelectClient*) client)
+void cs_client_trilogy_on_auth(CharSelectClient* client)
 {
-    R(ProtocolHandler*) handler = char_select_client_handler(client);
-    R(Basic*) basic             = protocol_handler_basic(handler);
+    ProtocolHandler* handler    = char_select_client_handler(client);
+    Basic* basic                = protocol_handler_basic(handler);
     Aligned w;
-    R(PacketTrilogy*) packet;
+    PacketTrilogy* packet;
     
     packet = packet_trilogy_create(basic, TrilogyOp_LoginApproved, 1);
     packet_trilogy_data(packet)[0] = 0;
@@ -68,12 +68,12 @@ void cs_client_trilogy_on_auth(R(CharSelectClient*) client)
     char_select_client_query_account_id(client, (CharSelect*)basic);
 }
 
-static void cs_client_trilogy_characters_callback(R(Query*) query)
+static void cs_client_trilogy_characters_callback(Query* query)
 {
-    R(CharSelectClient*) client = query_userdata_type(query, CharSelectClient);
-    R(ProtocolHandler*) handler = char_select_client_handler(client);
-    R(PacketTrilogy*) packet;
-    R(CSTrilogy_CharSelectInfo*) cs;
+    CharSelectClient* client    = query_userdata_type(query, CharSelectClient);
+    ProtocolHandler* handler    = char_select_client_handler(client);
+    PacketTrilogy* packet;
+    CSTrilogy_CharSelectInfo* cs;
     uint32_t i;
     
     /*
@@ -172,9 +172,9 @@ static void cs_client_trilogy_characters_callback(R(Query*) query)
     char_select_client_drop(client);
 }
 
-void cs_client_trilogy_on_account_id(R(CharSelectClient*) client, uint32_t accountId)
+void cs_client_trilogy_on_account_id(CharSelectClient* client, uint32_t accountId)
 {
-    R(Database*) db = core_db(C(protocol_handler_basic(char_select_client_handler(client))));
+    Database* db = core_db(C(protocol_handler_basic(char_select_client_handler(client))));
     Query query;
     
     char_select_client_grab(client);
@@ -196,11 +196,11 @@ void cs_client_trilogy_on_account_id(R(CharSelectClient*) client, uint32_t accou
     db_schedule(db, &query);
 }
 
-static void cs_trilogy_handle_op_guild_list(R(CharSelectClient*) client, R(ProtocolHandler*) handler)
+static void cs_trilogy_handle_op_guild_list(CharSelectClient* client, ProtocolHandler* handler)
 {
     Aligned write;
-    R(Aligned*) w = &write;
-    R(PacketTrilogy*) packet;
+    Aligned* w  = &write;
+    PacketTrilogy* packet;
     uint32_t i;
     
     if (!char_select_client_is_authed(client))
@@ -235,9 +235,9 @@ static void cs_trilogy_handle_op_guild_list(R(CharSelectClient*) client, R(Proto
     cs_trilogy_schedule_packet(handler, packet);
 }
 
-static void cs_trilogy_handle_op_name_approval(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+static void cs_trilogy_handle_op_name_approval(CharSelectClient* client, ProtocolHandler* handler, Aligned* a)
 {
-    R(const char*) name;
+    const char* name;
     uint32_t race;
     uint32_t class;
     
@@ -252,10 +252,10 @@ static void cs_trilogy_handle_op_name_approval(R(CharSelectClient*) client, R(Pr
     char_select_client_query_character_name_taken(client, (CharSelect*)protocol_handler_basic(handler), name);
 }
 
-void cs_client_trilogy_on_character_name_checked(R(CharSelectClient*) client, int taken)
+void cs_client_trilogy_on_character_name_checked(CharSelectClient* client, int taken)
 {
-    R(ProtocolHandler*) handler = char_select_client_handler(client);
-    R(PacketTrilogy*) packet    = packet_trilogy_create(protocol_handler_basic(handler), TrilogyOp_NameApproval, 1);
+    ProtocolHandler* handler    = char_select_client_handler(client);
+    PacketTrilogy* packet       = packet_trilogy_create(protocol_handler_basic(handler), TrilogyOp_NameApproval, 1);
     int available               = !taken;
     
     if (available)
@@ -265,7 +265,7 @@ void cs_client_trilogy_on_character_name_checked(R(CharSelectClient*) client, in
     cs_trilogy_schedule_packet(handler, packet);
 }
 
-static int cs_client_trilogy_char_creation_params_are_valid(R(CSTrilogy_CharCreateParams*) params)
+static int cs_client_trilogy_char_creation_params_are_valid(CSTrilogy_CharCreateParams* params)
 {
     uint32_t class  = params->class - 1;
     uint32_t race   = params->race - 1;
@@ -396,10 +396,10 @@ static int cs_client_trilogy_char_creation_params_are_valid(R(CSTrilogy_CharCrea
     return true;
 }
 
-static void cs_client_trilogy_send_char_create_failure(R(CharSelectClient*) client)
+static void cs_client_trilogy_send_char_create_failure(CharSelectClient* client)
 {
-    R(ProtocolHandler*) handler = char_select_client_handler(client);
-    R(PacketTrilogy*) packet    = packet_trilogy_create(protocol_handler_basic(handler), TrilogyOp_NameApproval, 1);
+    ProtocolHandler* handler    = char_select_client_handler(client);
+    PacketTrilogy* packet       = packet_trilogy_create(protocol_handler_basic(handler), TrilogyOp_NameApproval, 1);
     
     char_select_client_set_name_approved(client, false);
     
@@ -407,9 +407,9 @@ static void cs_client_trilogy_send_char_create_failure(R(CharSelectClient*) clie
     cs_trilogy_schedule_packet(handler, packet);
 }
 
-static void cs_client_trilogy_create_character_callback(R(Query*) query)
+static void cs_client_trilogy_create_character_callback(Query* query)
 {
-    R(CharSelectClient*) client = query_userdata_type(query, CharSelectClient);
+    CharSelectClient* client = query_userdata_type(query, CharSelectClient);
     
     if (query_affected_rows(query) == 0)
         cs_client_trilogy_send_char_create_failure(client);
@@ -419,10 +419,10 @@ static void cs_client_trilogy_create_character_callback(R(Query*) query)
     char_select_client_drop(client);
 }
 
-static void cs_trilogy_handle_op_create_character(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+static void cs_trilogy_handle_op_create_character(CharSelectClient* client, ProtocolHandler* handler, Aligned* a)
 {
     CSTrilogy_CharCreateParams params;
-    R(Database*) db;
+    Database* db;
     Query query;
     
     if (!char_select_client_is_authed(client) || !char_select_client_is_name_approved(client) || aligned_remaining(a) < sizeof(CSTrilogy_CreateCharacter))
@@ -533,9 +533,9 @@ static void cs_trilogy_handle_op_create_character(R(CharSelectClient*) client, R
     db_schedule(db, &query);
 }
 
-static void cs_trilogy_handle_op_delete_character(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+static void cs_trilogy_handle_op_delete_character(CharSelectClient* client, ProtocolHandler* handler, Aligned* a)
 {
-    R(const char*) name;
+    const char* name;
     
     if (!char_select_client_is_authed(client) || aligned_remaining(a) < 2)
         return;
@@ -545,7 +545,7 @@ static void cs_trilogy_handle_op_delete_character(R(CharSelectClient*) client, R
     char_select_client_delete_character_by_name(client, (CharSelect*)protocol_handler_basic(handler), name);
 }
 
-static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+static void cs_trilogy_handle_op_wear_change(CharSelectClient* client, ProtocolHandler* handler, Aligned* a)
 {
     uint8_t slot;
     uint16_t op;
@@ -571,8 +571,8 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
     // If the flag is 0xb1, it is some kind of echo -- don't reply or it'll cause endless spam
     if (op != WEARCHANGE_OP_SWITCH_CHAR && flag != 0xb1)
     {
-        R(Basic*) basic;
-        R(PacketTrilogy*) packet;
+        Basic* basic;
+        PacketTrilogy* packet;
         Aligned w;
 
         if (index >= 10 || (slot != 7 && slot != 8))
@@ -596,7 +596,7 @@ static void cs_trilogy_handle_op_wear_change(R(CharSelectClient*) client, R(Prot
     }
 }
 
-static void cs_trilogy_handle_op_enter(R(CharSelectClient*) client, R(ProtocolHandler*) handler, R(Aligned*) a)
+static void cs_trilogy_handle_op_enter(CharSelectClient* client, ProtocolHandler* handler, Aligned* a)
 {
     if (!char_select_client_is_authed(client) || aligned_remaining(a) < 2)
         return;
@@ -604,10 +604,10 @@ static void cs_trilogy_handle_op_enter(R(CharSelectClient*) client, R(ProtocolHa
     char_select_send_client_zone_in_request((CharSelect*)protocol_handler_basic(handler), client, handler, (const char*)aligned_current(a));
 }
 
-void cs_client_trilogy_on_zone_in_failure(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(const char*) zoneShortName)
+void cs_client_trilogy_on_zone_in_failure(CharSelectClient* client, CharSelect* charSelect, const char* zoneShortName)
 {
-    R(PacketTrilogy*) packet    = packet_trilogy_create(B(charSelect), TrilogyOp_ZoneUnavailable, sizeof(CSTrilogy_ZoneUnavailable));
-    R(ProtocolHandler*) handler = char_select_client_handler(client);
+    PacketTrilogy* packet       = packet_trilogy_create(B(charSelect), TrilogyOp_ZoneUnavailable, sizeof(CSTrilogy_ZoneUnavailable));
+    ProtocolHandler* handler    = char_select_client_handler(client);
     Aligned w;
     
     aligned_init(B(charSelect), &w, packet_trilogy_data(packet), packet_trilogy_length(packet));
@@ -617,13 +617,13 @@ void cs_client_trilogy_on_zone_in_failure(R(CharSelectClient*) client, R(CharSel
     cs_trilogy_schedule_packet(handler, packet);
 }
 
-void cs_client_trilogy_on_zone_in_success(R(CharSelectClient*) client, R(CharSelect*) charSelect, R(Server_ZoneAddress*) zoneAddr)
+void cs_client_trilogy_on_zone_in_success(CharSelectClient* client, CharSelect* charSelect, Server_ZoneAddress* zoneAddr)
 {
-    R(ProtocolHandler*) handler = char_select_client_handler(client);
-    R(PacketTrilogy*) packet;
+    ProtocolHandler* handler = char_select_client_handler(client);
+    PacketTrilogy* packet;
     EQ_Time eqTime;
     Aligned write;
-    R(Aligned*) w = &write;
+    Aligned* w  = &write;
     uint32_t length;
     
     aligned_set_basic(w, B(charSelect));
@@ -673,10 +673,10 @@ void cs_client_trilogy_on_zone_in_success(R(CharSelectClient*) client, R(CharSel
     cs_trilogy_schedule_packet(handler, packet);
 }
 
-void client_recv_packet_trilogy(R(void*) vclient, uint16_t opcode, R(Aligned*) a)
+void client_recv_packet_trilogy(void* vclient, uint16_t opcode, Aligned* a)
 {
-    R(CharSelectClient*) client = (CharSelectClient*)vclient;
-    R(ProtocolHandler*) handler = char_select_client_handler(client);
+    CharSelectClient* client    = (CharSelectClient*)vclient;
+    ProtocolHandler* handler    = char_select_client_handler(client);
 
     printf("Received packet opcode 0x%04x, length %u:\n", opcode, aligned_remaining(a));
     

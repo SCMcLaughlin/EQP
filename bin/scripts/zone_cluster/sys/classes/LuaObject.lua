@@ -36,4 +36,8 @@ function LuaObject:getPersonalEnvironment()
     return getmetatable(self)
 end
 
+function LuaObject:getSharedEnvironment()
+    return getmetatable(getmetatable(self))
+end
+
 return LuaObject

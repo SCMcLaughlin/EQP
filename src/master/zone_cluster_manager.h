@@ -32,16 +32,16 @@ STRUCT_DEFINE(ZoneReservation)
     ZoneCluster*    zoneCluster;
 };
 
-void            zc_mgr_init(R(MasterIpcThread*) ipcThread, R(ZoneClusterMgr*) mgr, R(lua_State*) L);
-void            zc_mgr_deinit(R(ZoneClusterMgr*) mgr);
+void            zc_mgr_init(MasterIpcThread* ipcThread, ZoneClusterMgr* mgr, lua_State* L);
+void            zc_mgr_deinit(ZoneClusterMgr* mgr);
 
-ZoneCluster*    zc_mgr_get_or_start(R(ZoneClusterMgr*) mgr, int zoneSourceId);
-ZoneCluster*    zc_mgr_get(R(ZoneClusterMgr*) mgr, int sourceId);
+ZoneCluster*    zc_mgr_get_or_start(ZoneClusterMgr* mgr, int zoneSourceId);
+ZoneCluster*    zc_mgr_get(ZoneClusterMgr* mgr, int sourceId);
 
-void            zc_mgr_start_zone_on_cluster(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, int sourceId);
+void            zc_mgr_start_zone_on_cluster(ZoneClusterMgr* mgr, ZoneCluster* zc, int sourceId);
 
-EQP_API void            zc_mgr_set_max_zones_per_cluster(R(ZoneClusterMgr*) mgr, uint16_t maxPer);
-EQP_API ZoneCluster*    zc_mgr_start_zone_cluster(R(ZoneClusterMgr*) mgr);
-EQP_API void            zc_mgr_add_zone_reservation(R(ZoneClusterMgr*) mgr, R(ZoneCluster*) zc, R(const char*) shortName, int zoneId, int instanceId, int alwaysUp);
+EQP_API void            zc_mgr_set_max_zones_per_cluster(ZoneClusterMgr* mgr, uint16_t maxPer);
+EQP_API ZoneCluster*    zc_mgr_start_zone_cluster(ZoneClusterMgr* mgr);
+EQP_API void            zc_mgr_add_zone_reservation(ZoneClusterMgr* mgr, ZoneCluster* zc, const char* shortName, int zoneId, int instanceId, int alwaysUp);
 
 #endif//EQP_ZONE_CLUSTER_MANAGER_H

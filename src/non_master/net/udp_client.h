@@ -26,10 +26,10 @@ STRUCT_DEFINE(UdpClient)
     uint64_t            lastRecvTime;
 };
 
-void    udp_client_init(R(Basic*) basic, R(UdpClient*) client, uint32_t ip, uint16_t port);
-void    udp_client_deinit(R(UdpClient*) client);
+void    udp_client_init(Basic* basic, UdpClient* client, uint32_t ip, uint16_t port);
+void    udp_client_deinit(UdpClient* client);
 
-void    udp_client_update_index(R(UdpClient*) client, uint32_t index);
+void    udp_client_update_index(UdpClient* client, uint32_t index);
 
 #define udp_client_ip(cli) ((cli)->ip)
 #define udp_client_port(cli) ((cli)->port)

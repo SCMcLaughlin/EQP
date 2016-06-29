@@ -4,6 +4,7 @@ local ffi = require "ffi"
 ffi.cdef[[
 typedef struct Client Client;
 
+int         client_expansion(Client* client);
 int         client_is_pvp(Client* client);
 int         client_is_gm(Client* client);
 int         client_is_afk(Client* client);

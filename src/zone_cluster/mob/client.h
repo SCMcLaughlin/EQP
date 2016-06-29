@@ -97,10 +97,13 @@ STRUCT_DEFINE(Client)
 Client* client_create(ZC* zc, Zone* zone, Server_ClientZoning* zoning);
 #define client_grab(cli) atomic_fetch_add(&(cli)->refCount, 1)
 void    client_drop(Client* client);
+void    client_forcibly_disconnect(Client* client);
 
 void    client_catch_up_with_loading_progress(Client* client);
 void    client_check_loading_finished(Client* client);
 void    client_fill_in_missing_bind_points(Client* client);
+
+void    client_on_unhandled_packet_opcode(Client* client, uint16_t opcode, Aligned* a);
 
 #define client_set_zone_index(cli, index) ((cli)->zoneClientIndex = (index))
 #define client_zone_index(cli) ((cli)->zoneClientIndex)
@@ -110,7 +113,6 @@ void    client_fill_in_missing_bind_points(Client* client);
 
 #define client_set_handler(cli, h) ((cli)->handler = (h))
 #define client_handler(cli) ((cli)->handler)
-#define client_expansion(cli) ((cli)->expansion)
 #define client_name(cli) mob_name(&(cli)->mob)
 #define client_name_cstr(cli) mob_name_cstr(&(cli)->mob)
 #define client_entity_id(cli) mob_entity_id(&(cli)->mob)
@@ -165,6 +167,7 @@ void    client_fill_in_missing_bind_points(Client* client);
 #define client_primary_model_id(cli) mob_primary_model_id(&(cli)->mob)
 #define client_secondary_model_id(cli) mob_secondary_model_id(&(cli)->mob)
 
+EQP_API int         client_expansion(Client* client);
 EQP_API int         client_is_pvp(Client* client);
 EQP_API int         client_is_gm(Client* client);
 EQP_API int         client_is_afk(Client* client);

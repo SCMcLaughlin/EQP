@@ -125,6 +125,7 @@ void network_client_trilogy_send_disconnect(NetworkClientTrilogy* client)
     dis.crc     = crc_calc32_network(&dis, sizeof(dis) - sizeof(uint32_t));
     
     network_client_send(&client->base, &dis, sizeof(dis));
+    network_client_flag_to_ignore_all_packets(&client->base);
 }
 
 static void network_client_trilogy_send_fragment(NetworkClientTrilogy* client, OutputPacketTrilogy* wrapper, Aligned* a,

@@ -33,6 +33,12 @@ void    zc_lua_destroy_object(ZC* zc, LuaObject* lobj);
 
 #define zc_lua_event(zc, zone, obj, evName) zc_lua_event_basic((zc), (zone), (LuaObject*)(obj), (evName))
 void    zc_lua_event_basic(ZC* zc, Zone* zone, LuaObject* lobj, const char* eventName);
+#define zc_lua_event_with_other(zc, zone, obj, other, evName) zc_lua_event_basic_with_other((zc), (zone), (LuaObject*)(obj), (LuaObject*)(other), (evName))
+void    zc_lua_event_basic_with_other(ZC* zc, Zone* zone, LuaObject* lobj, LuaObject* lobjOther, const char* eventName);
+void    zc_lua_event_prolog(ZC* zc, lua_State* L, Zone* zone, LuaObject* lobj, const char* eventName);
+void    zc_lua_event_epilog(ZC* zc, lua_State* L, int numAdditionalArgs);
+
+void    zc_lua_push_lua_object(ZC* zc, lua_State* L, LuaObject* lobj);
 
 /* LuaJIT API */
 EQP_API int         zc_lua_object_get_index(LuaObject* lobj);

@@ -389,6 +389,14 @@ stub:
     free(client);
 }
 
+void client_forcibly_disconnect(Client* client)
+{
+    ProtocolHandler* handler = client_handler(client);
+    
+    if (handler)
+        protocol_handler_send_disconnect(handler);
+}
+
 void client_catch_up_with_loading_progress(Client* client)
 {
     // This is called when the client is matched with its UDP connection;
@@ -460,6 +468,28 @@ found:
         if (client->bindPoints[i].zoneId == 0)
             memcpy(&client->bindPoints[i], copyFrom, sizeof(BindPoint));
     }
+}
+
+void client_on_unhandled_packet_opcode(Client* client, uint16_t opcode, Aligned* a)
+{
+    ZC* zc          = client_zone_cluster(client);
+    Zone* zone      = client_zone(client);
+    lua_State* L    = zc_lua(zc);
+    
+    zc_lua_event_prolog(zc, L, zone, (LuaObject*)client, "event_unhandled_packet");
+    
+    lua_createtable(L, 0, 2);
+    lua_pushinteger(L, opcode);
+    lua_setfield(L, -2, "opcode");
+    lua_pushlstring(L, (const char*)aligned_current(a), aligned_remaining(a));
+    lua_setfield(L, -2, "data");
+    
+    zc_lua_event_epilog(zc, L, 1);
+}
+
+int client_expansion(Client* client)
+{
+    return client->expansion;
 }
 
 int client_is_pvp(Client* client)

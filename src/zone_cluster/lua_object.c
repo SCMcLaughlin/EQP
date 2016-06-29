@@ -43,7 +43,7 @@ void zc_lua_clear(lua_State* L)
 
 static void zc_lua_push(ZC* zc, lua_State* L, int index, const char* getName)
 {
-    lua_getfield(L, SYS_INDEX, getName);
+    zc_lua_push_sys_func(zc, L, getName);
     lua_pushinteger(L, index);
     if (!lua_sys_call_no_throw(B(zc), L, 1, 1))
         lua_pushnil(L);
@@ -52,6 +52,11 @@ static void zc_lua_push(ZC* zc, lua_State* L, int index, const char* getName)
 static void zc_lua_push_object(ZC* zc, lua_State* L, int index)
 {
     zc_lua_push(zc, L, index, "getObject");
+}
+
+void zc_lua_push_lua_object(ZC* zc, lua_State* L, LuaObject* lobj)
+{
+    zc_lua_push_object(zc, L, lobj->index);
 }
 
 static void zc_lua_push_callback(ZC* zc, lua_State* L, int index)
@@ -116,6 +121,35 @@ void zc_lua_event_basic(ZC* zc, Zone* zone, LuaObject* lobj, const char* eventNa
     zc_lua_push_object(zc, L, lobj->index);
     
     lua_sys_call_no_throw(B(zc), L, 3, 0);
+}
+
+void zc_lua_event_basic_with_other(ZC* zc, Zone* zone, LuaObject* lobj, LuaObject* lobjOther, const char* eventName)
+{
+    lua_State* L = zc->L;
+    
+    zc_lua_push_sys_func(zc, L, "eventCall");
+    
+    lua_pushstring(L, eventName);
+    zc_lua_push_object(zc, L, zone->luaObj.index);
+    zc_lua_push_object(zc, L, lobj->index);
+    zc_lua_push_object(zc, L, lobjOther->index);
+    
+    lua_sys_call_no_throw(B(zc), L, 4, 0);
+}
+
+void zc_lua_event_prolog(ZC* zc, lua_State* L, Zone* zone, LuaObject* lobj, const char* eventName)
+{
+    zc_lua_push_sys_func(zc, L, "eventCall");
+    
+    lua_pushstring(L, eventName);
+    zc_lua_push_object(zc, L, zone->luaObj.index);
+    zc_lua_push_object(zc, L, lobj->index);
+}
+
+void zc_lua_event_epilog(ZC* zc, lua_State* L, int numAdditionalArgs)
+{
+    // Args are eventName, zone, object, plus how much was added
+    lua_sys_call_no_throw(B(zc), L, 3 + numAdditionalArgs, 0);
 }
 
 int zc_lua_object_get_index(LuaObject* lobj)

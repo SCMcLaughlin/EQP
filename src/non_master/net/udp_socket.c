@@ -122,7 +122,9 @@ void udp_socket_recv(UdpSocket* sock)
         
     found:
         udp_client_update_last_recv_time(client);
-        protocol_handler_recv(udp_client_handler(client), buffer, len);
+        
+        if (!udp_client_ignore_all_packets(client))
+            protocol_handler_recv(udp_client_handler(client), buffer, len);
     }
 }
 
@@ -191,6 +193,14 @@ void udp_socket_flag_client_as_dead_by_index(UdpSocket* sock, uint32_t index)
     
     if (cli)
         udp_client_flag_as_dead(cli);
+}
+
+void udp_socket_flag_client_to_ignore_all_packets(UdpSocket* sock, uint32_t index)
+{
+    UdpClient* cli = array_get_type(sock->clients, index, UdpClient);
+    
+    if (cli)
+        udp_client_flag_to_ignore_all_packets(cli);
 }
 
 #undef ERR_SOCKET

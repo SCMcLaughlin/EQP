@@ -21,7 +21,8 @@
 #include "lua_object.h"
 #include "zone_cluster_ipc.h"
 
-#define EQP_ZC_CLIENT_KEEP_ALIVE_DELAY_MS   500
+#define EQP_ZC_CLIENT_KEEP_ALIVE_DELAY_MS       500
+#define EQP_ZC_CLIENT_LINKDEAD_LINGER_TIMEOUT   TIMER_SECONDS(30)
 
 STRUCT_DEFINE(ZC)
 {

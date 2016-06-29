@@ -39,6 +39,7 @@ int     network_client_send(NetworkClient* client, const void* data, uint32_t le
 
 #define network_client_update_udp_client_index(cli, i) ((cli)->udpClientIndex = (i))
 void    network_client_flag_connection_as_dead(NetworkClient* client);
+#define network_client_flag_to_ignore_all_packets(cli) udp_socket_flag_client_to_ignore_all_packets((cli)->udpSocket, (cli)->udpClientIndex)
 #define network_client_increment_packets_received(cli) ((cli)->packetsReceived++)
 
 #endif//EQP_NETWORK_CLIENT_H

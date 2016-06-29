@@ -244,7 +244,13 @@ void zc_add_connected_client(ZC* zc, Client* client)
     {
         Client* cli = *prev;
         zc_remove_connected_client(zc, cli, false);
-        client_drop(cli);
+        
+        // If the client is linkdead, it will be dropped by the pending linkdead timeout timer
+        if (!client_is_linkdead(cli))
+        {
+            client_forcibly_disconnect(cli);
+            client_drop(cli);
+        }
     }
     
     // Insert into our zone-cluster-wide lists
@@ -257,6 +263,17 @@ void zc_add_connected_client(ZC* zc, Client* client)
     array_push_back(B(zc), &zc->connectedClients, &con);
     
     zone_spawn_client(zc, client_zone(client), client);
+}
+
+static void zc_remove_linkdead_client_callback(Timer* timer)
+{
+    Client* client  = timer_userdata_type(timer, Client);
+    ZC* zc          = client_zone_cluster(client);
+    
+    zc_remove_connected_client(zc, client, false);
+    
+    client_drop(client);
+    timer_destroy(timer);
 }
 
 void zc_remove_connected_client(ZC* zc, Client* client, int isLinkdead)
@@ -284,20 +301,18 @@ void zc_remove_connected_client(ZC* zc, Client* client, int isLinkdead)
             }
         }
         
-        //fixme: add a timeout for the linkdead client
-        
+        eqp_timer_create(B(zc), zc_timer_pool(zc), EQP_ZC_CLIENT_LINKDEAD_LINGER_TIMEOUT, zc_remove_linkdead_client_callback, client, true);
         return;
     }
     
     name = client_name(client);
-    hash_table_remove_by_str(zc->connectedClientsByName, name);
-    
-    zone_remove_client(client_zone(client), client);
     
     for (i = 0; i < n; i++)
     {
         if (array[i].client == client)
         {
+            zone_remove_client(client_zone(client), client);
+            hash_table_remove_by_str(zc->connectedClientsByName, name);
             array_swap_and_pop(zc->connectedClients, i);
             break;
         }

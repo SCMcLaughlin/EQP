@@ -38,5 +38,6 @@ void        udp_socket_send(UdpSocket* sock);
 #define     udp_socket_get_compress_buffer(sock) ((sock)->compressBuffer)
 
 void        udp_socket_flag_client_as_dead_by_index(UdpSocket* sock, uint32_t index);
+void        udp_socket_flag_client_to_ignore_all_packets(UdpSocket* sock, uint32_t index);
 
 #endif//EQP_UDP_SOCKET_H

@@ -16,8 +16,9 @@ STRUCT_DEFINE(UdpClient)
     {
         struct
         {
-            uint16_t isDead : 1;
-            uint16_t unused : 15;
+            uint16_t isDead             : 1;
+            uint16_t ignoreAllPackets   : 1;
+            uint16_t unused             : 14;
         };
         
         uint16_t flags;
@@ -37,6 +38,8 @@ void    udp_client_update_index(UdpClient* client, uint32_t index);
 
 #define udp_client_is_dead(cli) ((cli)->isDead)
 #define udp_client_flag_as_dead(cli) ((cli)->isDead = true)
+#define udp_client_ignore_all_packets(cli) ((cli)->ignoreAllPackets)
+#define udp_client_flag_to_ignore_all_packets(cli) ((cli)->ignoreAllPackets = true)
 
 #define udp_client_last_recv_time(cli) ((cli)->lastRecvTime)
 #define udp_client_update_last_recv_time(cli) ((cli)->lastRecvTime = clock_milliseconds())

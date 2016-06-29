@@ -102,6 +102,8 @@ static void client_trilogy_handle_op_enter_zone(Client* client)
     
     //calc all the client's stats
     //send hp and mana updates
+    
+    zc_lua_event(zc, zone, client, "event_spawn");
 }
 
 void client_recv_packet_trilogy(void* vclient, uint16_t opcode, Aligned* a)
@@ -136,6 +138,7 @@ void client_recv_packet_trilogy(void* vclient, uint16_t opcode, Aligned* a)
         break;
     
     default:
+        client_on_unhandled_packet_opcode(client, opcode, a);
         break;
     }
 }

@@ -78,6 +78,39 @@ static void client_trilogy_send_player_profile_compress_and_obfuscate(Client* cl
     client_trilogy_schedule_packet_individual(client, packet);
 }
 
+static void temp_write_packet(const char* leader, const byte* packet, uint32_t len)
+{
+    uint32_t i, j, k;
+    
+    static FILE* fp = NULL;
+    
+    if (fp == NULL)
+    {
+        fp = fopen("packet.txt", "w+");
+        setvbuf(fp, NULL, _IONBF, 0);
+    }
+    
+    fprintf(fp, "%s:\n", leader);
+    
+    i = 0;
+    while (i < len)
+    {
+        fprintf(fp, "[%04u] ", i);
+        
+        j = len - i;
+        if (j > 8) j = 8;
+        
+        for (k = 0; k < j; k++) fprintf(fp, "%02x ", packet[i + k]);
+        fprintf(fp, "   ");
+        for (k = 0; k < j; k++) fputc(isprint(packet[i + k]) ? packet[i + k] : '.', fp);
+        fputc('\n', fp);
+        
+        i += 8;
+    }
+    
+    fprintf(fp, "\n\n");
+}
+
 void client_trilogy_send_player_profile(Client* client)
 {
     Trilogy_PlayerProfile pp;
@@ -329,7 +362,7 @@ void client_trilogy_send_player_profile(Client* client)
     aligned_advance(w, 2);
     aligned_write_uint8(w, 0xb0);
     aligned_write_uint8(w, 0x40);
-    aligned_advance(w, 96);
+    aligned_advance(w, 92);
     
     // autoSplit
     aligned_write_uint32(w, client->isAutoSplitEnabled);
@@ -344,13 +377,13 @@ void client_trilogy_send_player_profile(Client* client)
     // disciplinesReady
     aligned_write_uint32(w, (time >= client->disciplineTimestamp));
     // unknownI[20]
-    aligned_advance(w, 20);
+    aligned_advance(w, sizeof(pp.unknownI));
     // hunger
     aligned_write_uint32(w, client->hungerLevel);
     // thirst
     aligned_write_uint32(w, client->thirstLevel);
     // unknownJ[24]
-    aligned_advance(w, 24);
+    aligned_advance(w, sizeof(pp.unknownJ));
     
     // bindZoneShortName[5]
     for (i = 0; i < 5; i++)
@@ -413,7 +446,7 @@ void client_trilogy_send_player_profile(Client* client)
     aligned_advance(w, sizeof(pp.bankBaggedItemProperties));
     
     // unknownK
-    aligned_advance(w, sizeof(uint32_t));
+    aligned_advance(w, sizeof(pp.unknownK));
     
     // bindLocY[5]
     aligned_write_float(w, client->bindPoints[0].loc.y);
@@ -440,6 +473,8 @@ void client_trilogy_send_player_profile(Client* client)
     aligned_write_float(w, client->bindPoints[3].loc.heading);
     aligned_write_float(w, client->bindPoints[4].loc.heading);
     
+    // unknownL
+    aligned_advance(w, sizeof(pp.unknownL));
     // bankInventoryInternalUnused[8]
     aligned_advance(w, sizeof(pp.bankInventoryInternalUnused));
     // unknownM[12]
@@ -492,7 +527,7 @@ void client_trilogy_send_player_profile(Client* client)
     // guildId
     aligned_write_uint16(w, client->guildId ? client->guildId : 0xffff);
     // unixTimeB
-    aligned_write_uint32(w, time);
+    aligned_write_uint32(w, (uint32_t)time);
     // unknownQ[4]
     aligned_advance(w, sizeof(pp.unknownQ));
     // unknownRDefault7f7f
@@ -531,24 +566,11 @@ void client_trilogy_send_player_profile(Client* client)
     //fixme: handle these
     for (i = 0; i < 5; i++)
     {
-        // name
-        aligned_advance(w, sizeof_field(Trilogy_PPGroupMember, name));
-        // unknownADefaultFFFFFFFF
-        aligned_write_uint32(w, 0xffffffff);
-        // unknownB[2]
-        aligned_advance(w, sizeof_field(Trilogy_PPGroupMember, unknownB));
-        // unknownCDefaultFFFFFFFF
-        aligned_write_uint32(w, 0xffffffff);
-        // unknownD
-        aligned_advance(w, sizeof_field(Trilogy_PPGroupMember, unknownD));
-        // unknownEDefaultFFFFFFFF
-        aligned_write_uint32(w, 0xffffffff);
-        // unknownF
-        aligned_advance(w, sizeof_field(Trilogy_PPGroupMember, unknownF));
+        aligned_advance(w, sizeof(pp.groupMember[i]));
     }
     
     // unknownW
-    aligned_advance(w, 30);
+    aligned_advance(w, 70);
     aligned_write_uint16(w, 0xffff);
     aligned_advance(w, 6);
     aligned_write_memset(w, 0xff, 6);
@@ -556,26 +578,7 @@ void client_trilogy_send_player_profile(Client* client)
     aligned_write_uint16(w, 0xffff);
     aligned_advance(w, 2);
     
-    // unknownX
-    for (i = 0; i < 60; i++)
-    {
-        // name
-        aligned_advance(w, sizeof_field(Trilogy_PPGroupMember, name));
-        // unknownADefaultFFFFFFFF
-        aligned_write_uint32(w, 0xffffffff);
-        // unknownB[2]
-        aligned_advance(w, sizeof_field(Trilogy_PPGroupMember, unknownB));
-        // unknownCDefaultFFFFFFFF
-        aligned_write_uint32(w, 0xffffffff);
-        // unknownD
-        aligned_advance(w, sizeof_field(Trilogy_PPGroupMember, unknownD));
-        // unknownEDefaultFFFFFFFF
-        aligned_write_uint32(w, 0xffffffff);
-        // unknownF
-        aligned_advance(w, sizeof_field(Trilogy_PPGroupMember, unknownF));
-    }
-    
-    // unknownY[20] is already zeroed, don't need to bother with it
+    // The rest is already zeroed, don't need to bother with it
 
     // crc
     pp.crc = ~crc_calc32(((byte*)&pp) + sizeof(uint32_t), sizeof(pp) - sizeof(uint32_t));
@@ -792,7 +795,7 @@ PacketTrilogy* client_trilogy_make_op_zone_info(ZC* zc, Zone* zone)
 
 PacketTrilogy* client_trilogy_make_op_spawn_appearance(ZC* zc, uint16_t entityId, uint16_t type, uint32_t value)
 {
-    PacketTrilogy* packet = packet_trilogy_create(B(zc), TrilogyOp_ZoneInfo, sizeof(Trilogy_ZoneInfo));
+    PacketTrilogy* packet = packet_trilogy_create(B(zc), TrilogyOp_SpawnAppearance, sizeof(Trilogy_SpawnAppearance));
     Aligned write;
     Aligned* w = &write;
     

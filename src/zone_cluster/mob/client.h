@@ -30,18 +30,26 @@ STRUCT_DEFINE(Client)
     int                 expansion;
     atomic_int          refCount;
     
-    uint32_t    isStubClient        : 1;
-    uint32_t    isLocal             : 1;
-    uint32_t    isFromCharSelect    : 1;
-    uint32_t    isAutoSplitEnabled  : 1;
-    uint32_t    isPermanentlyPvP    : 1;
-    uint32_t    isCurrentlyPvP      : 1;
-    uint32_t    isGM                : 1;
-    uint32_t    isAfk               : 1;
-    uint32_t    isLinkdead          : 1;
-    uint32_t    isSneaking          : 1;
-    uint32_t    isHiding            : 1;
-    uint32_t    bools_unused        : 23;
+    union
+    {
+        struct
+        {
+            uint64_t    isStubClient        : 1;
+            uint64_t    isLocal             : 1;
+            uint64_t    isFromCharSelect    : 1;
+            uint64_t    isAutoSplitEnabled  : 1;
+            uint64_t    isPermanentlyPvP    : 1;
+            uint64_t    isCurrentlyPvP      : 1;
+            uint64_t    isGM                : 1;
+            uint64_t    isAfk               : 1;
+            uint64_t    isLinkdead          : 1;
+            uint64_t    isSneaking          : 1;
+            uint64_t    isHiding            : 1;
+            uint64_t    bools_unused        : 53;
+        };
+        
+        uint64_t bools;
+    };
     
     union
     {

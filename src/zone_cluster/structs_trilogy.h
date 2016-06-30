@@ -37,13 +37,8 @@ STRUCT_DEFINE(Trilogy_PPItem)
 
 STRUCT_DEFINE(Trilogy_PPGroupMember)
 {
-    char        name[30];
-    uint32_t    unknownADefaultFFFFFFFF;
-    uint32_t    unknownB[2];
-    uint32_t    unknownCDefaultFFFFFFFF;
-    uint32_t    unknownD;
-    uint32_t    unknownEDefaultFFFFFFFF;
-    uint16_t    unknownF;
+    char    name[16];
+    uint8_t unknown[32];
 };
 
 STRUCT_DEFINE(Trilogy_PlayerProfile)
@@ -93,7 +88,7 @@ STRUCT_DEFINE(Trilogy_PlayerProfile)
     uint8_t                 unknownF[162];
     uint32_t                autoSplit;  // 0 or 1
     uint32_t                pvpEnabled;
-    uint8_t                 unknownG[12];
+    uint8_t                 unknownG[12]; //starts with uint32_t isAfk?
     uint32_t                isGM;
     uint8_t                 unknownH[20];
     uint32_t                disciplinesReady;
@@ -135,10 +130,7 @@ STRUCT_DEFINE(Trilogy_PlayerProfile)
     uint32_t                unknownV; // Is the above field supposed to be 4 bytes lower?
     uint32_t                harmtouchRefreshMilliseconds;
     Trilogy_PPGroupMember   groupMember[5];
-    uint8_t                 unknownW[224];
-    // Seems to be another 30 spaces followed by FF as in groupMember; pet name, maybe?
-    Trilogy_PPGroupMember   unknownX[60];   // Maybe a guild roster type thing..?
-    uint8_t                 unknownY[20];
+    uint8_t                 unknownW[3644];
 };
 
 STRUCT_DEFINE(Trilogy_ZoneEntry)

@@ -25,7 +25,7 @@ local format        = string.format
 
 local Client = class("Client", Mob)
 
-local globalScriptEnv = {__index = Client)
+local globalScriptEnv = {__index = Client}
 setmetatable(globalScriptEnv, globalScriptEnv)
 local sharedScriptEnvsByZoneId = {}
 
@@ -38,7 +38,7 @@ local function runGlobalScript()
         if not s then 
             ZC:log(err)
             -- Loading a script is all-or-nothing
-            globalScriptEnv = {__index = Client)
+            globalScriptEnv = {__index = Client}
             setmetatable(globalScriptEnv, globalScriptEnv)
         end
     end

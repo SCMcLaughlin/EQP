@@ -482,9 +482,16 @@ found:
 
 void client_on_unhandled_packet_opcode(Client* client, uint16_t opcode, Aligned* a)
 {
-    ZC* zc          = client_zone_cluster(client);
-    Zone* zone      = client_zone(client);
-    lua_State* L    = zc_lua(zc);
+    ZC* zc;
+    Zone* zone;
+    lua_State* L;
+    
+    if (opcode == 0)
+        return;
+    
+    zc      = client_zone_cluster(client);
+    zone    = client_zone(client);
+    L       = zc_lua(zc);
     
     zc_lua_event_prolog(zc, L, zone, (LuaObject*)client, "event_unhandled_packet");
     

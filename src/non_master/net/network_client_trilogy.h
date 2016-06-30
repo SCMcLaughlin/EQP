@@ -58,6 +58,6 @@ void        network_client_trilogy_send_queued(NetworkClientTrilogy* client);
 #define     network_client_trilogy_update_index(cli, i) network_client_update_udp_client_index(&(cli)->base, i)
 #define     network_client_trilogy_flag_connection_as_dead(cli) network_client_flag_connection_as_dead(&(cli)->base)
 #define     network_client_trilogy_increment_packets_received(cli) network_client_increment_packets_received(&(cli)->base)
-#define     network_client_trilogy_send_keep_alive_ack(cli) network_client_trilogy_send_pure_ack((cli), (cli)->nextAckRequestCheck)
+#define     network_client_trilogy_send_keep_alive_ack(cli) network_client_trilogy_send_pure_ack((cli), toNetworkUint16((cli)->nextAckRequestCheck))
 
 #endif//EQP_NETWORK_CLIENT_TRILOGY_H

@@ -78,6 +78,24 @@ void hash_table_destroy(HashTable* tbl)
     free(tbl);
 }
 
+void hash_table_for_each(HashTable* tbl, void(*callback)(void*))
+{
+    uint32_t entSize    = tbl->entSize;
+    byte* data          = tbl->data;
+    uint32_t n          = tbl->capacity;
+    uint32_t i;
+    
+    for (i = 0; i < n; i++)
+    {
+        HashTable_Entry* ent = (HashTable_Entry*)data;
+        
+        if (ent->key)
+            callback(ent->data);
+        
+        data += entSize;
+    }
+}
+
 static uint32_t hash_table_calc_hash(const char* key, uint32_t length)
 {
     uint32_t h      = length;

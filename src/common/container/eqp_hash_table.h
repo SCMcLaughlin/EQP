@@ -28,4 +28,6 @@ void*       hash_table_get_by_cstr(HashTable* tbl, const char* key, uint32_t len
 void        hash_table_remove_by_cstr(HashTable* tbl, const char* key, uint32_t length);
 #define     hash_table_remove_by_str(tbl, str) hash_table_remove_by_cstr((tbl), string_data((str)), string_length((str)))
 
+void        hash_table_for_each(HashTable* tbl, void(*callback)(void*));
+
 #endif//EQP_HASH_TABLE_H

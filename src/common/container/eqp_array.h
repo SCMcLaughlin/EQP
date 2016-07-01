@@ -16,17 +16,17 @@ Array*      array_create_with_capacity(Basic* basic, size_t elementSize, uint32_
 uint32_t    array_count(Array* array);
 uint32_t    array_element_size(Array* array);
 void*       array_data(Array* array);
-#define     array_data_type(array, type) (type*)array_data((array))
+#define     array_data_type(array, type) ((type*)array_data((array)))
 #define     array_empty(array) (array_count((array)) == 0)
 
 void*       array_get(Array* array, uint32_t index);
-#define     array_get_type(array, index, type) (type*)array_get((array), (index))
+#define     array_get_type(array, index, type) ((type*)array_get((array), (index)))
 void*       array_back(Array* array);
-#define     array_back_type(array, type) (type*)array_back((array))
+#define     array_back_type(array, type) ((type*)array_back((array)))
 void        array_get_copy(Array* array, uint32_t index, void* copyTo);
 void        array_back_copy(Array* array, void* copyTo);
 void        array_set(Array* array, uint32_t index, const void* value);
-#define     array_push_back_type(basic, array, type) (type*)array_push_back((basic), (array), NULL)
+#define     array_push_back_type(basic, array, type) ((type*)array_push_back((basic), (array), NULL))
 void*       array_push_back(Basic* basic, Array** array, const void* value);
 void        array_pop_back(Array* array);
 int         array_swap_and_pop(Array* array, uint32_t index);

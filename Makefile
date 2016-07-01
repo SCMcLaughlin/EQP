@@ -266,6 +266,26 @@ INCLUDECONSOLE= -I$(DIRCONSOLE)
 BINCONSOLE= $(DIRBIN)eqp
 
 ##############################################################################
+# Map Gen
+##############################################################################
+DIRMAPGEN= src/map_gen/
+BMAPGEN= build/$(BUILDTYPE)/map_gen/
+_OMAPGEN= map_gen_main.o \
+ map_gen.o pfs.o wld.o matrix.o aabb.o octree.o output.o
+_HMAPGEN= geometry.h \
+ map_gen.h pfs.h wld.h matrix.h aabb.h octree.h output.h
+OMAPGEN= $(patsubst %,$(BMAPGEN)%,$(_OMAPGEN))
+HMAPGEN= $(patsubst %,$(DIRMAPGEN)%,$(_HMAPGEN))
+
+OMAPGEN+= $(BCOMMON_CONTAINER)eqp_string.o $(BCOMMON_CONTAINER)eqp_array.o \
+ $(BCOMMON_CONTAINER)eqp_hash_table.o $(BCOMMON)eqp_basic.o $(BCOMMON)exception.o \
+ $(BCOMMON)random.o $(BCOMMON)bit.o $(BCOMMON)file.o $(BCOMMON)eqp_alloc.o \
+ $(BCOMMON_LOG)eqp_log.o $(OCOMMON_SYNC) $(BCOMMON_TIME)eqp_clock.o
+
+INCLUDEMAPGEN= -I$(DIRMAPGEN)
+BINMAPGEN= $(DIRBIN)eqp-map-gen
+
+##############################################################################
 # Core Linker flags
 ##############################################################################
 LFLAGS= -rdynamic
@@ -292,7 +312,7 @@ RM= rm -f
 ##############################################################################
 .PHONY: default all clean
 
-default all: master login char-select zone-cluster log-writer console
+default all: master login char-select zone-cluster log-writer console map-gen
 
 master: $(BINMASTER)
 
@@ -305,6 +325,8 @@ zone-cluster: $(BINZC)
 log-writer: $(BINLOGWRITER)
 
 console: $(BINCONSOLE)
+
+map-gen: $(BINMAPGEN)
 
 amalg: amalg-master amalg-login amalg-char-select amalg-zone-cluster amalg-log-writer amalg-console
 
@@ -368,6 +390,10 @@ $(BINCONSOLE): $(OCONSOLE)
 	$(E) "Linking $@"
 	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNAMIC) $(LFLAGS)
 
+$(BINMAPGEN): $(OMAPGEN)
+	$(E) "Linking $@"
+	$(Q)$(CC) -o $@ $^ $(LDYNAMIC)
+
 # -std=gnu11 breaks longjmp somehow...
 $(BCOMMON)exception.o: $(DIRCOMMON)exception.c $(HCOMMON_ALL)
 	$(E) "\033[0;32mCC      $@\033[0m"
@@ -404,6 +430,10 @@ $(BLOGWRITER)%.o: $(DIRLOGWRITER)%.c $(HLOGWRITER)
 $(BCONSOLE)%.o: $(DIRCONSOLE)%.c $(HCONSOLE)
 	$(E) "\033[0;32mCC      $@\033[0m"
 	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDECONSOLE)
+
+$(BMAPGEN)%.o: $(DIRMAPGEN)%.c $(HMAPGEN)
+	$(E) "\033[0;32mCC      $@\033[0m"
+	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEMAPGEN)
 
 ##############################################################################
 # Clean rules

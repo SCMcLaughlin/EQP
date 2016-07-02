@@ -2,5 +2,6 @@
 !.gitignore
 !db/
 !log/
+!maps/
 !scripts/
 !shm/

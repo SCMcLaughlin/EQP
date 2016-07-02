@@ -8,6 +8,8 @@
 #include "eqp_alloc.h"
 #include "wld_fragments.h"
 
+//#define EQP_WLD_USE_Y_AS_UP_AXIS 1
+
 STRUCT_DECLARE(MapGen);
 
 STRUCT_DEFINE(Wld)

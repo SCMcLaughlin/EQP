@@ -108,7 +108,7 @@ void map_gen_read_all_zones(MapGen* map, const char* dirPath)
         if (!strstr(entry.d_name, ".s3d"))
             continue;
         
-        if (strstr(entry.d_name, "_obj") || strstr(entry.d_name, "_chr"))
+        if (strstr(entry.d_name, "_obj") || strstr(entry.d_name, "_chr") || strstr(entry.d_name, "_lit"))
             continue;
         
         snprintf(path + len, sizeof(path) - len, "%s", entry.d_name);
@@ -147,7 +147,7 @@ void map_gen_read_vertices(MapGen* map, const char* path)
         map_gen_read_s3d_zone(map, path, &pfs, &minZ);
         isZone = true;
     }
-    
+
     pfs_close(&pfs);
     
     if (!isZone)

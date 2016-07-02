@@ -17,8 +17,9 @@ STRUCT_DEFINE(OctreeNode)
 
 STRUCT_DEFINE(Octree)
 {
-    Array*  nodes;
-    Basic*  basic;
+    Array*      nodes;
+    uint32_t    triangleCount;
+    Basic*      basic;
 };
 
 void    octree_init(Basic* basic, Octree* octree);

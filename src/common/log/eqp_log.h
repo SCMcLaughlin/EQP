@@ -19,6 +19,7 @@ ENUM_DEFINE(LogType)
     LogNone,
     LogFatal,
     LogError,
+    LogWarning,
     LogInfo,
     LogSql,
     LogNetwork,

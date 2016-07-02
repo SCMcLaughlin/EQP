@@ -69,6 +69,8 @@ void    zc_client_keep_alive_callback(Timer* timer);
 void    zc_add_connected_client(ZC* zc, Client* client);
 void    zc_remove_connected_client(ZC* zc, Client* client, int isLinkdead);
 
+void    zc_zone_log_format(ZC* zc, Zone* zone, LogType type, const char* fmt, ...);
+
 /* LuaJIT API */
 EQP_API void    zc_log(ZC* zc, const char* str);
 EQP_API void    zc_log_for(ZC* zc, int sourceId, const char* str);

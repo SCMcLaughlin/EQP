@@ -127,14 +127,14 @@ void zc_start_zone(ZC* zc, int sourceId)
     if (zc_get_zone_by_source_id(zc, sourceId))
         return;
     
+    // Tell the log writer to open a log for this zone / instance
+    ipc_set_log_file_open(B(zc), &zc->ipcSet, sourceId);
+    
     // Create our new zone
     zone.sourceId   = sourceId;
     zone.zone       = zone_create(zc, sourceId, zoneId, instId);
     
     array_push_back(B(zc), &zc->zoneList, &zone);
-    
-    // Tell the log writer to open a log for this zone / instance
-    ipc_set_log_file_open(B(zc), &zc->ipcSet, sourceId);
 }
 
 Zone* zc_get_zone_by_source_id(ZC* zc, int sourceId)
@@ -329,6 +329,14 @@ void zc_remove_connected_client(ZC* zc, Client* client, int isLinkdead)
             break;
         }
     }
+}
+
+void zc_zone_log_format(ZC* zc, Zone* zone, LogType type, const char* fmt, ...)
+{
+    va_list args;
+    va_start(args, fmt);
+    log_from_vformat(B(zc), zone_get_source_id(zone), type, fmt, args);
+    va_end(args);
 }
 
 /* LuaJIT API */

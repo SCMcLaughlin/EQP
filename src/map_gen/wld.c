@@ -166,7 +166,11 @@ static void wld_read_zone_vertices_callback(MapGen* map, Wld* wld, Fragment* fra
             if (tri.flag & EQP_WLD_TRIANGLE_FLAG_PERMEABLE)
                 continue;
             
+#ifndef EQP_WLD_USE_Y_AS_UP_AXIS
             for (k = 0; k < 3; k++)
+#else
+            for (k = 2; k >= 0; k--)
+#endif
             {
                 uint16_t index = tri.index[k];
                 Wld_Vertex vert;
@@ -178,19 +182,19 @@ static void wld_read_zone_vertices_callback(MapGen* map, Wld* wld, Fragment* fra
                 
                 v.x = cx + (float)vert.x * scale;
                 
-                if (!isObject)
-                {
-                    v.y = cy + (float)vert.y * scale;
-                    v.z = cz + (float)vert.z * scale;
-                    
-                    if (v.z < minZ)
-                        minZ = v.z;
-                }
-                else
-                {
-                    v.z = cy + (float)vert.y * scale;
-                    v.y = cz + (float)vert.z * scale;
-                }
+#ifndef EQP_WLD_USE_Y_AS_UP_AXIS
+                v.y = cy + (float)vert.y * scale;
+                v.z = cz + (float)vert.z * scale;
+                
+                if (v.z < minZ)
+                    minZ = v.z;
+#else
+                v.z = cy + (float)vert.y * scale;
+                v.y = cz + (float)vert.z * scale;
+                
+                if (v.y < minZ)
+                    minZ = v.y;
+#endif
                 
                 array_push_back(B(map), vertArray, &v);
             }
@@ -257,11 +261,20 @@ static void wld_read_object_placements_callback(MapGen* map, Wld* wld, Fragment*
     if (!model)
         return;
     
+#ifndef EQP_WLD_USE_Y_AS_UP_AXIS
     rotZ = f15->rotX / 512.0f * 360.0f;
     rotY = f15->rotY / 512.0f * 360.0f;
+#else
+    rotY = -(f15->rotX / 512.0f * 360.0f);
+    rotZ =  (f15->rotY / 512.0f * 360.0f);
+#endif
     
     matrix = matrix_angle_yz(rotY, rotZ);
+#ifndef EQP_WLD_USE_Y_AS_UP_AXIS
     matrix_set_translation(&matrix, f15->x, f15->y, f15->z);
+#else
+    matrix_set_translation(&matrix, f15->x, f15->z, f15->y);
+#endif
     
     scale = f15->scaleZ;
     

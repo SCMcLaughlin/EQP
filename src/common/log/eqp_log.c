@@ -24,6 +24,10 @@ static uint32_t log_construct_message(Basic* basic, char* message, LogType type,
         wrote = snprintf(message + pos, EQP_LOG_MESSAGE_SIZE - pos, "[ERROR] ");
         break;
     
+    case LogWarning:
+        wrote = snprintf(message + pos, EQP_LOG_MESSAGE_SIZE - pos, "[Warning] ");
+        break;
+    
     case LogInfo:
         wrote = snprintf(message + pos, EQP_LOG_MESSAGE_SIZE - pos, "[Info] ");
         break;

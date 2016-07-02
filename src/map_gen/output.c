@@ -1,16 +1,18 @@
 
 #include "output.h"
 
-static void output_write_header(Octree* octree, Aligned* w, float minZ)
+static void output_write_header(Octree* octree, FILE* fp, uint32_t length, float minZ)
 {
     MapFileHeader header;
     
-    header.signature    = EQP_MAP_GEN_MAP_FILE_SIGNATURE;
-    header.version      = 1;
-    header.boxCount     = array_count(octree->nodes);
-    header.minZ         = minZ;
+    header.signature        = EQP_MAP_GEN_MAP_FILE_SIGNATURE;
+    header.version          = 1;
+    header.inflatedLength   = length;
+    header.minZ             = minZ;
+    header.triangleCount    = octree->triangleCount;
+    header.boxCount         = array_count(octree->nodes);
     
-    aligned_write_buffer(w, &header, sizeof(header));
+    fwrite(&header, 1, sizeof(header), fp);
 }
 
 static void output_write_octree_nodes(Octree* octree, Aligned* w)
@@ -19,32 +21,54 @@ static void output_write_octree_nodes(Octree* octree, Aligned* w)
     uint32_t n          = array_count(octree->nodes);
     uint32_t i;
     
+    // Triangles
+    for (i = 0; i < n; i++)
+    {
+        OctreeNode* node    = &nodes[i];
+        Triangle* tris      = array_data_type(node->triangles, Triangle);
+        uint32_t m          = array_count(node->triangles);
+        
+        aligned_write_buffer(w, tris, sizeof(Triangle) * m);
+    }
+    
+    // Boxes
     for (i = 0; i < n; i++)
     {
         OctreeNode* node = &nodes[i];
         MapFileBox boxHeader;
-        Triangle* tris  = array_data_type(node->triangles, Triangle);
-        uint32_t m      = array_count(node->triangles);
-        uint32_t j;
         
         boxHeader.center        = aabb_get_center(&node->box);
         boxHeader.halfExtent    = aabb_get_half_extent(&node->box);
-        boxHeader.triangleCount = m;
+        boxHeader.triangleCount = array_count(node->triangles);
         
         aligned_write_buffer(w, &boxHeader, sizeof(boxHeader));
-        
-        for (j = 0; j < m; j++)
-        {
-            aligned_write_buffer(w, &tris[j], sizeof(Triangle));
-        }
     }
 }
 
-static void output_write_to_disk(Basic* basic, byte* buffer, uint32_t length, const char* zoneShortName)
+static void output_write_to_disk(Basic* basic, byte* buffer, uint32_t length, FILE* fp, const char* fileName)
 {
     unsigned long compLen   = compressBound(length);
     byte* compressed        = eqp_alloc_type_bytes(basic, compLen, byte);
-    const char* binPath     = getenv(EQP_MAP_GEN_PATH_ENV_VARIABLE);
+    
+    if (compress2(compressed, &compLen, buffer, length, Z_BEST_COMPRESSION))
+    {
+        fclose(fp);
+        exception_throw_format(basic, ErrorCompression, "Compression failed for '%s'", fileName);
+    }
+    
+    fwrite(compressed, 1, compLen, fp);
+    
+    free(compressed);
+}
+
+static uint32_t output_calc_length(Octree* octree)
+{
+    return (sizeof(Triangle) * octree->triangleCount) + (sizeof(MapFileBox) * array_count(octree->nodes));
+}
+
+static FILE* output_open_file(Basic* basic, const char* zoneShortName)
+{
+    const char* binPath = getenv(EQP_MAP_GEN_PATH_ENV_VARIABLE);
     char path[1024];
     int len;
     FILE* fp;
@@ -60,45 +84,22 @@ static void output_write_to_disk(Basic* basic, byte* buffer, uint32_t length, co
     if (!fp)
         exception_throw_format(basic, ErrorDoesNotExist, "Could not open file '%s' for writing", path);
     
-    if (compress2(compressed, &compLen, buffer, length, Z_BEST_COMPRESSION))
-    {
-        fclose(fp);
-        exception_throw_format(basic, ErrorCompression, "Compression failed for '%s'", path);
-    }
-    
-    fwrite(compressed, 1, compLen, fp);
-    fclose(fp);
-    
-    free(compressed);
-}
-
-static uint32_t output_calc_length(Octree* octree)
-{
-    OctreeNode* nodes   = array_data_type(octree->nodes, OctreeNode);
-    uint32_t n          = array_count(octree->nodes);
-    uint32_t len        = sizeof(MapFileHeader);
-    uint32_t i;
-    
-    for (i = 0; i < n; i++)
-    {
-        len += sizeof(MapFileBox) + (sizeof(Triangle) * array_count(nodes[i].triangles));
-    }
-    
-    return len;
+    return fp;
 }
 
 void output_to_file(Octree* octree, const char* fileName, float minZ)
 {
     uint32_t length = output_calc_length(octree);
     byte* buffer    = eqp_alloc_type_bytes(octree->basic, length, byte);
-    Aligned write;
-    Aligned* w = &write;
+    FILE* fp        = output_open_file(octree->basic, fileName);
+    Aligned w;
     
-    aligned_init(octree->basic, w, buffer, length);
+    aligned_init(octree->basic, &w, buffer, length);
 
-    output_write_header(octree, w, minZ);
-    output_write_octree_nodes(octree, w);
-    output_write_to_disk(octree->basic, buffer, length, fileName);
+    output_write_header(octree, fp, length, minZ);
+    output_write_octree_nodes(octree, &w);
+    output_write_to_disk(octree->basic, buffer, length, fp, fileName);
     
+    fclose(fp);
     free(buffer);
 }

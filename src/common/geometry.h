@@ -18,4 +18,15 @@ STRUCT_DEFINE(Triangle)
 
 #pragma pack()
 
+STRUCT_DEFINE(Vector64)
+{
+    double x, y, z;
+};
+
+STRUCT_DEFINE(Triangle64)
+{
+    Vector64 points[3];
+    Vector64 normal;
+};
+
 #endif//EQP_GEOMETRY_H

@@ -13,6 +13,12 @@ Zone* zone_create(ZC* zc, int sourceId, int zoneId, int instId)
     zone->zoneId        = zoneId;
     zone->instanceId    = instId;
     
+    los_map_open(zc, zone, &zone->losMap);
+    
+    ////
+    printf("Line of Sight test: %i\n", los_map_points_are_in_line_of_sight(&zone->losMap, -2501.94, -2468.06, -98.1875, 2717.22, 2531.94, 801.812));
+    ////
+    
     zone->mobsByEntityId    = array_create_type(B(zc), Mob*);
     zone->mobsByPosition    = array_create_type(B(zc), MobByPosition);
     zone->clientList        = array_create_type(B(zc), ClientListing);
@@ -53,6 +59,8 @@ void zone_destroy(ZC* zc, Zone* zone)
         array_destroy(zone->clientList);
         zone->clientList = NULL;
     }
+    
+    los_map_close(&zone->losMap);
     
     zc_lua_destroy_object(zc, &zone->luaObj);
     

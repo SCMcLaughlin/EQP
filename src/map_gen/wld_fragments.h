@@ -16,6 +16,8 @@ STRUCT_DEFINE(Fragment)
     int         nameRef;
 };
 
+#pragma pack()
+
 STRUCT_DEFINE(Frag36)
 {
     Fragment    header;
@@ -52,6 +54,8 @@ STRUCT_DEFINE(Frag15)
     int         refC;
     uint32_t    refCParam;
 };
+
+#pragma pack(1)
 
 STRUCT_DEFINE(Wld_Vertex)
 {

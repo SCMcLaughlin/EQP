@@ -113,7 +113,7 @@ static void octree_create_nodes(Octree* octree, Array* stack, Triangle* triangle
     
     for (i = 0; i < n; i++)
     {
-        Array* tris = array_create_type(basic, OctreeNode);
+        Array* tris = array_create_type(basic, Triangle);
         uint32_t j;
         AABB box;
         OctreeNode node;
@@ -161,6 +161,8 @@ void octree_generate(Octree* octree, Array* vertices, uint32_t maxTrianglesPerNo
     }
     
     n /= 3;
+    
+    octree->triangleCount = n;
     
     top.box         = box;
     top.claimId     = 0;

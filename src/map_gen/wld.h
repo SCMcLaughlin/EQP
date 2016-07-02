@@ -18,10 +18,11 @@ STRUCT_DEFINE(Wld)
     uint32_t    version;
     byte*       data;
     uint32_t    length;
+    float       minZ;
     Wld*        objDefs;
 };
 
-void    wld_read_zone_vertices(MapGen* map, byte* data, uint32_t len);
+void    wld_read_zone_vertices(MapGen* map, byte* data, uint32_t len, float* minZ);
 Wld*    wld_read_object_definitions(MapGen* map, byte* data, uint32_t len);
 void    wld_read_object_placements(MapGen* map, Wld* objDefs, byte* data, uint32_t len);
 

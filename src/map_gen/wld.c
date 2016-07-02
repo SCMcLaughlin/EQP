@@ -100,6 +100,8 @@ static void wld_read_zone_vertices_callback(MapGen* map, Wld* wld, Fragment* fra
     byte* data;
     uint32_t vcount;
     uint32_t tcount;
+    int isObject;
+    float minZ = 999999.0f;
     
     if (frag->type != 0x36)
         return;
@@ -120,6 +122,8 @@ static void wld_read_zone_vertices_callback(MapGen* map, Wld* wld, Fragment* fra
     scale   = 1.0f / (float)(1 << f36->scale);
     vcount  = f36->vertCount;
     tcount  = f36->polyCount;
+    
+    isObject = (wld && wld->objectDefsByName);
     
     verts = (Wld_Vertex*)(data + p);
     p += sizeof(Wld_Vertex) * vcount;
@@ -162,7 +166,7 @@ static void wld_read_zone_vertices_callback(MapGen* map, Wld* wld, Fragment* fra
             if (tri.flag & EQP_WLD_TRIANGLE_FLAG_PERMEABLE)
                 continue;
             
-            for (k = 2; k >= 0; k--)
+            for (k = 0; k < 3; k++)
             {
                 uint16_t index = tri.index[k];
                 Wld_Vertex vert;
@@ -173,8 +177,20 @@ static void wld_read_zone_vertices_callback(MapGen* map, Wld* wld, Fragment* fra
                 vert = verts[index];
                 
                 v.x = cx + (float)vert.x * scale;
-                v.z = cy + (float)vert.y * scale;
-                v.y = cz + (float)vert.z * scale;
+                
+                if (!isObject)
+                {
+                    v.y = cy + (float)vert.y * scale;
+                    v.z = cz + (float)vert.z * scale;
+                    
+                    if (v.z < minZ)
+                        minZ = v.z;
+                }
+                else
+                {
+                    v.z = cy + (float)vert.y * scale;
+                    v.y = cz + (float)vert.z * scale;
+                }
                 
                 array_push_back(B(map), vertArray, &v);
             }
@@ -183,6 +199,9 @@ static void wld_read_zone_vertices_callback(MapGen* map, Wld* wld, Fragment* fra
         tris += m;
         tcount -= m;
     }
+    
+    if (!isObject && minZ < wld->minZ)
+        wld->minZ = minZ;
 }
 
 static void wld_read_object_definitions_callback(MapGen* map, Wld* wld, Fragment* frag, Array** unused)
@@ -238,11 +257,11 @@ static void wld_read_object_placements_callback(MapGen* map, Wld* wld, Fragment*
     if (!model)
         return;
     
-    rotY = -(f15->rotX / 512.0f * 360.0f);
-    rotZ =  (f15->rotY / 512.0f * 360.0f);
+    rotZ = f15->rotX / 512.0f * 360.0f;
+    rotY = f15->rotY / 512.0f * 360.0f;
     
     matrix = matrix_angle_yz(rotY, rotZ);
-    matrix_set_translation(&matrix, f15->x, f15->z, f15->y);
+    matrix_set_translation(&matrix, f15->x, f15->y, f15->z);
     
     scale = f15->scaleZ;
     
@@ -255,11 +274,16 @@ static void wld_read_object_placements_callback(MapGen* map, Wld* wld, Fragment*
     map_gen_add_object_placement(map, *model, &matrix);
 }
 
-void wld_read_zone_vertices(MapGen* map, byte* data, uint32_t len)
+void wld_read_zone_vertices(MapGen* map, byte* data, uint32_t len, float* minZ)
 {
     Wld wld;
     
+    wld.objectDefsByName    = NULL;
+    wld.minZ                = 999999.0f;
+    
     wld_read_frags(map, &wld, data, len, wld_read_zone_vertices_callback, &map->vertices, false);
+    
+    *minZ = wld.minZ;
 }
 
 Wld* wld_read_object_definitions(MapGen* map, byte* data, uint32_t len)

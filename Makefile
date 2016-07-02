@@ -280,7 +280,7 @@ HMAPGEN= $(patsubst %,$(DIRMAPGEN)%,$(_HMAPGEN))
 OMAPGEN+= $(BCOMMON_CONTAINER)eqp_string.o $(BCOMMON_CONTAINER)eqp_array.o \
  $(BCOMMON_CONTAINER)eqp_hash_table.o $(BCOMMON)eqp_basic.o $(BCOMMON)exception.o \
  $(BCOMMON)random.o $(BCOMMON)bit.o $(BCOMMON)file.o $(BCOMMON)eqp_alloc.o \
- $(BCOMMON_LOG)eqp_log.o $(OCOMMON_SYNC) $(BCOMMON_TIME)eqp_clock.o
+ $(BCOMMON_LOG)eqp_log.o $(OCOMMON_SYNC) $(BCOMMON_TIME)eqp_clock.o $(BCOMMON)aligned.o
 
 INCLUDEMAPGEN= -I$(DIRMAPGEN)
 BINMAPGEN= $(DIRBIN)eqp-map-gen

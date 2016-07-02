@@ -45,7 +45,7 @@ static const char* map_gen_file_name(const char* src, int len)
     return src + len + 1;
 }
 
-static void map_gen_read_s3d_zone(MapGen* map, const char* path, Pfs* pfs)
+static void map_gen_read_s3d_zone(MapGen* map, const char* path, Pfs* pfs, float* minZ)
 {
     char buf[2048];
     const char* name;
@@ -61,7 +61,7 @@ static void map_gen_read_s3d_zone(MapGen* map, const char* path, Pfs* pfs)
 
     // Main zone geometry
     data = pfs_get_file_by_name(pfs, name, &len);
-    wld_read_zone_vertices(map, data, len);
+    wld_read_zone_vertices(map, data, len, minZ);
     free(data);
     
     // Object definitions, from a separate pfs archive
@@ -86,16 +86,18 @@ static void map_gen_read_s3d_zone(MapGen* map, const char* path, Pfs* pfs)
 void map_gen_read_vertices(MapGen* map, const char* path)
 {
     Pfs pfs;
+    float minZ = -32000.0f;
     uint64_t time = clock_microseconds();
     
     pfs_open(B(map), &pfs, path);
     
     if (pfs_is_s3d_zone(&pfs))
-        map_gen_read_s3d_zone(map, path, &pfs);
+        map_gen_read_s3d_zone(map, path, &pfs, &minZ);
     
     pfs_close(&pfs);
     
-    octree_generate(&map->octree, map->vertices, 512);
+    octree_generate(&map->octree, map->vertices, EQP_MAP_GEN_DEFAULT_TRIANGLES_PER_OCTREE_NODE);
+    output_to_file(&map->octree, map_gen_file_name(path, strlen(path)), minZ);
     
     printf("time: %lu microseconds\n", clock_microseconds() - time);
     printf("vert count: %u\n", array_count(map->vertices));

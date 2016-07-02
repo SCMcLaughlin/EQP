@@ -12,6 +12,9 @@
 #include "matrix.h"
 #include "geometry.h"
 #include "octree.h"
+#include "output.h"
+
+#define EQP_MAP_GEN_DEFAULT_TRIANGLES_PER_OCTREE_NODE 512
 
 STRUCT_DEFINE(MapGen)
 {

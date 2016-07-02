@@ -272,7 +272,7 @@ DIRMAPGEN= src/map_gen/
 BMAPGEN= build/$(BUILDTYPE)/map_gen/
 _OMAPGEN= map_gen_main.o \
  map_gen.o pfs.o wld.o matrix.o aabb.o octree.o output.o
-_HMAPGEN= geometry.h \
+_HMAPGEN= \
  map_gen.h pfs.h wld.h matrix.h aabb.h octree.h output.h
 OMAPGEN= $(patsubst %,$(BMAPGEN)%,$(_OMAPGEN))
 HMAPGEN= $(patsubst %,$(DIRMAPGEN)%,$(_HMAPGEN))
@@ -483,5 +483,10 @@ clean-console:
 	$(Q)$(RM) $(BINCONSOLE)
 	$(E) "Cleaned console"
 
-clean: clean-common clean-non-master clean-master clean-login clean-char-select clean-zone-cluster clean-log-writer clean-console
+clean-map-gen:
+	$(Q)$(RM) $(BMAPGEN)*.o
+	$(Q)$(RM) $(BINMAPGEN)
+	$(E) "Cleaned map-gen"
+
+clean: clean-common clean-non-master clean-master clean-login clean-char-select clean-zone-cluster clean-log-writer clean-console clean-map-gen
 

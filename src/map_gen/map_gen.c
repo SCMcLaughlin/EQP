@@ -156,8 +156,8 @@ void map_gen_read_vertices(MapGen* map, const char* path)
     octree_generate(&map->octree, map->vertices, EQP_MAP_GEN_DEFAULT_TRIANGLES_PER_OCTREE_NODE);
     output_to_file(&map->octree, map_gen_file_name(path, strlen(path)), minZ);
     
-    printf("%-24s | %8u triangles | %10lu milliseconds\n", map_gen_file_name(path, strlen(path)),
-        array_count(map->vertices) / 3, clock_milliseconds() - time);
+    printf("%-19s | %8u triangles | %5u nodes | %7lu milliseconds\n", map_gen_file_name(path, strlen(path)),
+        array_count(map->vertices) / 3, array_count(map->octree.nodes), clock_milliseconds() - time);
 }
 
 void map_gen_add_object_placement(MapGen* map, Array* object, Matrix* matrix)

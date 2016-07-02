@@ -83,24 +83,81 @@ static void map_gen_read_s3d_zone(MapGen* map, const char* path, Pfs* pfs, float
     pfs_close(&objDefsPfs);
 }
 
+void map_gen_read_all_zones(MapGen* map, const char* dirPath)
+{
+    uint64_t totalTime = clock_milliseconds();
+#ifdef EQP_WINDOWS
+    
+#else
+    DIR* dir = opendir(dirPath);
+    struct dirent entry;
+    struct dirent* result;
+    char path[1024];
+    int len;
+    
+    if (!dir)
+        exception_throw_format(B(map), ErrorDoesNotExist, "Directory '%s' does not exist", dirPath);
+    
+    len = snprintf(path, sizeof(path), "%s/", dirPath);
+    
+    while (!readdir_r(dir, &entry, &result))
+    {
+        if (result == NULL)
+            break;
+        
+        if (!strstr(entry.d_name, ".s3d"))
+            continue;
+        
+        if (strstr(entry.d_name, "_obj") || strstr(entry.d_name, "_chr"))
+            continue;
+        
+        snprintf(path + len, sizeof(path) - len, "%s", entry.d_name);
+        
+        map_gen_read_vertices(map, path);
+        map_gen_reset(map);
+    }
+
+    closedir(dir);
+#endif
+    
+    totalTime = clock_milliseconds() - totalTime;
+    printf("Total time: %lu.%lu seconds\n", totalTime / 1000, totalTime % 1000);
+}
+
+void map_gen_read_single_zone(MapGen* map, const char* dirPath, const char* fileName)
+{
+    char path[1024];
+    
+    snprintf(path, sizeof(path), "%s/%s", dirPath, fileName);
+    
+    map_gen_read_vertices(map, path);
+}
+
 void map_gen_read_vertices(MapGen* map, const char* path)
 {
     Pfs pfs;
-    float minZ = -32000.0f;
-    uint64_t time = clock_microseconds();
+    float minZ      = -32000.0f;
+    uint64_t time   = clock_milliseconds();
+    int isZone      = false;
     
     pfs_open(B(map), &pfs, path);
     
     if (pfs_is_s3d_zone(&pfs))
+    {
         map_gen_read_s3d_zone(map, path, &pfs, &minZ);
+        isZone = true;
+    }
     
     pfs_close(&pfs);
+    
+    if (!isZone)
+        return;
     
     octree_generate(&map->octree, map->vertices, EQP_MAP_GEN_DEFAULT_TRIANGLES_PER_OCTREE_NODE);
     output_to_file(&map->octree, map_gen_file_name(path, strlen(path)), minZ);
     
-    printf("time: %lu microseconds\n", clock_microseconds() - time);
-    printf("vert count: %u\n", array_count(map->vertices));
+    printf("%-24s | %8u triangles | %10lu milliseconds\n", map_gen_file_name(path, strlen(path)),
+        array_count(map->vertices) / 3, clock_milliseconds() - time);
 }
 
 void map_gen_add_object_placement(MapGen* map, Array* object, Matrix* matrix)

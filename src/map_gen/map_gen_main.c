@@ -13,7 +13,10 @@ static int map_gen_main(MapGen* map, int argc, const char** argv)
     {
     case Try:
         map_gen_init(map);
-        map_gen_read_vertices(map, argv[1]);
+        if (argc >= 3)
+            map_gen_read_single_zone(map, argv[1], argv[2]);
+        else
+            map_gen_read_all_zones(map, argv[1]);
         break;
     
     case Finally:

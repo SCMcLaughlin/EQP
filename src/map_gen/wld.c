@@ -222,7 +222,7 @@ static void wld_read_object_definitions_callback(MapGen* map, Wld* wld, Fragment
 
     len = snprintf(buf, sizeof(buf), "%s", name);
     snprintf(buf + len - 12, sizeof(buf) - len + 12, "_actordef");
-
+    
     array = array_create_type(B(map), Vertex);
     wld_read_zone_vertices_callback(map, wld, frag, &array);
     

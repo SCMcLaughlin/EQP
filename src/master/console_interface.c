@@ -127,7 +127,9 @@ int console_receive(MasterIpcThread* ipcThread, Master* M, ChildProcess* proc, i
     int volatile ret            = false;
     int ex;
     
-    switch ((ex = exception_try(B(ipcThread), &exScope)))
+    exception_begin_try(B(ipcThread), &exScope);
+    
+    switch ((ex = exception_try(B(ipcThread))))
     {
     case Try:
         ret = console_do_receive(ipcThread, M, proc, sourceId, packet, &console);

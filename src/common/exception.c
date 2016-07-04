@@ -46,15 +46,13 @@ void exception_throw_format(Basic* basic, ErrorCode errcode, const char* fmt, ..
     exception_throw(basic, errcode);
 }
 
-int exception_try(Basic* basic, ExceptionScope* scope)
+void exception_begin_try(Basic* basic, ExceptionScope* scope)
 {
     ExceptionState* es = &basic->exceptionState;
     
     // Link in the new exception scope
     scope->prev     = es->topScope;
     es->topScope    = scope;
-    
-    return setjmp(scope->jmpBuf);
 }
 
 void exception_handled(Basic* basic)
@@ -85,7 +83,7 @@ void exception_end_try_with_finally(Basic* basic)
 {
     ExceptionState* es  = &basic->exceptionState;
     ExceptionScope* top = es->topScope;
-    
+
     // Has the finally block just finished executing?
     if (es->inFinallyBlock)
     {

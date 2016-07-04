@@ -9,7 +9,9 @@ int zone_cluster_main(ZC* zc, const char** argv)
     int volatile ret = 0;
     int ex;
     
-    switch ((ex = exception_try(B(zc), &exScope)))
+    exception_begin_try(B(zc), &exScope);
+    
+    switch ((ex = exception_try(B(zc))))
     {
     case Try:
         zc_init(zc, argv[1], argv[2], argv[3], argv[4], argv[5]);

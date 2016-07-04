@@ -52,7 +52,9 @@ static void db_thread_execute_queries(DbThread* dbThread)
         ExceptionScope exScope;
         Query* volatile query = &queries[i];
         
-        switch (exception_try(B(dbThread), &exScope))
+        exception_begin_try(B(dbThread), &exScope);
+        
+        switch (exception_try(B(dbThread)))
         {
         case Try:
             if (query_execute_background(query))

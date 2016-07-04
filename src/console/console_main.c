@@ -9,7 +9,9 @@ int console_main(Console* console, int argc, const char** argv)
     int volatile ret = 0;
     int ex;
     
-    switch ((ex = exception_try(B(console), &exScope)))
+    exception_begin_try(B(console), &exScope);
+    
+    switch ((ex = exception_try(B(console))))
     {
     case Try:
         console_init(console);

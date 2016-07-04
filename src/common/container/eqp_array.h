@@ -10,7 +10,7 @@ STRUCT_DECLARE(Array);
 Array*      array_create(Basic* basic, size_t elementSize);
 #define     array_create_type(basic, type) array_create((basic), sizeof(type))
 Array*      array_create_with_capacity(Basic* basic, size_t elementSize, uint32_t capacity);
-#define     array_create_with_capacity_type(basic, type, capacity) array_create_with_capacity((basic), sizeof(type), (capacity))
+#define     array_create_with_capacity_type(basic, capacity, type) array_create_with_capacity((basic), sizeof(type), (capacity))
 #define     array_destroy(array) free(array)
 
 uint32_t    array_count(Array* array);
@@ -18,6 +18,7 @@ uint32_t    array_element_size(Array* array);
 void*       array_data(Array* array);
 #define     array_data_type(array, type) ((type*)array_data((array)))
 #define     array_empty(array) (array_count((array)) == 0)
+#define     array_is_empty(array) array_empty(array)
 
 void*       array_get(Array* array, uint32_t index);
 #define     array_get_type(array, index, type) ((type*)array_get((array), (index)))
@@ -34,5 +35,6 @@ void        array_shift_left(Array* array, uint32_t numIndices);
 
 void        array_reserve(Basic* basic, Array** array, uint32_t count);
 void        array_clear(Array* array);
+void        array_clear_from_index(Array* array, uint32_t index);
 
 #endif//EQP_ARRAY_H

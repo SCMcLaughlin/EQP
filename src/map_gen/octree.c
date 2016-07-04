@@ -2,6 +2,7 @@
 #include "octree.h"
 #include "eqp_basic.h"
 
+#if 0
 STRUCT_DEFINE(OctreeStack)
 {
     AABB        box;
@@ -179,3 +180,4 @@ void octree_generate(Octree* octree, Array* vertices, uint32_t maxTrianglesPerNo
     array_destroy(stack);
     free(claims);
 }
+#endif

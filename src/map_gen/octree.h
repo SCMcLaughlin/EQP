@@ -7,6 +7,7 @@
 #include "aabb.h"
 #include "geometry.h"
 
+#if 0
 STRUCT_DECLARE(Basic);
 
 STRUCT_DEFINE(OctreeNode)
@@ -25,5 +26,6 @@ STRUCT_DEFINE(Octree)
 void    octree_init(Basic* basic, Octree* octree);
 void    octree_deinit(Octree* octree);
 void    octree_generate(Octree* octree, Array* vertices, uint32_t maxTrianglesPerNode);
+#endif
 
 #endif//EQP_OCTREE_H

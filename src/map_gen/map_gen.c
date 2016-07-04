@@ -4,7 +4,8 @@
 static void map_gen_init_arrays(MapGen* map)
 {
     map->vertices = array_create_type(B(map), Vertex);
-    octree_init(B(map), &map->octree);
+    //octree_init(B(map), &map->octree);
+    bsp_tree_init(B(map), &map->bsp);
 }
 
 void map_gen_init(MapGen* map)
@@ -21,7 +22,8 @@ void map_gen_deinit(MapGen* map)
         map->vertices = NULL;
     }
     
-    octree_deinit(&map->octree);
+    //octree_deinit(&map->octree);
+    bsp_tree_deinit(&map->bsp);
 }
 
 void map_gen_reset(MapGen* map)
@@ -153,11 +155,19 @@ void map_gen_read_vertices(MapGen* map, const char* path)
     if (!isZone)
         return;
     
+    bsp_tree_generate(&map->bsp, map->vertices);
+    output_bsp_to_file(&map->bsp, map_gen_file_name(path, strlen(path)), minZ);
+    
+    printf("%-19s | %8u triangles | %7u nodes | %7lu milliseconds\n", map_gen_file_name(path, strlen(path)),
+        array_count(map->vertices) / 3, array_count(map->bsp.nodes), clock_milliseconds() - time);
+    
+#if 0
     octree_generate(&map->octree, map->vertices, EQP_MAP_GEN_DEFAULT_TRIANGLES_PER_OCTREE_NODE);
     output_to_file(&map->octree, map_gen_file_name(path, strlen(path)), minZ);
     
     printf("%-19s | %8u triangles | %5u nodes | %7lu milliseconds\n", map_gen_file_name(path, strlen(path)),
         array_count(map->vertices) / 3, array_count(map->octree.nodes), clock_milliseconds() - time);
+#endif
 }
 
 void map_gen_add_object_placement(MapGen* map, Array* object, Matrix* matrix)

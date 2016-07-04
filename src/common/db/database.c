@@ -62,7 +62,9 @@ static void db_create_from_schema(Database* db, const char* dbPath, const char* 
         Core* volatile core     = db->core;
         String* volatile str    = NULL;
         
-        switch (exception_try(B(core), &exScope))
+        exception_begin_try(B(core), &exScope);
+        
+        switch (exception_try(B(core)))
         {
         case Try:
             str = string_create_from_file(B(core), schema);
@@ -146,7 +148,9 @@ void db_exec(Database* db, const char*sql, const char* exceptionFormat)
         ExceptionScope exScope;
         Basic* volatile basic = B(db->core);
         
-        switch (exception_try(basic, &exScope))
+        exception_begin_try(basic, &exScope);
+        
+        switch (exception_try(basic))
         {
         case Try:
             if (exceptionFormat)

@@ -25,6 +25,7 @@ STRUCT_DECLARE(Zone);
     as well exclude them as fast as possible.
 */
 
+#if 0
 STRUCT_DEFINE(LineOfSightBox)
 {
     Vertex      center;
@@ -44,6 +45,24 @@ STRUCT_DEFINE(LineOfSightMap)
     LineOfSightBox*         boxes;
     LineOfSightTriangles*   triangleSets;
     Triangle64*             triangles;
+};
+#endif
+
+STRUCT_DEFINE(LineOfSightBspNode)
+{
+    uint32_t    triangleCount;
+    uint32_t    leftIndex;
+    uint32_t    rightIndex;
+    AABB        bounds;
+    Triangle    triangles[EQP_BSP_MAX_TRIANGLES_PER_NODE];
+    Triangle*   extraTriangles;
+};
+
+STRUCT_DEFINE(LineOfSightMap)
+{
+    Array*          recursionStack;
+    MapFileBspNode* nodes;
+    Triangle*       triangles;
 };
 
 void    los_map_open(ZC* zc, Zone* zone, LineOfSightMap* map);

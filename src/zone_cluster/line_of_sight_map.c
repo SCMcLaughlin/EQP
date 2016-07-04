@@ -3,8 +3,6 @@
 #include "zone_cluster.h"
 #include "zone.h"
 
-#define EPSILON 0.00000001
-
 static byte* los_map_open_and_decompress(ZC* zc, Zone* zone, const char* path, uint32_t* length, MapFileHeader* header)
 {
     FILE* fp        = fopen(path, "rb");
@@ -31,45 +29,52 @@ ret_null:
     return buffer;
 }
 
-static void los_map_calc_tri_normal(Triangle64* tri)
-{
-    Vector64 a;
-    Vector64 b;
-    Vector64 c;
-    double length;
-    
-    // Vector differences
-    a.x = tri->points[1].x - tri->points[0].x;
-    a.y = tri->points[1].y - tri->points[0].y;
-    a.z = tri->points[1].z - tri->points[0].z;
-    
-    b.x = tri->points[2].x - tri->points[0].x;
-    b.y = tri->points[2].y - tri->points[0].y;
-    b.z = tri->points[2].z - tri->points[0].z;
-    
-    // Cross product
-    c.x = a.y * b.z - a.z * b.y;
-    c.y = a.z * b.x - a.x * b.z;
-    c.z = a.x * b.y - a.y * b.x;
-    
-    // Normalize
-    length = c.x * c.x + c.y * c.y + c.z * c.z;
-    
-    if (length != 0.0)
-    {
-        length = 1.0 / sqrt(length);
-        
-        c.x *= length;
-        c.y *= length;
-        c.z *= length;
-    }
-    
-    tri->normal = c;
-}
-
 static uint64_t los_map_read(ZC* zc, LineOfSightMap* map, byte* data, uint32_t length, MapFileHeader* header)
 {
-    uint64_t time                   = clock_microseconds();
+    uint64_t time               = clock_microseconds();
+    uint32_t n                  = header->nodeCount;
+    LineOfSightBspNode* nodes   = eqp_alloc_type_array(B(zc), n, LineOfSightBspNode);
+    Triangle* triangles         = eqp_alloc_type_array(B(zc), header->triangleCount, Triangle);
+    Aligned reader;
+    Aligned* a = &reader;
+    uint32_t i;
+    
+    aligned_init(B(zc), a, data, length);
+    
+    // Triangles
+    aligned_read_buffer(a, triangles, sizeof(Triangle) * header->triangleCount);
+    
+    // Nodes
+    for (i = 0; i < n; i++)
+    {
+        LineOfSightBspNode* node = &nodes[i];
+        uint32_t m;
+        
+        // triangleCount
+        m                   = aligned_read_uint32(a);
+        node->triangleCount = m;
+        // leftIndex
+        node->leftIndex     = aligned_read_uint32(a);
+        // rightIndex
+        node->rightIndex    = aligned_read_uint32(a);
+        // bounds
+        aligned_read_buffer(a, &node->bounds, sizeof(AABB));
+        // triangles
+        aligned_read_buffer(a, &node->triangles, sizeof_field(LineOfSightBspNode, triangles));
+        
+        // extraTriangleIndex
+        if (m > EQP_BSP_MAX_TRIANGLES_PER_NODE)
+        {
+            node->extraTriangles = triangles + aligned_read_uint32(a);
+        }
+        else
+        {
+            node->extraTriangles = NULL;
+            aligned_advance(a, sizeof(uint32_t));
+        }
+    }
+    
+#if 0
     LineOfSightBox* boxes           = eqp_alloc_type_array(B(zc), header->boxCount, LineOfSightBox);
     LineOfSightTriangles* triSets   = eqp_alloc_type_array(B(zc), header->boxCount, LineOfSightTriangles);
     Triangle64* triangles           = eqp_alloc_type_array(B(zc), header->triangleCount, Triangle64);
@@ -101,7 +106,7 @@ static uint64_t los_map_read(ZC* zc, LineOfSightMap* map, byte* data, uint32_t l
         t->points[2].y = tri.points[2].y;
         t->points[2].z = tri.points[2].z;
         
-        los_map_calc_tri_normal(t);
+        //los_map_calc_tri_normal(t);
     }
     
     // Boxes
@@ -126,6 +131,7 @@ static uint64_t los_map_read(ZC* zc, LineOfSightMap* map, byte* data, uint32_t l
     map->boxes          = boxes;
     map->triangleSets   = triSets;
     map->triangles      = triangles;
+#endif
     
     return clock_microseconds() - time;
 }
@@ -158,25 +164,24 @@ void los_map_open(ZC* zc, Zone* zone, LineOfSightMap* map)
     }
     else
     {
-        map->boxCount       = 0;
-        map->boxes          = NULL;
-        map->triangleSets   = NULL;
+        map->recursionStack = NULL;
+        map->nodes          = NULL;
         map->triangles      = NULL;
     }
 }
 
 void los_map_close(LineOfSightMap* map)
 {
-    if (map->boxes)
+    if (map->recursionStack)
     {
-        free(map->boxes);
-        map->boxes = NULL;
+        array_destroy(map->recursionStack);
+        map->recursionStack = NULL;
     }
     
-    if (map->triangleSets)
+    if (map->nodes)
     {
-        free(map->triangleSets);
-        map->triangleSets = NULL;
+        free(map->nodes);
+        map->nodes = NULL;
     }
     
     if (map->triangles)
@@ -186,8 +191,7 @@ void los_map_close(LineOfSightMap* map)
     }
 }
 
-#define dot_product(a, b) ((a.x) * (b.x) + (a.y) * (b.y) + (a.z) * (b.z))
-
+#if 0
 // Pass-by-copy is deliberate
 static int los_map_point_is_on_triangle_side(Vector64* p1, Vector64* p2, Vector64 a, Vector64* b)
 {
@@ -210,19 +214,13 @@ static int los_map_point_is_on_triangle_side(Vector64* p1, Vector64* p2, Vector6
     temp.y = diff.y;
     temp.z = diff.z;
     
-    // Cross product
-    cp1.x = bmin.y * temp.z - bmin.z * temp.y;
-    cp1.y = bmin.z * temp.x - bmin.x * temp.z;
-    cp1.z = bmin.x * temp.y - bmin.y * temp.x;
+    cross_product(cp1, bmin, temp);
     
     temp.x = p2->x - a.x;
     temp.y = p2->y - a.y;
     temp.z = p2->z - a.z;
     
-    // Cross product
-    cp2.x = bmin.y * temp.z - bmin.z * temp.y;
-    cp2.y = bmin.z * temp.x - bmin.x * temp.z;
-    cp2.z = bmin.x * temp.y - bmin.y * temp.x;
+    cross_product(cp2, bmin, temp);
     
     result = dot_product(cp1, cp2);
     
@@ -262,6 +260,15 @@ static int los_map_point_is_on_triangle_side(Vector64* p1, Vector64* p2, Vector6
         cp1.y = bmin.z * diff.x - bmin.x * diff.z;
         cp1.z = bmin.x * diff.y - bmin.y * diff.x;
         
+        if (cp1.x < 0.0)
+            cp1.x = -cp1.x;
+        
+        if (cp1.y < 0.0)
+            cp1.y = -cp1.y;
+        
+        if (cp1.z < 0.0)
+            cp1.z = -cp1.z;
+        
         if (cp1.x < EPSILON && cp1.y < EPSILON && cp1.z < EPSILON)
             goto ret_true;
     }
@@ -289,6 +296,9 @@ static int los_map_line_intersects_triangles(LineOfSightTriangles* triSet, Vecto
         // Check if the line intersects the triangle's plane
         tri     = triangles[i];
         result  = dot_product(tri.normal, lineVector);
+        
+        if (result < 0.0)
+            result = -result;
         
         if (result < EPSILON)
             continue;
@@ -336,9 +346,85 @@ static int los_map_line_intersects_triangles(LineOfSightTriangles* triSet, Vecto
     
     return false;
 }
+#endif
+
+#if 0
+static int los_map_line_intersects_triangle(Vector64* start, Vector64* lineVector, Triangle64* tri, double* t)
+{
+    Vector64 e1, e2, h, s, q;
+    double a, f, u, v;
+    //uint64_t time = clock_microseconds();
+    
+    vector_difference(&e1, &tri->points[1], &tri->points[0]);
+    vector_difference(&e2, &tri->points[2], &tri->points[0]);
+    cross_product(&h, lineVector, &e2);
+    a = dot_product(&e1, &h);
+    
+    if (a > -0.00001 && a < 0.00001)
+        goto ret_false;
+    
+    f = 1.0 / a;
+    vector_difference(&s, start, &tri->points[0]);
+    u = f * dot_product(&s, &h);
+    
+    if (u < 0.0 || u > 1.0)
+        goto ret_false;
+    
+    cross_product(&q, &s, &e1);
+    v = f * dot_product(lineVector, &q);
+    
+    if (v < 0.0 || (u + v) > 1.0)
+        goto ret_false;
+    
+    *t = f * dot_product(&e2, &q);
+    
+    if (*t <= 0.0)
+        goto ret_false;
+    
+    //printf("math time: %lu\n", clock_microseconds() - time);
+    return true;
+    
+ret_false:
+    //printf("math time: %lu\n", clock_microseconds() - time);
+    return false;
+}
+
+// Pass-by-copy is deliberate
+static int los_map_line_intersects_triangles(LineOfSightTriangles* triSet, Vector64* lineVector, Vector64* start)
+{
+    uint32_t n              = triSet->count;
+    Triangle64* triangles   = triSet->triangles;
+    uint32_t i;
+    Vector64 intersect;
+    double t = 0.0;
+    //uint64_t time = clock_microseconds();
+    
+    for (i = 0; i < n; i++)
+    {
+        if (!los_map_line_intersects_triangle(start, lineVector, &triangles[i], &t))
+            continue;
+        
+        /*
+        intersect.x = start->x + lineVector->x * t;
+        intersect.y = start->y + lineVector->y * t;
+        intersect.z = start->z + lineVector->z * t;
+        
+        printf("intersect: %g, %g, %g\n", intersect.x, intersect.y, intersect.z);
+        */
+        
+        return true;
+    }
+    
+    //printf("triangles %u access time %lu (%g)\n", n, clock_microseconds() - time, t);
+    
+    return false;
+}
+#endif
 
 int los_map_points_are_in_line_of_sight(LineOfSightMap* map, float ax, float ay, float az, float bx, float by, float bz)
 {
+    return true;
+#if 0
     LineOfSightTriangles* triangleSets;
     LineOfSightBox* boxes;
     uint32_t n = map->boxCount;
@@ -438,9 +524,10 @@ int los_map_points_are_in_line_of_sight(LineOfSightMap* map, float ax, float ay,
         //printf("box %u\n", i);
         
         // If we reach here, the line intersects this box... time to check its triangles
-        if (los_map_line_intersects_triangles(&triangleSets[i], lineVectorUnnormalized, start, end, lengthSquared))
+        if (los_map_line_intersects_triangles(&triangleSets[i], &lineVector, &start))
         {
-            printf("los time: %lu\n", clock_microseconds() - time);
+            time = clock_microseconds() - time;
+            printf("los time: %lu\n", time);
             return false;
         }
     }
@@ -449,6 +536,7 @@ int los_map_points_are_in_line_of_sight(LineOfSightMap* map, float ax, float ay,
     
 ret_true:
     return true;
+#endif
 }
 
 float los_map_get_best_z(LineOfSightMap* map, float x, float y, float z)

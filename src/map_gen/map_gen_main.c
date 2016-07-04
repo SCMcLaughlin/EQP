@@ -9,7 +9,9 @@ static int map_gen_main(MapGen* map, int argc, const char** argv)
     int volatile ret = 0;
     int ex;
     
-    switch ((ex = exception_try(B(map), &exScope)))
+    exception_begin_try(B(map), &exScope);
+    
+    switch ((ex = exception_try(B(map))))
     {
     case Try:
         map_gen_init(map);

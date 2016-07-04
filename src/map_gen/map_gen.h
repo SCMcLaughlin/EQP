@@ -12,6 +12,7 @@
 #include "matrix.h"
 #include "geometry.h"
 #include "octree.h"
+#include "bsp_tree.h"
 #include "output.h"
 
 #ifdef EQP_LINUX
@@ -24,7 +25,8 @@ STRUCT_DEFINE(MapGen)
 {
     Basic   basic;
     Array*  vertices;
-    Octree  octree;
+    BspTree bsp;
+    //Octree  octree;
 };
 
 void    map_gen_init(MapGen* map);

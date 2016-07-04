@@ -129,7 +129,9 @@ static void master_start_process(Master* M, const char* binPath, ChildProcess* p
 {
     ExceptionScope exScope;
     
-    switch (exception_try(B(M), &exScope))
+    exception_begin_try(B(M), &exScope);
+    
+    switch (exception_try(B(M)))
     {
     case Try:
         proc_create_ipc_buffer(B(M), proc, ipcPath);

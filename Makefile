@@ -1,7 +1,7 @@
 
 CC= clang
 
-CFLAG= 
+CFLAGS= 
 COPT= -O2 -fomit-frame-pointer -std=gnu11
 CWARN= -Wall -Wextra -Wredundant-decls
 CWARNIGNORE= -Wno-unused-result -Wno-strict-aliasing
@@ -9,10 +9,10 @@ CINCLUDE=
 CDEF=
 
 #ifdef debug
-CFLAG+= -O0 -g -Wno-format -fno-omit-frame-pointer
+CFLAGS+= -O0 -g -Wno-format -fno-omit-frame-pointer -DEQP_DEBUG -DDEBUG
 BUILDTYPE= debug
 #else
-#CFLAG+= -DNDEBUG
+#CFLAGS+= -DNDEBUG
 #BUILDTYPE= release
 #endif
 
@@ -273,9 +273,9 @@ BINCONSOLE= $(DIRBIN)eqp
 DIRMAPGEN= src/map_gen/
 BMAPGEN= build/$(BUILDTYPE)/map_gen/
 _OMAPGEN= map_gen_main.o \
- map_gen.o pfs.o wld.o matrix.o aabb.o octree.o output.o
+ map_gen.o pfs.o wld.o matrix.o octree.o bsp_tree.o output.o
 _HMAPGEN= \
- map_gen.h pfs.h wld.h matrix.h aabb.h octree.h output.h
+ map_gen.h pfs.h wld.h matrix.h octree.h bsp_tree.h output.h
 OMAPGEN= $(patsubst %,$(BMAPGEN)%,$(_OMAPGEN))
 HMAPGEN= $(patsubst %,$(DIRMAPGEN)%,$(_HMAPGEN))
 
@@ -286,6 +286,25 @@ OMAPGEN+= $(BCOMMON_CONTAINER)eqp_string.o $(BCOMMON_CONTAINER)eqp_array.o \
 
 INCLUDEMAPGEN= -I$(DIRMAPGEN)
 BINMAPGEN= $(DIRBIN)eqp-map-gen
+
+##############################################################################
+# Zone Map
+##############################################################################
+DIRZONEMAP= src/zone_map/
+BZONEMAP= build/$(BUILDTYPE)/zone_map/
+_OZONEMAP= \
+ aabb.o
+_HZONEMAP= geometry.h map_file.h \
+ aabb.h
+OZONEMAP= $(patsubst %,$(BZONEMAP)%,$(_OZONEMAP))
+HZONEMAP= $(patsubst %,$(DIRZONEMAP)%,$(_HZONEMAP))
+
+OCOMMONALL+= $(OZONEMAP)
+OMAPGEN+= $(OZONEMAP)
+
+INCLUDEZONEMAP = -I$(DIRZONEMAP)
+INCLUDEZC+= $(INCLUDEZONEMAP)
+INCLUDEMAPGEN+= $(INCLUDEZONEMAP)
 
 ##############################################################################
 # Core Linker flags
@@ -437,6 +456,10 @@ $(BMAPGEN)%.o: $(DIRMAPGEN)%.c $(HMAPGEN)
 	$(E) "\033[0;32mCC      $@\033[0m"
 	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEMAPGEN)
 
+$(BZONEMAP)%.o: $(DIRZONEMAP)%.c $(HZONEMAP)
+	$(E) "\033[0;32mCC      $@\033[0m"
+	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEZONEMAP)
+
 ##############################################################################
 # Clean rules
 ##############################################################################
@@ -472,6 +495,7 @@ clean-char-select:
 clean-zone-cluster:
 	$(Q)$(RM) $(BZC)*.o
 	$(Q)$(RM) $(BZC_MOB)*.o
+	$(Q)$(RM) $(BZONEMAP)*.o
 	$(Q)$(RM) $(BINZC)
 	$(E) "Cleaned zone-cluster"
 
@@ -487,6 +511,7 @@ clean-console:
 
 clean-map-gen:
 	$(Q)$(RM) $(BMAPGEN)*.o
+	$(Q)$(RM) $(BZONEMAP)*.o
 	$(Q)$(RM) $(BINMAPGEN)
 	$(E) "Cleaned map-gen"
 

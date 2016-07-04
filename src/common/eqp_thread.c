@@ -21,7 +21,9 @@ static void thread_proc_wrapper(void* thread)
     ExceptionScope exScope;
     int ex;
     
-    switch ((ex = exception_try(B(thread), &exScope)))
+    exception_begin_try(B(thread), &exScope);
+    
+    switch ((ex = exception_try(B(thread))))
     {
     case Try:
         T(thread)->func(T(thread));

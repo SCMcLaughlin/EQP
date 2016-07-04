@@ -9,7 +9,9 @@ int master_main(Master* M)
     int volatile ret = 0;
     int ex;
     
-    switch ((ex = exception_try(B(M), &exScope)))
+    exception_begin_try(B(M), &exScope);
+    
+    switch ((ex = exception_try(B(M))))
     {
     case Try:
         master_init(M);
@@ -19,6 +21,7 @@ int master_main(Master* M)
         // Start the IPC thread now to avoid needing to hold the lock while the above processes start
         master_start_ipc_thread(M);
         master_main_loop(M);
+        clock_sleep_milliseconds(500);
         break;
     
     case Finally:

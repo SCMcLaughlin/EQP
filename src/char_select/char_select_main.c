@@ -9,7 +9,9 @@ int char_select_main(CharSelect* charSelect, const char** argv)
     int volatile ret = 0;
     int ex;
     
-    switch ((ex = exception_try(B(charSelect), &exScope)))
+    exception_begin_try(B(charSelect), &exScope);
+    
+    switch ((ex = exception_try(B(charSelect))))
     {
     case Try:
         char_select_init(charSelect, argv[1], argv[2], argv[3]);

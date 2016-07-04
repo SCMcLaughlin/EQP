@@ -267,7 +267,9 @@ static void tcp_client_reconnect_callback(Timer* timer)
     TcpClient* volatile client          = char_select_get_tcp_client(charSelect, config->index);
     struct addrinfo* volatile result    = NULL;
     
-    switch (exception_try(B(charSelect), &exScope))
+    exception_begin_try(B(charSelect), &exScope);
+    
+    switch (exception_try(B(charSelect)))
     {
     case Try:
         tcp_client_do_connect(charSelect, client, timer, result);

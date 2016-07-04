@@ -29,7 +29,8 @@ void    exception_throw(Basic* basic, ErrorCode errcode);
 void    exception_throw_message(Basic* basic, ErrorCode errcode, const char* msg, uint32_t len);
 #define exception_throw_literal(basic, errcode, literal) exception_throw_message((basic), (errcode), (literal), sizeof((literal)) - 1)
 void    exception_throw_format(Basic* basic, ErrorCode errcode, const char* fmt, ...);
-int     exception_try(Basic* basic, ExceptionScope* scope);
+void    exception_begin_try(Basic* basic, ExceptionScope* scope);
+#define exception_try(basic) setjmp((basic)->exceptionState.topScope->jmpBuf)
 void    exception_handled(Basic* basic);
 void    exception_end_try(Basic* basic);
 void    exception_end_try_with_finally(Basic* basic);

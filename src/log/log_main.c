@@ -8,7 +8,9 @@ int log_main(LogWriter* logWriter, const char* ipcPath)
     int volatile ret = 0;
     int ex;
     
-    switch ((ex = exception_try(B(logWriter), &exScope)))
+    exception_begin_try(B(logWriter), &exScope);
+    
+    switch ((ex = exception_try(B(logWriter))))
     {
     case Try:
         log_writer_init(logWriter, ipcPath);

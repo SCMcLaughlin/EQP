@@ -9,7 +9,9 @@ int login_main(Login* login, const char** argv)
     int volatile ret = 0;
     int ex;
     
-    switch ((ex = exception_try(B(login), &exScope)))
+    exception_begin_try(B(login), &exScope);
+    
+    switch ((ex = exception_try(B(login))))
     {
     case Try:
         login_init(login, argv[1], argv[2], argv[3]);

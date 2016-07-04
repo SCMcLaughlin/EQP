@@ -166,4 +166,10 @@ void array_clear(Array* array)
     array->count = 0;
 }
 
+void array_clear_from_index(Array* array, uint32_t index)
+{
+    if (index < array->count)
+        array->count = index;
+}
+
 #undef MIN_CAPACITY

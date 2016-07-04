@@ -6,6 +6,7 @@
 #include "eqp_alloc.h"
 #include "geometry.h"
 #include "map_file.h"
+#include "aabb.h"
 #include "file.h"
 #include <zlib.h>
 
@@ -54,21 +55,20 @@ STRUCT_DEFINE(LineOfSightBspNode)
     uint32_t    leftIndex;
     uint32_t    rightIndex;
     AABB        bounds;
-    Triangle    triangles[EQP_BSP_MAX_TRIANGLES_PER_NODE];
-    Triangle*   extraTriangles;
+    Triangle*   triangles;
 };
 
 STRUCT_DEFINE(LineOfSightMap)
 {
-    Array*          recursionStack;
-    MapFileBspNode* nodes;
-    Triangle*       triangles;
+    Array*              recursionStack;
+    LineOfSightBspNode* nodes;
+    Triangle*           triangles;
 };
 
 void    los_map_open(ZC* zc, Zone* zone, LineOfSightMap* map);
 void    los_map_close(LineOfSightMap* map);
 
-int     los_map_points_are_in_line_of_sight(LineOfSightMap* map, float ax, float ay, float az, float bx, float by, float bz);
+int     los_map_points_are_in_line_of_sight(ZC* zc, LineOfSightMap* map, float ax, float ay, float az, float bx, float by, float bz);
 float   los_map_get_best_z(LineOfSightMap* map, float x, float y, float z);
 
 #endif//EQP_LINE_OF_SIGHT_MAP_H

@@ -2,7 +2,7 @@
 CC= clang
 
 CFLAGS= 
-COPT= -O2 -fomit-frame-pointer -std=gnu11
+COPT= -O2 -fomit-frame-pointer -ffast-math -std=gnu11
 CWARN= -Wall -Wextra -Wredundant-decls
 CWARNIGNORE= -Wno-unused-result -Wno-strict-aliasing
 CINCLUDE=
@@ -299,7 +299,7 @@ _HZONEMAP= geometry.h map_file.h \
 OZONEMAP= $(patsubst %,$(BZONEMAP)%,$(_OZONEMAP))
 HZONEMAP= $(patsubst %,$(DIRZONEMAP)%,$(_HZONEMAP))
 
-OCOMMONALL+= $(OZONEMAP)
+OCOMMON_ALL+= $(OZONEMAP)
 OMAPGEN+= $(OZONEMAP)
 
 INCLUDEZONEMAP = -I$(DIRZONEMAP)

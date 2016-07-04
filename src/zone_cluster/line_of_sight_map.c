@@ -59,20 +59,13 @@ static uint64_t los_map_read(ZC* zc, LineOfSightMap* map, byte* data, uint32_t l
         node->rightIndex    = aligned_read_uint32(a);
         // bounds
         aligned_read_buffer(a, &node->bounds, sizeof(AABB));
-        // triangles
-        aligned_read_buffer(a, &node->triangles, sizeof_field(LineOfSightBspNode, triangles));
-        
-        // extraTriangleIndex
-        if (m > EQP_BSP_MAX_TRIANGLES_PER_NODE)
-        {
-            node->extraTriangles = triangles + aligned_read_uint32(a);
-        }
-        else
-        {
-            node->extraTriangles = NULL;
-            aligned_advance(a, sizeof(uint32_t));
-        }
+        // trianglesIndex
+        node->triangles     = triangles + aligned_read_uint32(a);
     }
+    
+    map->recursionStack = array_create_type_with_capacity(B(zc), 32, LineOfSightBspNode*);
+    map->nodes          = nodes;
+    map->triangles      = triangles;
     
 #if 0
     LineOfSightBox* boxes           = eqp_alloc_type_array(B(zc), header->boxCount, LineOfSightBox);
@@ -421,9 +414,138 @@ static int los_map_line_intersects_triangles(LineOfSightTriangles* triSet, Vecto
 }
 #endif
 
-int los_map_points_are_in_line_of_sight(LineOfSightMap* map, float ax, float ay, float az, float bx, float by, float bz)
+static int los_map_line_intersects_triangle(Vector* start, Vector* direction, Triangle* tri, float* t)
 {
+    Vector e1, e2, h, s, q;
+    float a, f, u, v;
+
+    vector_difference(&e1, &tri->points[1], &tri->points[0]);
+    vector_difference(&e2, &tri->points[2], &tri->points[0]);
+    vector_cross_product(&h, direction, &e2);
+    a = vector_dot_product(&e1, &h);
+    
+    if (a > -FLOAT_EPSILON && a < FLOAT_EPSILON)
+        goto ret_false;
+    
+    f = 1.0f / a;
+    vector_difference(&s, start, &tri->points[0]);
+    u = f * vector_dot_product(&s, &h);
+    
+    if (u < 0.0f || u > 1.0f)
+        goto ret_false;
+    
+    vector_cross_product(&q, &s, &e1);
+    v = f * vector_dot_product(direction, &q);
+    
+    if (v < 0.0f || (u + v) > 1.0f)
+        goto ret_false;
+    
+    *t = f * vector_dot_product(&e2, &q);
+    
+    if (*t <= 0.0f)
+        goto ret_false;
+    
     return true;
+    
+ret_false:
+    return false;
+}
+
+/*
+static int los_map_line_intersects_triangle_set(Vector* start, Vector* direction, Triangle* triangles, uint32_t n)
+{
+    uint32_t i;
+    float t;
+    
+    for (i = 0; i < n; i++)
+    {
+        if (los_map_line_intersects_triangle(start, direction, &triangles[i], &t))
+            return true;
+    }
+    
+    return false;
+}
+*/
+
+int los_map_points_are_in_line_of_sight(ZC* zc, LineOfSightMap* map, float ax, float ay, float az, float bx, float by, float bz)
+{
+    uint64_t time = clock_microseconds();
+    Array* stack                = map->recursionStack;
+    LineOfSightBspNode* nodes   = map->nodes;
+    LineOfSightBspNode* ptr;
+    Vector start;
+    Vector direction;
+    float distance;
+    float temp;
+    
+    uint32_t x = 0;
+    uint32_t y = 0;
+    uint32_t z = 0;
+    
+    vector_set(&start, ax, ay, az);
+    vector_set(&direction, bx, by, bz);
+    
+    vector_difference(&direction, &direction, &start);
+    distance = vector_length(&direction);
+    
+    if (distance < FLOAT_EPSILON)
+        goto ret_true;
+    
+    temp = 1.0f / distance;
+    vector_multiply_scalar(&direction, temp);
+    
+    array_push_back(B(zc), &stack, (void*)&nodes);
+    
+    while (!array_empty(stack))
+    {
+        uint32_t n;
+        LineOfSightBspNode* node = *array_back_type(stack, LineOfSightBspNode*);
+        array_pop_back(stack);
+        
+        if (!aabb_intersected_by_line_segment(&node->bounds, &start, &direction, distance, NULL))
+            continue;
+        
+        n = node->triangleCount;
+        
+        x++;
+        y += n;
+        
+        if (n > 0)
+        {
+            uint32_t i;
+            float t;
+            
+            for (i = 0; i < n; i++)
+            {
+                if (los_map_line_intersects_triangle(&start, &direction, &node->triangles[i], &t))
+                    goto ret_false;
+            }
+        }
+        
+        if (node->rightIndex)
+        {
+            ptr = &nodes[node->rightIndex];
+            array_push_back(B(zc), &stack, (void*)&ptr);
+        }
+        
+        if (node->leftIndex)
+        {
+            ptr = &nodes[node->leftIndex];
+            array_push_back(B(zc), &stack, (void*)&ptr);
+        }
+    }
+    
+    map->recursionStack = stack;
+    
+ret_true:
+    printf("time: %lu, x: %u, y: %u, z: %u\n", clock_microseconds() - time, x, y, z);
+    return true;
+    
+ret_false:
+    array_clear(stack);
+    map->recursionStack = stack;
+    printf("time: %lu, x: %u, y: %u\n", clock_microseconds() - time, x, y);
+    return false;
 #if 0
     LineOfSightTriangles* triangleSets;
     LineOfSightBox* boxes;

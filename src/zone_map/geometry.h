@@ -41,6 +41,13 @@ typedef Vertex Vector;
 
 #define vector_length_squared(v) ((v)->x * (v)->x + (v)->y * (v)->y + (v)->z * (v)->z)
 
+#define vector_length(v) sqrtf(vector_length_squared(v))
+
+#define vector_multiply_scalar(v, s)    \
+    (v)->x *= (s);                      \
+    (v)->y *= (s);                      \
+    (v)->z *= (s)
+
 STRUCT_DEFINE(Vector64)
 {
     double x, y, z;

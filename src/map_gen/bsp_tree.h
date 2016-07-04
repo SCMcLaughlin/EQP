@@ -6,9 +6,10 @@
 #include "geometry.h"
 #include "eqp_array.h"
 #include "eqp_alloc.h"
+#include "map_file.h"
 #include "aabb.h"
 
-#define EQP_BSP_MAX_TRIANGLES_PER_NODE 6
+#define EQP_BSP_MAX_TRIANGLES_PER_NODE 4
 
 STRUCT_DEFINE(BspNode)
 {
@@ -16,8 +17,7 @@ STRUCT_DEFINE(BspNode)
     uint32_t    leftIndex;
     uint32_t    rightIndex;
     AABB        bounds;
-    Triangle    triangles[EQP_BSP_MAX_TRIANGLES_PER_NODE];
-    Triangle*   extraTriangles;
+    Triangle*   triangles;
 };
 
 STRUCT_DEFINE(BspTree)
@@ -25,7 +25,7 @@ STRUCT_DEFINE(BspTree)
     Array*      nodes;
     Array*      stack;
     Basic*      basic;
-    uint32_t    externalTriangles;
+    uint32_t    triangleCount;
 };
 
 void    bsp_tree_init(Basic* basic, BspTree* bsp);

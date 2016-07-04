@@ -13,10 +13,10 @@ STRUCT_DEFINE(BspStack)
 
 void bsp_tree_init(Basic* basic, BspTree* bsp)
 {
-    bsp->nodes              = array_create_type(basic, BspNode);
-    bsp->stack              = array_create_type(basic, BspStack);
-    bsp->basic              = basic;
-    bsp->externalTriangles  = 0;
+    bsp->nodes          = array_create_type(basic, BspNode);
+    bsp->stack          = array_create_type(basic, BspStack);
+    bsp->basic          = basic;
+    bsp->triangleCount  = 0;
 }
 
 void bsp_tree_deinit(BspTree* bsp)
@@ -31,8 +31,8 @@ void bsp_tree_deinit(BspTree* bsp)
         {
             BspNode* node = &array[i];
             
-            if (node->extraTriangles)
-                free(node->extraTriangles);
+            if (node->triangles)
+                free(node->triangles);
         }
         
         array_destroy(bsp->nodes);
@@ -81,8 +81,7 @@ static uint32_t bsp_tree_add_node(BspTree* bsp, AABB* box, Array* triangles, int
 static void bsp_tree_recurse(BspTree* bsp)
 {
     Basic* basic = bsp->basic;
-    uint32_t a = 0;
-    
+
     while (!array_empty(bsp->stack))
     {
         BspStack se         = *array_get_type(bsp->stack, 0, BspStack);
@@ -115,24 +114,14 @@ static void bsp_tree_recurse(BspTree* bsp)
         
         if (n <= EQP_BSP_MAX_TRIANGLES_PER_NODE || axisLength <= MIN_AXIS_LENGTH || se.depth >= MAX_DEPTH)
         {
-            uint32_t m          = (n < EQP_BSP_MAX_TRIANGLES_PER_NODE) ? n : EQP_BSP_MAX_TRIANGLES_PER_NODE;
+            Triangle* tris      = eqp_alloc_type_array(basic, n, Triangle);
+            node->triangles     = tris;
             node->triangleCount = n;
+        
+            bsp->triangleCount += n;
             
-            a += m;
-            memcpy(node->triangles, array_data(se.triangles), sizeof(Triangle) * m);
-            
-            if (n > EQP_BSP_MAX_TRIANGLES_PER_NODE)
-            {
-                Triangle* extra;
-                m = n - EQP_BSP_MAX_TRIANGLES_PER_NODE;
-                
-                bsp->externalTriangles += m;
-                extra                   = eqp_alloc_type_array(basic, m, Triangle);
-                node->extraTriangles    = extra;
-                
-                memcpy(extra, array_data_type(se.triangles, Triangle) + EQP_BSP_MAX_TRIANGLES_PER_NODE, sizeof(Triangle) * m);
-            }
-            
+            memcpy(tris, array_data(se.triangles), sizeof(Triangle) * n);
+
             goto next;
         }
         
@@ -198,10 +187,6 @@ static void bsp_tree_recurse(BspTree* bsp)
         array_destroy(se.triangles);
         array_shift_left(bsp->stack, 1);
     }
-    
-#ifdef EQP_DEBUG
-    printf("external triangles: %u\ninternal triangles: %u\n", bsp->externalTriangles, a);
-#endif
 }
 
 void bsp_tree_generate(BspTree* bsp, Array* vertices)

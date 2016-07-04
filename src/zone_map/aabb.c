@@ -147,7 +147,8 @@ int aabb_contains_triangle_precise(AABB* box, Triangle* tri, uint32_t* orCode)
 }
 
 #define asInt(v) (*(uint32_t*)&(v))
-#define asFloatArray(v) ((float*)&(v))
+#define asFloatArrayFlat(v) ((float*)&(v))
+#define asFloatArray(v) ((float*)(v))
 
 int aabb_intersected_by_ray(AABB* box, Vector* origin, Vector* direction, Vector* intersect)
 {
@@ -160,21 +161,21 @@ int aabb_intersected_by_ray(AABB* box, Vector* origin, Vector* direction, Vector
     
     for (i = 0; i < 3; i++)
     {
-        if (asFloatArray(origin)[i] < asFloatArray(box->minCorner)[i])
+        if (asFloatArray(origin)[i] < asFloatArrayFlat(box->minCorner)[i])
         {
-            asFloatArray(intersect)[i]  = asFloatArray(box->minCorner)[i];
+            asFloatArray(intersect)[i]  = asFloatArrayFlat(box->minCorner)[i];
             inside                      = false;
             
             if (asInt(asFloatArray(direction)[i]))
-                maxT[i] = (asFloatArray(box->minCorner)[i] - asFloatArray(origin)[i]) / asFloatArray(direction)[0];
+                maxT[i] = (asFloatArrayFlat(box->minCorner)[i] - asFloatArray(origin)[i]) / asFloatArray(direction)[i];
         }
-        else if (asFloatArray(origin)[i] > asFloatArray(box->maxCorner)[i])
+        else if (asFloatArray(origin)[i] > asFloatArrayFlat(box->maxCorner)[i])
         {
-            asFloatArray(intersect)[i]  = asFloatArray(box->maxCorner)[i];
+            asFloatArray(intersect)[i]  = asFloatArrayFlat(box->maxCorner)[i];
             inside                      = false;
             
             if (asInt(asFloatArray(direction)[i]))
-                maxT[i] = (asFloatArray(box->maxCorner)[i] - asFloatArray(origin)[i]) / asFloatArray(direction)[0];
+                maxT[i] = (asFloatArrayFlat(box->maxCorner)[i] - asFloatArray(origin)[i]) / asFloatArray(direction)[i];
         }
     }
     
@@ -193,7 +194,7 @@ int aabb_intersected_by_ray(AABB* box, Vector* origin, Vector* direction, Vector
     
     if (asInt(maxT[which]) & 0x80000000)
         return false;
-    
+
     for (i = 0; i < 3; i++)
     {
         if (i == which)
@@ -201,8 +202,8 @@ int aabb_intersected_by_ray(AABB* box, Vector* origin, Vector* direction, Vector
         
         asFloatArray(intersect)[i] = asFloatArray(origin)[i] + maxT[which] * asFloatArray(direction)[i];
         
-        if (asFloatArray(intersect)[i] < (asFloatArray(box->minCorner)[i] - FLOAT_EPSILON) ||
-            asFloatArray(intersect)[i] > (asFloatArray(box->maxCorner)[i] + FLOAT_EPSILON))
+        if (asFloatArray(intersect)[i] < (asFloatArrayFlat(box->minCorner)[i] - FLOAT_EPSILON) ||
+            asFloatArray(intersect)[i] > (asFloatArrayFlat(box->maxCorner)[i] + FLOAT_EPSILON))
             return false;
     }
     
@@ -212,12 +213,11 @@ int aabb_intersected_by_ray(AABB* box, Vector* origin, Vector* direction, Vector
 #undef asInt
 #undef asFloatArray
 
-int aabb_intersected_by_line_segment(AABB* box, Vector* origin, Vector* direction, float* distance)
+int aabb_intersected_by_line_segment(AABB* box, Vector* origin, Vector* direction, float distance, float* outDistance)
 {
     int ret = false;
-    float d = *distance;
     
-    if (d > FLOAT_EPSILON)
+    if (distance > FLOAT_EPSILON)
     {
         Vector intersect;
         
@@ -231,10 +231,15 @@ int aabb_intersected_by_line_segment(AABB* box, Vector* origin, Vector* directio
             
             dsq = vector_length_squared(&intersect);
             
-            if (dsq < (d * d))
-                *distance = sqrtf(dsq);
+            if (dsq < (distance * distance))
+            {
+                if (outDistance)
+                    *outDistance = sqrtf(dsq);
+            }
             else
+            {
                 ret = false;
+            }
         }
     }
     

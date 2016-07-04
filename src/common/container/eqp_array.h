@@ -10,7 +10,7 @@ STRUCT_DECLARE(Array);
 Array*      array_create(Basic* basic, size_t elementSize);
 #define     array_create_type(basic, type) array_create((basic), sizeof(type))
 Array*      array_create_with_capacity(Basic* basic, size_t elementSize, uint32_t capacity);
-#define     array_create_with_capacity_type(basic, capacity, type) array_create_with_capacity((basic), sizeof(type), (capacity))
+#define     array_create_type_with_capacity(basic, capacity, type) array_create_with_capacity((basic), sizeof(type), (capacity))
 #define     array_destroy(array) free(array)
 
 uint32_t    array_count(Array* array);

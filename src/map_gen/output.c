@@ -46,7 +46,7 @@ static void output_write_bsp_header(BspTree* bsp, FILE* fp, uint32_t length, flo
     header.version          = 1;
     header.inflatedLength   = length;
     header.minZ             = minZ;
-    header.triangleCount    = bsp->externalTriangles;
+    header.triangleCount    = bsp->triangleCount;
     header.nodeCount        = array_count(bsp->nodes);
     
     fwrite(&header, 1, sizeof(header), fp);
@@ -63,11 +63,10 @@ static void output_write_bsp_nodes(BspTree* bsp, Aligned* w)
     for (i = 0; i < n; i++)
     {
         BspNode* node   = &nodes[i];
-        Triangle* tris  = node->extraTriangles;
-        uint32_t m      = node->triangleCount - EQP_BSP_MAX_TRIANGLES_PER_NODE;
+        Triangle* tris  = node->triangles;
         
         if (tris)
-            aligned_write_buffer(w, tris, sizeof(Triangle) * m);
+            aligned_write_buffer(w, tris, sizeof(Triangle) * node->triangleCount);
     }
     
     // Nodes
@@ -84,27 +83,16 @@ static void output_write_bsp_nodes(BspTree* bsp, Aligned* w)
         aligned_write_uint32(w, node->rightIndex);
         // bounds
         aligned_write_buffer(w, &node->bounds, sizeof(AABB));
-        // triangles
-        aligned_write_buffer(w, &node->triangles, sizeof_field(BspNode, triangles));
-        // extraTriangleIndex
-        if (m > EQP_BSP_MAX_TRIANGLES_PER_NODE)
-        {
-            m -= EQP_BSP_MAX_TRIANGLES_PER_NODE;
+        // triangleIndex
+        aligned_write_uint32(w, triIndex);
             
-            aligned_write_uint32(w, triIndex);
-            
-            triIndex += m;
-        }
-        else
-        {
-            aligned_write_uint32(w, 0);
-        }
+        triIndex += m;
     }
 }
 
 static uint32_t output_bsp_calc_length(BspTree* bsp)
 {
-    return (sizeof(Triangle) * bsp->externalTriangles) + (sizeof(MapFileBspNode) * array_count(bsp->nodes));
+    return (sizeof(Triangle) * bsp->triangleCount) + (sizeof(MapFileBspNode) * array_count(bsp->nodes));
 }
 
 void output_bsp_to_file(BspTree* bsp, const char* zoneShortName, float minZ)

@@ -7,7 +7,6 @@
 #include "aabb.h"
 
 #define EQP_MAP_GEN_MAP_FILE_SIGNATURE  0x4d505145  /* "EQPM" */
-#define EQP_BSP_MAX_TRIANGLES_PER_NODE  6
 
 STRUCT_DEFINE(MapFileHeader)
 {
@@ -34,8 +33,7 @@ STRUCT_DEFINE(MapFileBspNode)
     uint32_t    leftIndex;
     uint32_t    rightIndex;
     AABB        bounds;
-    Triangle    triangles[EQP_BSP_MAX_TRIANGLES_PER_NODE];
-    uint32_t    extraTrianglesIndex;
+    uint32_t    trianglesIndex;
 };
 
 #endif//EQP_MAP_FILE_H

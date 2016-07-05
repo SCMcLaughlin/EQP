@@ -5,6 +5,7 @@
 #include "define.h"
 #include "octree.h"
 #include "bsp_tree.h"
+#include "z_slices.h"
 #include "geometry.h"
 #include "map_file.h"
 #include "aligned.h"
@@ -18,6 +19,6 @@
 #if 0
 void    output_octree_to_file(Octree* octree, const char* zoneShortName, float minZ);
 #endif
-void    output_bsp_to_file(BspTree* bsp, const char* zoneShortName, float minZ);
+void    output_bsp_to_file(BspTree* bsp, ZSlices* z, const char* zoneShortName, float minZ);
 
 #endif//EQP_OUTPUT_H

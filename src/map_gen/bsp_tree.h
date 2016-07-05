@@ -7,6 +7,7 @@
 #include "eqp_array.h"
 #include "eqp_alloc.h"
 #include "map_file.h"
+#include "z_slices.h"
 #include "aabb.h"
 
 #define EQP_BSP_MAX_TRIANGLES_PER_NODE 4
@@ -30,6 +31,6 @@ STRUCT_DEFINE(BspTree)
 
 void    bsp_tree_init(Basic* basic, BspTree* bsp);
 void    bsp_tree_deinit(BspTree* bsp);
-void    bsp_tree_generate(BspTree* bsp, Array* vertices);
+void    bsp_tree_generate(BspTree* bsp, Array* vertices, ZSlices* zSlices);
 
 #endif//EQP_BSP_TREE_H

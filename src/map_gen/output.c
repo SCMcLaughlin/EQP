@@ -38,16 +38,21 @@ static FILE* output_open_file(Basic* basic, const char* zoneShortName)
     return fp;
 }
 
-static void output_write_bsp_header(BspTree* bsp, FILE* fp, uint32_t length, float minZ)
+static void output_write_bsp_header(BspTree* bsp, ZSlices* z, FILE* fp, uint32_t length, float minZ)
 {
     MapFileHeader header;
     
-    header.signature        = EQP_MAP_GEN_MAP_FILE_SIGNATURE;
-    header.version          = 1;
-    header.inflatedLength   = length;
-    header.minZ             = minZ;
-    header.triangleCount    = bsp->triangleCount;
-    header.nodeCount        = array_count(bsp->nodes);
+    header.signature            = EQP_MAP_GEN_MAP_FILE_SIGNATURE;
+    header.version              = 1;
+    header.inflatedLength       = length;
+    header.minX                 = z->minX;
+    header.minY                 = z->minY;
+    header.minZ                 = minZ;
+    header.incrementX           = z->incrementX;
+    header.incrementY           = z->incrementY;
+    header.triangleCount        = bsp->triangleCount;
+    header.nodeCount            = array_count(bsp->nodes);
+    header.zSliceTriangleCount  = array_count(z->triangles);
     
     fwrite(&header, 1, sizeof(header), fp);
 }
@@ -90,23 +95,35 @@ static void output_write_bsp_nodes(BspTree* bsp, Aligned* w)
     }
 }
 
-static uint32_t output_bsp_calc_length(BspTree* bsp)
+static void output_write_z_slices(ZSlices* z, Aligned* w)
 {
-    return (sizeof(Triangle) * bsp->triangleCount) + (sizeof(MapFileBspNode) * array_count(bsp->nodes));
+    // Slices
+    aligned_write_buffer(w, z->slices, sizeof(ZSlice) * EQP_ZSLICE_COUNT);
+    
+    // Triangles
+    aligned_write_buffer(w, array_data(z->triangles), sizeof(Triangle) * array_count(z->triangles));
 }
 
-void output_bsp_to_file(BspTree* bsp, const char* zoneShortName, float minZ)
+static uint32_t output_bsp_calc_length(BspTree* bsp, ZSlices* z)
+{
+    return 
+        (sizeof(Triangle) * bsp->triangleCount) + (sizeof(MapFileBspNode) * array_count(bsp->nodes)) +
+        (sizeof(Triangle) * array_count(z->triangles)) + (sizeof(MapFileZSlice) * EQP_ZSLICE_COUNT);
+}
+
+void output_bsp_to_file(BspTree* bsp, ZSlices* z, const char* zoneShortName, float minZ)
 {
     Basic* basic    = bsp->basic;
-    uint32_t length = output_bsp_calc_length(bsp);
+    uint32_t length = output_bsp_calc_length(bsp, z);
     byte* buffer    = eqp_alloc_type_bytes(basic, length, byte);
     FILE* fp        = output_open_file(basic, zoneShortName);
     Aligned w;
     
     aligned_init(basic, &w, buffer, length);
 
-    output_write_bsp_header(bsp, fp, length, minZ);
+    output_write_bsp_header(bsp, z, fp, length, minZ);
     output_write_bsp_nodes(bsp, &w);
+    output_write_z_slices(z, &w);
     output_write_to_disk(basic, buffer, length, fp, zoneShortName);
     
     fclose(fp);

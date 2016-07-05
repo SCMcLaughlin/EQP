@@ -189,7 +189,7 @@ static void bsp_tree_recurse(BspTree* bsp)
     }
 }
 
-void bsp_tree_generate(BspTree* bsp, Array* vertices)
+void bsp_tree_generate(BspTree* bsp, Array* vertices, ZSlices* zSlices)
 {
     Basic* basic        = bsp->basic;
     Array* triangles    = array_create_type(basic, Triangle);
@@ -213,6 +213,8 @@ void bsp_tree_generate(BspTree* bsp, Array* vertices)
     
     bsp_tree_add_node(bsp, &box, triangles, -1);
     bsp_tree_recurse(bsp);
+    
+    zslices_init(basic, zSlices, &box, tris, n);
 }
 
 #undef MIN_AXIS_LENGTH

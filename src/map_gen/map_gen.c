@@ -6,6 +6,7 @@ static void map_gen_init_arrays(MapGen* map)
     map->vertices = array_create_type(B(map), Vertex);
     //octree_init(B(map), &map->octree);
     bsp_tree_init(B(map), &map->bsp);
+    memset(&map->zSlices, 0, sizeof(ZSlices));
 }
 
 void map_gen_init(MapGen* map)
@@ -24,6 +25,7 @@ void map_gen_deinit(MapGen* map)
     
     //octree_deinit(&map->octree);
     bsp_tree_deinit(&map->bsp);
+    zslices_deinit(&map->zSlices);
 }
 
 void map_gen_reset(MapGen* map)
@@ -155,11 +157,14 @@ void map_gen_read_vertices(MapGen* map, const char* path)
     if (!isZone)
         return;
     
-    bsp_tree_generate(&map->bsp, map->vertices);
-    output_bsp_to_file(&map->bsp, map_gen_file_name(path, strlen(path)), minZ);
+    printf("%-18s ...", map_gen_file_name(path, strlen(path)));
+    fflush(stdout);
     
-    printf("%-19s | %8u triangles | %7u nodes | %7lu milliseconds\n", map_gen_file_name(path, strlen(path)),
-        array_count(map->vertices) / 3, array_count(map->bsp.nodes), clock_milliseconds() - time);
+    bsp_tree_generate(&map->bsp, map->vertices, &map->zSlices);
+    output_bsp_to_file(&map->bsp, &map->zSlices, map_gen_file_name(path, strlen(path)), minZ);
+    
+    printf("\b\b\b | %8u triangles | %7u nodes | %7lu milliseconds\n", array_count(map->vertices) / 3,
+        array_count(map->bsp.nodes), clock_milliseconds() - time);
     
 #if 0
     octree_generate(&map->octree, map->vertices, EQP_MAP_GEN_DEFAULT_TRIANGLES_PER_OCTREE_NODE);

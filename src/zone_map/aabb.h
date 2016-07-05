@@ -41,6 +41,7 @@ int         aabb_contains_point(AABB* box, Vector* v);
 uint32_t    aabb_clip_vector(AABB* box, Vector* v);
 uint32_t    aabb_clip_triangle(AABB* box, Triangle* tri, uint32_t* andCode);
 int         aabb_contains_triangle_precise(AABB* box, Triangle* tri, uint32_t* orCode);
+int         aabb_excludes_triangle(AABB* box, Triangle* tri);
 
 int         aabb_intersected_by_ray(AABB* box, Vector* origin, Vector* direction, Vector* intersect);
 int         aabb_intersected_by_line_segment(AABB* box, Vector* origin, Vector* direction, float distance, float* outDistance);

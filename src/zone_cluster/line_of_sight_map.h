@@ -63,6 +63,12 @@ STRUCT_DEFINE(LineOfSightMap)
     Array*              recursionStack;
     LineOfSightBspNode* nodes;
     Triangle*           triangles;
+    float               minX;
+    float               minY;
+    float               incrementX;
+    float               incrementY;
+    MapFileZSlice*      zSlices;
+    Triangle*           zSliceTriangles;
 };
 
 void    los_map_open(ZC* zc, Zone* zone, LineOfSightMap* map);

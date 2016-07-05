@@ -9,7 +9,7 @@ CINCLUDE=
 CDEF=
 
 #ifdef debug
-CFLAGS+= -O0 -g -Wno-format -fno-omit-frame-pointer -DEQP_DEBUG -DDEBUG
+#CFLAGS+= -O0 -g -Wno-format -fno-omit-frame-pointer -DEQP_DEBUG -DDEBUG
 BUILDTYPE= debug
 #else
 #CFLAGS+= -DNDEBUG
@@ -273,9 +273,9 @@ BINCONSOLE= $(DIRBIN)eqp
 DIRMAPGEN= src/map_gen/
 BMAPGEN= build/$(BUILDTYPE)/map_gen/
 _OMAPGEN= map_gen_main.o \
- map_gen.o pfs.o wld.o matrix.o octree.o bsp_tree.o output.o
+ map_gen.o pfs.o wld.o matrix.o octree.o bsp_tree.o z_slices.o output.o
 _HMAPGEN= \
- map_gen.h pfs.h wld.h matrix.h octree.h bsp_tree.h output.h
+ map_gen.h pfs.h wld.h matrix.h octree.h bsp_tree.h z_slices.h output.h
 OMAPGEN= $(patsubst %,$(BMAPGEN)%,$(_OMAPGEN))
 HMAPGEN= $(patsubst %,$(DIRMAPGEN)%,$(_HMAPGEN))
 

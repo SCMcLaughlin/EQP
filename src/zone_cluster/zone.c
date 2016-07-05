@@ -13,13 +13,6 @@ Zone* zone_create(ZC* zc, int sourceId, int zoneId, int instId)
     zone->zoneId        = zoneId;
     zone->instanceId    = instId;
     
-    los_map_open(zc, zone, &zone->losMap);
-    
-    ////
-    printf("Line of Sight test: %i\n", los_map_points_are_in_line_of_sight(zc, &zone->losMap, -2501.94, -2468.06, -98.1875, 2717.22, 2531.94, 801.812));
-    //printf("Line of Sight test: %i\n", los_map_points_are_in_line_of_sight(zc, &zone->losMap, 0, 0, 0, 0, 0, 5));
-    ////
-    
     zone->mobsByEntityId    = array_create_type(B(zc), Mob*);
     zone->mobsByPosition    = array_create_type(B(zc), MobByPosition);
     zone->clientList        = array_create_type(B(zc), ClientListing);
@@ -35,6 +28,15 @@ Zone* zone_create(ZC* zc, int sourceId, int zoneId, int instId)
     zone->minZ                  = -32000.0f;
     zone->minClippingDistance   = 1000.0f;
     zone->maxClippingDistance   = 20000.0f;
+    
+    // Make sure the map file is opened after minZ's default is set -- map will likely have a better value for it
+    los_map_open(zc, zone, &zone->losMap);
+    
+    ////
+    printf("Line of Sight test: %i\n", los_map_points_are_in_line_of_sight(zc, &zone->losMap, -2501.94, -2468.06, -98.1875, 2717.22, 2531.94, 801.812));
+    //printf("Line of Sight test: %i\n", los_map_points_are_in_line_of_sight(zc, &zone->losMap, 0, 0, 0, 0, 0, 5));
+    printf("BestZ test: %f\n", los_map_get_best_z(&zone->losMap, 0, 0, 0));
+    ////
     
     zc_lua_create_zone(zc, zone);
     
@@ -222,4 +224,94 @@ const char* zone_get_short_name(Zone* zone)
 const char* zone_get_long_name(Zone* zone)
 {
     return zone_long_name_by_id(zone->zoneId);
+}
+
+uint8_t zone_get_zone_type_id(Zone* zone)
+{
+    return zone->zoneType;
+}
+
+uint16_t zone_get_sky_id(Zone* zone)
+{
+    return zone->skyType;
+}
+
+float zone_get_gravity(Zone* zone)
+{
+    return zone->gravity;
+}
+
+float zone_get_min_clipping_distance(Zone* zone)
+{
+    return zone->minClippingDistance;
+}
+
+float zone_get_max_clipping_distance(Zone* zone)
+{
+    return zone->maxClippingDistance;
+}
+
+float zone_get_safe_spot_x(Zone* zone)
+{
+    return zone->safeSpot.x;
+}
+
+float zone_get_safe_spot_y(Zone* zone)
+{
+    return zone->safeSpot.y;
+}
+
+float zone_get_safe_spot_z(Zone* zone)
+{
+    return zone->safeSpot.z;
+}
+
+float zone_get_safe_spot_heading(Zone* zone)
+{
+    return zone->safeSpot.heading;
+}
+
+void zone_set_zone_type_id(Zone* zone, uint32_t id)
+{
+    zone->zoneType = id;
+}
+
+void zone_set_sky_id(Zone* zone, uint32_t id)
+{
+    zone->skyType = id;
+}
+
+void zone_set_gravity(Zone* zone, float value)
+{
+    zone->gravity = value;
+}
+
+void zone_set_min_clipping_distance(Zone* zone, float value)
+{
+    zone->minClippingDistance = value;
+}
+
+void zone_set_max_clipping_distance(Zone* zone, float value)
+{
+    zone->maxClippingDistance = value;
+}
+
+void zone_set_safe_spot(Zone* zone, float x, float y, float z, float heading)
+{
+    Loc* spot = &zone->safeSpot;
+    
+    spot->x         = x;
+    spot->y         = y;
+    spot->z         = z;
+    spot->heading   = heading;
+}
+
+int zone_are_points_in_line_of_sight(ZC* zc, Zone* zone, float x1, float y1, float z1, float x2, float y2, float z2)
+{
+    return los_map_points_are_in_line_of_sight(zc, &zone->losMap, x1, y1, z1, x2, y2, z2);
+}
+
+float zone_get_best_z_for_loc(Zone* zone, float x, float y, float z)
+{
+    return los_map_get_best_z(&zone->losMap, x, y, z);
 }

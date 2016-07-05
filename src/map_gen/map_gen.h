@@ -13,6 +13,7 @@
 #include "geometry.h"
 #include "octree.h"
 #include "bsp_tree.h"
+#include "z_slices.h"
 #include "output.h"
 
 #ifdef EQP_LINUX
@@ -26,6 +27,7 @@ STRUCT_DEFINE(MapGen)
     Basic   basic;
     Array*  vertices;
     BspTree bsp;
+    ZSlices zSlices;
     //Octree  octree;
 };
 

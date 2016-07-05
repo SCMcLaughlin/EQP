@@ -146,6 +146,17 @@ int aabb_contains_triangle_precise(AABB* box, Triangle* tri, uint32_t* orCode)
     return ret;
 }
 
+int aabb_excludes_triangle(AABB* box, Triangle* tri)
+{
+    return
+        (tri->points[0].x < box->minCorner.x && tri->points[1].x < box->minCorner.x && tri->points[2].x < box->minCorner.x) ||
+        (tri->points[0].y < box->minCorner.y && tri->points[1].y < box->minCorner.y && tri->points[2].y < box->minCorner.y) ||
+        (tri->points[0].z < box->minCorner.z && tri->points[1].z < box->minCorner.z && tri->points[2].z < box->minCorner.z) ||
+        (tri->points[0].x > box->maxCorner.x && tri->points[1].x > box->maxCorner.x && tri->points[2].x > box->maxCorner.x) ||
+        (tri->points[0].y > box->maxCorner.y && tri->points[1].y > box->maxCorner.y && tri->points[2].y > box->maxCorner.y) ||
+        (tri->points[0].z > box->maxCorner.z && tri->points[1].z > box->maxCorner.z && tri->points[2].z > box->maxCorner.z);
+}
+
 #define asInt(v) (*(uint32_t*)&(v))
 #define asFloatArrayFlat(v) ((float*)&(v))
 #define asFloatArray(v) ((float*)(v))

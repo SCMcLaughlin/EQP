@@ -3,6 +3,61 @@
 #include "zone.h"
 #include "zone_cluster.h"
 
+void mob_init_npc(Mob* mob, ZC* zc, Zone* zone, NpcPrototype* proto, float x, float y, float z, float heading)
+{
+    String* name;
+    
+    mob->mobType        = MobType_Npc;
+    mob->zoneMobIndex   = -1;
+    
+    mob->level          = npc_proto_get_level(proto);
+    mob->class          = npc_proto_get_class(proto);
+    mob->baseRace       = npc_proto_get_race(proto);
+    mob->currentRace    = npc_proto_get_race(proto);
+    mob->baseGender     = npc_proto_get_gender(proto);
+    mob->currentGender  = npc_proto_get_gender(proto);
+    mob->face           = npc_proto_get_face(proto);
+    
+    mob->uprightState   = Trilogy_UprightState_Standing; //fixme: make an expansion-agnostic enum for this?
+    mob->texture        = npc_proto_get_texture(proto);
+    mob->helmTexture    = npc_proto_get_helm_texture(proto);
+    
+    mob->x          = x;
+    mob->y          = y;
+    mob->z          = z;
+    mob->heading    = heading;
+    
+    memcpy(&mob->baseStats, npc_proto_get_stats(proto), sizeof(Stats));
+    
+    if (mob->baseStats.maxHp <= 0)
+        mob->baseStats.maxHp = 1;
+    
+    memcpy(&mob->currentStats, &mob->baseStats, sizeof(Stats));
+    
+    mob->currentWalkingSpeed    = npc_proto_get_walking_speed(proto);
+    mob->baseWalkingSpeed       = npc_proto_get_walking_speed(proto);
+    mob->currentRunningSpeed    = npc_proto_get_running_speed(proto);
+    mob->baseRunningSpeed       = npc_proto_get_running_speed(proto);
+    
+    mob->currentSize    = npc_proto_get_size(proto);
+    mob->baseSize       = npc_proto_get_size(proto);
+    
+    mob->bodyType       = npc_proto_get_body_type(proto);
+    
+    name        = npc_proto_get_name(proto);
+    mob->name   = name;
+    if (name)
+        string_grab(name);
+    
+    name                    = npc_proto_get_client_friendly_name(proto);
+    mob->clientFriendlyName = name;
+    if (name)
+        string_grab(name);
+    
+    mob->zone           = zone;
+    mob->zoneCluster    = zc;
+}
+
 void mob_init_client(Mob* mob, ZC* zc, Zone* zone, Server_ClientZoning* zoning)
 {
     mob->mobType        = MobType_Client;
@@ -13,9 +68,9 @@ void mob_init_client(Mob* mob, ZC* zc, Zone* zone, Server_ClientZoning* zoning)
     mob->helmTexture    = 0xff;
     
     // Temporary, just to make sure we don't try to divide by zero anywhere...
-    mob->maxHp          = 100;
-    mob->maxMana        = 100;
-    mob->maxEndurance   = 100;
+    mob->currentStats.maxHp         = 100;
+    mob->currentStats.maxMana       = 100;
+    mob->currentStats.maxEndurance  = 100;
     
     mob->currentWalkingSpeed    = 0.46f;
     mob->currentRunningSpeed    = 0.7f;
@@ -41,22 +96,39 @@ void mob_deinit(Mob* mob)
         mob->name = NULL;
     }
     
+    if (mob->clientFriendlyName)
+    {
+        string_destroy(mob->clientFriendlyName);
+        mob->clientFriendlyName = NULL;
+    }
+    
     if (mob->zoneCluster)
     {
-        ZC* zc  = mob->zoneCluster;
+        ZC* zc = mob->zoneCluster;
         
         zc_lua_destroy_object(zc, &mob->luaObj);
     }
 }
 
+void mob_set_position(Mob* mob, float x, float y, float z)
+{
+    Zone* zone = mob_zone(mob);
+    
+    mob->x = x;
+    mob->y = y;
+    mob->z = z;
+    
+    zone_update_mob_position(zone, mob_zone_index(mob), x, y, z);
+}
+
 const char* mob_name_cstr(Mob* mob)
 {
-    return string_data(mob->name);
+    return (mob->name) ? string_data(mob->name) : "";
 }
 
 const char* mob_client_friendly_name_cstr(Mob* mob)
 {
-    return (mob->clientFriendlyName) ? string_data(mob->clientFriendlyName) : string_data(mob->name);
+    return (mob->clientFriendlyName) ? string_data(mob->clientFriendlyName) : mob_name_cstr(mob);
 }
 
 int mob_entity_id(Mob* mob)
@@ -131,7 +203,7 @@ float mob_heading(Mob* mob)
 
 int8_t mob_hp_ratio(Mob* mob)
 {
-    return (mob->currentHp * 100) / mob->maxHp;
+    return (mob->currentHp * 100) / mob->currentStats.maxHp;
 }
 
 int64_t mob_current_hp(Mob* mob)
@@ -141,7 +213,7 @@ int64_t mob_current_hp(Mob* mob)
 
 int64_t mob_max_hp(Mob* mob)
 {
-    return mob->maxHp;
+    return mob->currentStats.maxHp;
 }
 
 int64_t mob_current_mana(Mob* mob)
@@ -151,7 +223,7 @@ int64_t mob_current_mana(Mob* mob)
 
 int64_t mob_max_mana(Mob* mob)
 {
-    return mob->maxMana;
+    return mob->currentStats.maxMana;
 }
 
 int64_t mob_current_endurance(Mob* mob)
@@ -161,7 +233,7 @@ int64_t mob_current_endurance(Mob* mob)
 
 int64_t mob_max_endurance(Mob* mob)
 {
-    return mob->maxEndurance;
+    return mob->currentStats.maxEndurance;
 }
 
 int mob_cur_str(Mob* mob)

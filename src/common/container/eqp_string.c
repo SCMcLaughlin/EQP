@@ -10,6 +10,7 @@ STRUCT_DEFINE(String)
 {
     uint32_t    length;
     uint32_t    capacity;
+    int         refCount;
     char        data[0];
 };
 
@@ -19,6 +20,7 @@ String* string_create(Basic* basic)
     
     str->length     = 0;
     str->capacity   = MIN_CAPACITY;
+    str->refCount   = 1;
     
     return str;
 }
@@ -36,6 +38,7 @@ String* string_create_with_capacity(Basic* basic, uint32_t capacity)
     
     str->length     = 0;
     str->capacity   = capacity;
+    str->refCount   = 1;
     
     return str;
 }
@@ -82,6 +85,19 @@ String* string_create_from_file(Basic* basic, FILE* fp)
     str->data[len] = 0;
     
     return str;
+}
+
+void string_grab(String* str)
+{
+    str->refCount++;
+}
+
+void string_drop(String* str)
+{
+    str->refCount--;
+    
+    if (str->refCount <= 0)
+        free(str);
 }
 
 void string_clear(String* str)
@@ -158,6 +174,11 @@ const char* string_get_data(String* str)
 uint32_t string_get_length(String* str)
 {
     return str->length;
+}
+
+uint32_t string_get_capacity(String* str)
+{
+    return str->capacity;
 }
 
 void string_add_char(Basic* basic, String** str, int c)

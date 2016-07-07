@@ -8,6 +8,8 @@
 #include "eqp_alloc.h"
 #include "lua_object.h"
 #include "mob.h"
+#include "npc.h"
+#include "npc_prototype.h"
 #include "client.h"
 #include "zone_id.h"
 #include "structs.h"
@@ -67,9 +69,15 @@ void    zone_destroy(ZC* zc, Zone* zone);
 #define zone_min_clipping_distance(zone) zone_get_min_clipping_distance((zone))
 #define zone_max_clipping_distance(zone) zone_get_max_clipping_distance((zone))
 
+EQP_API Npc*    zone_spawn_npc(ZC* zc, Zone* zone, NpcPrototype* proto, float x, float y, float z, float heading);
+
 void    zone_spawn_client(ZC* zc, Zone* zone, Client* client);
 void    zone_remove_client(Zone* zone, Client* client);
 void    zone_mark_client_as_linkdead(Zone* zone, Client* client);
+
+Mob*    zone_get_mob_by_entity_id(Zone* zone, uint32_t entityId);
+
+void    zone_update_mob_position(Zone* zone, int index, float x, float y, float z);
 
 void    zone_broadcast_packet(Zone* zone, PacketBroadcast* packet, Client* ignore);
 #define zone_broadcast_packet_to_all(zone, packet) zone_broadcast_packet((zone), (packet), NULL)

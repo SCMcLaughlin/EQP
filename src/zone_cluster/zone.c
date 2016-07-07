@@ -118,6 +118,20 @@ found_space_entity:
     mob_set_zone_index(mob, n);
 }
 
+Npc* zone_spawn_npc(ZC* zc, Zone* zone, NpcPrototype* proto, float x, float y, float z, float heading)
+{
+    PacketBroadcast packet;
+    Npc* npc = npc_create(zc, zone, proto, x, y, z, heading);
+    
+    //fixme: add spawn queue to make npc spawns reentrant
+    zone_spawn_mob(zc, zone, &npc->mob);
+    
+    packet_broadcast_init(zc, &packet, packet_broadcast_encode_op_spawn, npc);
+    zone_broadcast_packet_to_all(zone, &packet);
+    
+    return npc;
+}
+
 void zone_spawn_client(ZC* zc, Zone* zone, Client* client)
 {
     ClientListing listing;
@@ -170,6 +184,24 @@ void zone_mark_client_as_linkdead(Zone* zone, Client* client)
     listing->isLinkdead = true;
     
     //fixme: broadcast this client's linkdead status
+}
+
+Mob* zone_get_mob_by_entity_id(Zone* zone, uint32_t entityId)
+{
+    Mob** mob = array_get_type(zone->mobsByEntityId, entityId - 1, Mob*);
+    return mob ? *mob : NULL;
+}
+
+void zone_update_mob_position(Zone* zone, int index, float x, float y, float z)
+{
+    MobByPosition* pos = array_get_type(zone->mobsByPosition, index, MobByPosition);
+    
+    if (pos)
+    {
+        pos->x = x;
+        pos->y = y;
+        pos->z = z;
+    }
 }
 
 void zone_broadcast_packet(Zone* zone, PacketBroadcast* packetBroadcast, Client* ignore)

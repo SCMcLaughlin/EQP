@@ -56,7 +56,50 @@ static void client_trilogy_echo_packet(Client* client, uint16_t opcode, Aligned*
 
 static void client_trilogy_handle_op_inventory_request(Client* client)
 {
-    (void)client;
+    //just a test
+    ZC* zc = client_zone_cluster(client);
+    Trilogy_Item item;
+    PacketTrilogy* packet;
+    
+    memset(&item, 0, sizeof(item));
+    
+    item.typeFlag = 0x3336;
+    item.isPermanent = 1;
+    item.basic.classesBitfield = 256;
+    item.basic.delay = 25;
+    item.basic.damage = 15;
+    item.slotsBitfield = 24576;
+    item.basic.racesBitfield = 60651;
+    item.basic.skill = 2;
+    
+    item.itemId = 1;
+    item.icon = 592;
+    item.currentSlot = InvSlot_MainInventory1;
+    
+    snprintf(item.name, sizeof(item.name), "Shitty Dagger");
+    snprintf(item.model, sizeof(item.model), "IT1");
+    
+    packet = packet_trilogy_create(B(zc), TrilogyOp_Inventory, sizeof(item));
+    memcpy(packet_trilogy_data(packet), &item, sizeof(item));
+    client_trilogy_schedule_packet_individual(client, packet);
+    
+    
+    item.itemId = 2;    //11057
+    item.icon = 1183;//2874;   //1183
+    item.currentSlot = InvSlot_MainInventory0;
+    item.basic.spellId = 1927;
+    item.basic.effectType = 2;
+    item.basic.clickType = 2;
+    item.basic.consumableType = 3;
+    item.basic.light = 10;
+    
+    snprintf(item.name, sizeof(item.name), "Wagearner");
+    snprintf(item.model, sizeof(item.model), "IT140");
+    
+    packet = packet_trilogy_create(B(zc), TrilogyOp_Inventory, sizeof(item));
+    memcpy(packet_trilogy_data(packet), &item, sizeof(item));
+    client_trilogy_schedule_packet_individual(client, packet);
+    
     //fixme: send items
 }
 

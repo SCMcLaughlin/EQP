@@ -16,6 +16,9 @@
 #define TrilogyOp_EnterZone             0x20d8
 #define TrilogyOp_EnteredZoneUnknown    0x21c3
 
+#define TrilogyOp_Inventory             0x2031
+#define TrilogyOp_PositionUpdate        0x20a1
+#define TrilogyOp_ClientPositionUpdate  0x20f3
 #define TrilogyOp_SpawnAppearance       0x20f5
 #define TrilogyOp_Spawn                 0x2149
 #define TrilogyOp_CustomMessage         0x2180

@@ -9,7 +9,8 @@ CINCLUDE=
 CDEF=
 
 #ifdef debug
-#CFLAGS+= -O0 -g -Wno-format -fno-omit-frame-pointer -DEQP_DEBUG -DDEBUG
+CFLAGS+= -O0 -g -Wno-format -fno-omit-frame-pointer
+CDEF+= -DEQP_DEBUG -DDEBUG
 BUILDTYPE= debug
 #else
 #CFLAGS+= -DNDEBUG
@@ -217,10 +218,12 @@ DIRZC_MOB= $(DIRZC)mob/
 BZC_MOB= $(BZC)mob/
 _OZC_MOB= \
  mob.o client.o client_packet_standard.o inventory.o skills.o spellbook.o \
- client_packet_trilogy_input.o client_packet_trilogy_output.o
+ client_packet_trilogy_input.o client_packet_trilogy_output.o npc_prototype.o \
+ npc.o
 _HZC_MOB= \
  mob.h client.h client_packet_standard.h inventory.h skills.h spellbook.h \
- client_packet_trilogy_input.h client_packet_trilogy_output.h
+ client_packet_trilogy_input.h client_packet_trilogy_output.h npc_prototype.h \
+ npc.h
 OZC_MOB= $(patsubst %,$(BZC_MOB)%,$(_OZC_MOB))
 HZC_MOB= $(patsubst %,$(DIRZC_MOB)%,$(_HZC_MOB))
 

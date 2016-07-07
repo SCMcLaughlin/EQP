@@ -12,8 +12,11 @@ String*     string_create(Basic* basic);
 String*     string_create_with_capacity(Basic* basic, uint32_t capacity);
 String*     string_create_from_cstr(Basic* basic, const char* str, uint32_t len);
 String*     string_create_from_file(Basic* basic, FILE* fp);
-#define     string_destroy(str) free(str)
+#define     string_destroy(str) string_drop((str))
 String*     string_copy(Basic* basic, String* str);
+
+void        string_grab(String* str);
+void        string_drop(String* str);
 
 void        string_clear(String* str);
 
@@ -23,6 +26,7 @@ void        string_set_from_vformat(Basic* basic, String** str, const char* fmt,
 
 const char* string_get_data(String* str);
 uint32_t    string_get_length(String* str);
+uint32_t    string_get_capacity(String* str);
 #define     string_data(str) string_get_data(str)
 #define     string_length(str) string_get_length(str)
 

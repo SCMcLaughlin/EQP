@@ -41,6 +41,13 @@ ENUM_DEFINE(RaceId)
     Race_Iksar = 124
 };
 
+ENUM_DEFINE(GenderId)
+{
+    Gender_Male,
+    Gender_Female,
+    Gender_Neuter,
+};
+
 ENUM_DEFINE(DeityId)
 {
     Deity_Bertoxxulous  = 201,
@@ -64,6 +71,7 @@ ENUM_DEFINE(DeityId)
 
 ENUM_DEFINE(BodyTypeId)
 {
+    BodyType_None           = 0,
     BodyType_Humanoid       = 1,
     BodyType_Lycanthrope    = 2,
     BodyType_Undead         = 3,

@@ -6,19 +6,24 @@
 #include "lua_object.h"
 #include "eqp_string.h"
 #include "server_structs.h"
+#include "npc_prototype.h"
 
 STRUCT_DECLARE(ZC);
 STRUCT_DECLARE(Zone);
 
 STRUCT_DEFINE(Stats)
 {
-    int STR;
-    int STA;
-    int DEX;
-    int AGI;
-    int INT;
-    int WIS;
-    int CHA;
+    int64_t maxHp;
+    int64_t maxMana;
+    int64_t maxEndurance;
+    int     AC;
+    int     STR;
+    int     STA;
+    int     DEX;
+    int     AGI;
+    int     INT;
+    int     WIS;
+    int     CHA;
 };
 
 STRUCT_DEFINE(Mob)
@@ -49,13 +54,10 @@ STRUCT_DEFINE(Mob)
     int16_t     headingRaw;
     
     int64_t     currentHp;
-    int64_t     maxHp;
     int64_t     currentMana;
-    int64_t     maxMana;
     int64_t     currentEndurance;
-    int64_t     maxEndurance;
     
-    Stats       currentStats;
+    Stats       currentStats;   // Base + items + buffs
     Stats       baseStats;
     
     float       currentWalkingSpeed;
@@ -102,8 +104,11 @@ ENUM_DEFINE(MobType)
     MobType_ClientCorpse,
 };
 
+void    mob_init_npc(Mob* mob, ZC* zc, Zone* zone, NpcPrototype* proto, float x, float y, float z, float heading);
 void    mob_init_client(Mob* mob, ZC* zc, Zone* zone, Server_ClientZoning* zoning);
 void    mob_deinit(Mob* mob);
+
+void    mob_set_position(Mob* mob, float x, float y, float z);
 
 #define mob_set_entity_id(mob, id) ((mob)->entityId = (id))
 #define mob_set_zone_index(mob, index) ((mob)->zoneMobIndex = (index))

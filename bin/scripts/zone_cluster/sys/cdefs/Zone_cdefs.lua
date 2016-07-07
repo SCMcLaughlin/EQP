@@ -1,8 +1,15 @@
 
 local ffi = require "ffi"
 
+require "ZoneCluster_cdefs"
+require "NpcPrototype_cdefs"
+require "Npc_cdefs"
+require "Client_cdefs"
+
 ffi.cdef[[
 typedef struct Zone Zone;
+
+Npc*        zone_spawn_npc(ZC* zc, Zone* zone, NpcPrototype* proto, float x, float y, float z, float heading);
 
 int         zone_get_source_id(Zone* zone);
 uint16_t    zone_get_zone_id(Zone* zone);

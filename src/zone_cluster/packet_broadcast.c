@@ -43,6 +43,10 @@ ret:
 
 void packet_broadcast_encode_op_spawn(PacketBroadcast* packet, int expansionId)
 {
-    (void)packet;
-    (void)expansionId;
+    switch (expansionId)
+    {
+    case ExpansionId_Trilogy:
+        packet->trilogy = client_trilogy_make_op_spawn(packet->zc, (Mob*)packet->source);
+        break;
+    }
 }

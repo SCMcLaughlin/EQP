@@ -56,6 +56,11 @@ EQP_API void            npc_proto_set_agi(NpcPrototype* proto, int value);
 EQP_API void            npc_proto_set_wis(NpcPrototype* proto, int value);
 EQP_API void            npc_proto_set_int(NpcPrototype* proto, int value);
 EQP_API void            npc_proto_set_cha(NpcPrototype* proto, int value);
+EQP_API void            npc_proto_set_sv_magic(NpcPrototype* proto, int value);
+EQP_API void            npc_proto_set_sv_fire(NpcPrototype* proto, int value);
+EQP_API void            npc_proto_set_sv_cold(NpcPrototype* proto, int value);
+EQP_API void            npc_proto_set_sv_poison(NpcPrototype* proto, int value);
+EQP_API void            npc_proto_set_sv_disease(NpcPrototype* proto, int value);
 
 EQP_API const char*     npc_proto_get_name_cstr(NpcPrototype* proto);
 EQP_API uint32_t        npc_proto_get_adhoc_id(NpcPrototype* proto);
@@ -83,8 +88,5 @@ EQP_API uint8_t         npc_proto_get_secondary_message_skill(NpcPrototype* prot
 EQP_API int8_t          npc_proto_get_swings_per_round(NpcPrototype* proto);
 EQP_API int64_t         npc_proto_get_min_damage(NpcPrototype* proto);
 EQP_API int64_t         npc_proto_get_max_damage(NpcPrototype* proto);
-
-//fixme: implement this Lua-side
-//EQP_API void            npc_proto_calc_defaults_by_level(NpcPrototype* proto, uint8_t level); // If level = 0, will use the proto's currently set level
 
 #endif//EQP_NPC_PROTOTYPE_H

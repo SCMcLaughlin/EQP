@@ -24,6 +24,11 @@ STRUCT_DEFINE(Stats)
     int     INT;
     int     WIS;
     int     CHA;
+    int     svMagic;
+    int     svFire;
+    int     svCold;
+    int     svPoison;
+    int     svDisease;
 };
 
 STRUCT_DEFINE(Mob)

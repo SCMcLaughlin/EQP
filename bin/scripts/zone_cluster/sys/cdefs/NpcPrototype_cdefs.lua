@@ -42,6 +42,11 @@ void            npc_proto_set_agi(NpcPrototype* proto, int value);
 void            npc_proto_set_wis(NpcPrototype* proto, int value);
 void            npc_proto_set_int(NpcPrototype* proto, int value);
 void            npc_proto_set_cha(NpcPrototype* proto, int value);
+void            npc_proto_set_sv_magic(NpcPrototype* proto, int value);
+void            npc_proto_set_sv_fire(NpcPrototype* proto, int value);
+void            npc_proto_set_sv_cold(NpcPrototype* proto, int value);
+void            npc_proto_set_sv_poison(NpcPrototype* proto, int value);
+void            npc_proto_set_sv_disease(NpcPrototype* proto, int value);
 
 const char*     npc_proto_get_name_cstr(NpcPrototype* proto);
 uint32_t        npc_proto_get_adhoc_id(NpcPrototype* proto);

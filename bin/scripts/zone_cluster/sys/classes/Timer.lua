@@ -100,8 +100,8 @@ function Timer.times(args)
     local timer
     
     local function callback()
-        func(timer)
         i = i + 1
+        func(timer, i)
         if i >= n then
             onceEnd(timer)
         end

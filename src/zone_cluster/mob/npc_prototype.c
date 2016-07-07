@@ -308,6 +308,31 @@ void npc_proto_set_cha(NpcPrototype* proto, int value)
     proto->stats.CHA = value;
 }
 
+void npc_proto_set_sv_magic(NpcPrototype* proto, int value)
+{
+    proto->stats.svMagic = value;
+}
+
+void npc_proto_set_sv_fire(NpcPrototype* proto, int value)
+{
+    proto->stats.svFire = value;
+}
+
+void npc_proto_set_sv_cold(NpcPrototype* proto, int value)
+{
+    proto->stats.svCold = value;
+}
+
+void npc_proto_set_sv_poison(NpcPrototype* proto, int value)
+{
+    proto->stats.svPoison = value;
+}
+
+void npc_proto_set_sv_disease(NpcPrototype* proto, int value)
+{
+    proto->stats.svDisease = value;
+}
+
 const char* npc_proto_get_name_cstr(NpcPrototype* proto)
 {
     String* name = proto->name;

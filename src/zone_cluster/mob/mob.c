@@ -32,6 +32,10 @@ void mob_init_npc(Mob* mob, ZC* zc, Zone* zone, NpcPrototype* proto, float x, fl
     if (mob->baseStats.maxHp <= 0)
         mob->baseStats.maxHp = 1;
     
+    mob->currentHp          = mob->baseStats.maxHp;
+    mob->currentMana        = mob->baseStats.maxMana;
+    mob->currentEndurance   = mob->baseStats.maxEndurance;
+    
     memcpy(&mob->currentStats, &mob->baseStats, sizeof(Stats));
     
     mob->currentWalkingSpeed    = npc_proto_get_walking_speed(proto);

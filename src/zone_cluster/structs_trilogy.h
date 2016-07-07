@@ -323,7 +323,7 @@ STRUCT_DEFINE(Trilogy_ItemBasic)
     uint8_t     light;
     uint8_t     delay;
     uint8_t     damage;
-    uint8_t     clickType; // 0 = none/proc, 1 = unrestricted clicky, 2 = worn, 3 = unrestricted expendable, 4 = must-equip clicky, 5 = class-restricted clicky
+    uint8_t     clickyType; // 0 = none/proc, 1 = unrestricted clicky, 2 = worn, 3 = unrestricted expendable, 4 = must-equip clicky, 5 = class-restricted clicky
     uint8_t     range;
     uint8_t     skill;
     uint8_t     isMagic;

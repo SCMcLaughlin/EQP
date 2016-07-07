@@ -67,7 +67,9 @@ static String* string_realloc_and_fill(Basic* basic, String* str, const char* sr
 
 String* string_create_from_cstr(Basic* basic, const char* src, uint32_t len)
 {
-    return string_realloc_and_fill(basic, NULL, src, len);
+    String* str     = string_realloc_and_fill(basic, NULL, src, len);
+    str->refCount   = 1;
+    return str;
 }
 
 String* string_create_from_file(Basic* basic, FILE* fp)

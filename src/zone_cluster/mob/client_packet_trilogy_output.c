@@ -183,6 +183,16 @@ void client_trilogy_send_player_profile(Client* client)
     aligned_write_memset_no_advance(w, 0xff, sizeof(pp.mainInventoryItemIds));
     reset = aligned_position(w);
     
+    /////////////
+    aligned_advance(w, sizeof(uint16_t) * InvSlot_MainInventory0 - 1);
+    aligned_write_uint16(w, 1057);
+    aligned_reset_to(w, reset);
+    
+    aligned_advance(w, sizeof(uint16_t) * InvSlot_MainInventory1 - 1);
+    aligned_write_uint16(w, 1000);
+    aligned_reset_to(w, reset);
+    /////////////
+    
     inventory_iterator_init(&invItr, InvSlot_EquipMainAndCursorNoCharmBegin, InvSlot_EquipMainAndCursorNoCharmEnd);
     
     while (inventory_iterate_no_augs(inv, &invItr))

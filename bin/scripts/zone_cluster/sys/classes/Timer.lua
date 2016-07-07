@@ -86,6 +86,31 @@ function Timer.once(args)
     return timer
 end
 
+function Timer.times(args)
+    local ms    = getMilliseconds(args)
+    local func  = getCallback(args)
+    local n     = args.count or args.times or args.n or 1
+    
+    if n < 1 then
+        n = 1
+    end
+    
+    -- Timers with fixed numbers of uses can also by kept alive by their callbacks
+    local i = 0
+    local timer
+    
+    local function callback()
+        func(timer)
+        i = i + 1
+        if i >= n then
+            onceEnd(timer)
+        end
+    end
+    
+    timer = make(ms, callback, not args.stopped)
+    return timer
+end
+
 function Timer:_timer()
     return C.zc_lua_timer_get_timer(self:ptr())
 end

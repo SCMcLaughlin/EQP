@@ -64,17 +64,25 @@ static void client_trilogy_handle_op_inventory_request(Client* client)
     memset(&item, 0, sizeof(item));
     
     item.typeFlag = 0x3336;
-    item.isPermanent = 1;
-    item.basic.classesBitfield = 256;
+    item.isPermanent = 0xff;
+    item.basic.classesBitfield = 65535;
     item.basic.delay = 25;
     item.basic.damage = 15;
     item.slotsBitfield = 24576;
-    item.basic.racesBitfield = 60651;
+    item.basic.racesBitfield = 65535;
     item.basic.skill = 2;
+    item.basic.isMagic = 1;
     
-    item.itemId = 1;
+    item.itemId = 1000;
     item.icon = 592;
     item.currentSlot = InvSlot_MainInventory1;
+    
+    /*item.basic.spellId = 998;
+    item.basic.clickySpellId = 998;
+    item.basic.effectType = 2;
+    item.basic.clickyType = 2;
+    item.basic.consumableType = 3;
+    item.basic.charges = 0xff;*/
     
     snprintf(item.name, sizeof(item.name), "Shitty Dagger");
     snprintf(item.model, sizeof(item.model), "IT1");
@@ -84,16 +92,19 @@ static void client_trilogy_handle_op_inventory_request(Client* client)
     client_trilogy_schedule_packet_individual(client, packet);
     
     
-    item.itemId = 2;    //11057
-    item.icon = 1183;//2874;   //1183
+    item.itemId = 1057;//11057;
+    item.icon = 1183;
     item.currentSlot = InvSlot_MainInventory0;
     item.basic.spellId = 1927;
+    item.basic.clickySpellId = 1927;
     item.basic.effectType = 2;
-    item.basic.clickType = 2;
+    item.basic.clickyType = 2;
     item.basic.consumableType = 3;
     item.basic.light = 10;
+    item.basic.hastePercent = 1;
+    item.basic.castingTime = 0;
     
-    snprintf(item.name, sizeof(item.name), "Wagearner");
+    snprintf(item.name, sizeof(item.name), "Wagebringer");
     snprintf(item.model, sizeof(item.model), "IT140");
     
     packet = packet_trilogy_create(B(zc), TrilogyOp_Inventory, sizeof(item));

@@ -41,6 +41,7 @@ void    zc_lua_event_epilog(ZC* zc, lua_State* L, int numAdditionalArgs);
 void    zc_lua_push_lua_object(ZC* zc, lua_State* L, LuaObject* lobj);
 
 /* LuaJIT API */
+EQP_API void        zc_lua_object_set_index(LuaObject* lobj, int index);
 EQP_API int         zc_lua_object_get_index(LuaObject* lobj);
 EQP_API LuaTimer*   zc_lua_timer_create(ZC* zc, uint32_t periodMilliseconds, int luaCallback, int timerIndex, int start);
 EQP_API void        zc_lua_timer_destroy(LuaTimer* timer);

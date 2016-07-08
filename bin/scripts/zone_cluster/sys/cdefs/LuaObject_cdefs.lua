@@ -2,7 +2,8 @@
 local ffi = require "ffi"
 
 ffi.cdef[[
-int zc_lua_object_get_index(void* lobj);
+void    zc_lua_object_set_index(void* lobj, int index);
+int     zc_lua_object_get_index(void* lobj);
 ]]
 
 return ffi.C

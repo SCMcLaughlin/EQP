@@ -4,7 +4,9 @@
 --------------------------------------------------------------------------------
 local C         = require "Zone_cdefs"
 local ffi       = require "ffi"
+local sys       = require "sys"
 local class     = require "class"
+local script    = require "script"
 local LuaObject = require "LuaObject"
 local ZC        = require "ZC"
 --------------------------------------------------------------------------------
@@ -12,34 +14,15 @@ local ZC        = require "ZC"
 --------------------------------------------------------------------------------
 -- Caches
 --------------------------------------------------------------------------------
-local xpcall        = xpcall
-local loadfile      = loadfile
-local setfenv       = setfenv
-local setmetatable  = setmetatable
-local package       = package
-local toLuaString   = ffi.string
-local traceback     = debug.traceback
+local toLuaString = ffi.string
 --------------------------------------------------------------------------------
 
 local Zone = class("Zone", LuaObject)
 
-local globalScriptEnv = {__index = Zone}
-setmetatable(globalScriptEnv, globalScriptEnv)
+local globalScriptEnv = script.initEnv(Zone)
 
 local function runGlobalScript()
-    -- Run global zone init script
-    local script = loadfile("scripts/zone_cluster/global/global_zone.lua")
-    if script then
-        setfenv(script, globalScriptEnv)
-        local s, err = xpcall(script, traceback)
-        if not s then
-            ZC:log(err)
-            -- Loading a script is all-or-nothing
-            globalScriptEnv = {__index = Zone}
-            setmetatable(globalScriptEnv, globalScriptEnv)
-        end
-    end
-    
+    script.runGlobal(globalScriptEnv, "scripts/zone_cluster/global/global_zone.lua")
     runGlobalScript = nil
 end
 
@@ -50,21 +33,7 @@ function Zone._wrap(ptr)
     local env   = zone:getPersonalEnvironment()
     local name  = zone:getShortName()
     
-    -- Run zone-specific init script
-    local script = loadfile("scripts/zone_cluster/zones/".. name .."/zone.lua")
-    if script then
-        package.loaded["zone"] = zone
-        setfenv(script, env)
-        local s, err = xpcall(script, traceback)
-        if not s then
-            zone:log(err)
-            -- Loading a script is all-or-nothing
-            for k in pairs(env) do
-                env[k] = nil
-            end
-        end
-        package.loaded["zone"] = nil
-    end
+    script.runZoneSpecific(zone, env, "scripts/zone_cluster/zones/".. name .."/zone.lua")
     
     return zone
 end
@@ -82,8 +51,7 @@ end
 
 function Zone:spawnNpc(proto, x, y, z, heading)
     local npc = C.zone_spawn_npc(ZC:ptr(), self:ptr(), proto:ptr(), x or 0, y or 0, z or 0, heading or 0)
-    --fixme: wrap the npc, run scripts, etc...
-    return npc
+    return sys.createNpc(zone, npc)
 end
 
 function Zone:getSourceId()

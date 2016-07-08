@@ -9,6 +9,7 @@
 # include <semaphore.h>
 #endif
 
+//fixme: semaphores in shared memory regions won't work on Windows, since Win32 only exposes them as pointers...
 #ifdef EQP_WINDOWS
 typedef HANDLE Semaphore;
 #else

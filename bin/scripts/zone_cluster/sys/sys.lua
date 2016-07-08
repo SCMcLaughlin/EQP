@@ -99,8 +99,16 @@ function sys.createClient(zone, ptr)
     return pushObj(Client._wrap(zone, ptr))
 end
 
-function sys.createNPC(zone, ptr)
-    return 0
+function sys.createNpc(zone, ptr)
+    -- Avoid requiring "ZC" before it has been set
+    local Npc   = require "Npc"
+    local obj   = Npc._wrap(zone, ptr)
+    local index = pushObj(obj)
+    
+    -- Npcs are always created and loaded from the Lua side, so we need to set their C-side object index from this side as well
+    obj:setObjectIndex(index)
+    
+    return obj
 end
 
 local function doEventCall(from, eventName, zone, obj, ...)

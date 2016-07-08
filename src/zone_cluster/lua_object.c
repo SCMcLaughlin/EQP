@@ -152,6 +152,11 @@ void zc_lua_event_epilog(ZC* zc, lua_State* L, int numAdditionalArgs)
     lua_sys_call_no_throw(B(zc), L, 3 + numAdditionalArgs, 0);
 }
 
+void zc_lua_object_set_index(LuaObject* lobj, int index)
+{
+    lobj->index = index;
+}
+
 int zc_lua_object_get_index(LuaObject* lobj)
 {
     return lobj->index;

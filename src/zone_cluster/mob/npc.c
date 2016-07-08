@@ -20,3 +20,8 @@ void npc_destroy(Npc* npc)
     
     free(npc);
 }
+
+uint32_t npc_adhoc_id(Npc* npc)
+{
+    return npc->adhocId;
+}

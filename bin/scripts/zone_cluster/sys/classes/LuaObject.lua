@@ -32,6 +32,10 @@ function LuaObject.getClassName()
     return "LuaObject"
 end
 
+function LuaObject:setObjectIndex(index)
+    C.zc_lua_object_set_index(self:ptr(), index)
+end
+
 function LuaObject:getObjectIndex()
     return C.zc_lua_object_get_index(self:ptr())
 end

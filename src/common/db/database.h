@@ -4,6 +4,7 @@
 
 #include "define.h"
 #include "query.h"
+#include "transaction.h"
 #include "db_thread.h"
 #include "exception.h"
 #include "eqp_clock.h"
@@ -38,6 +39,7 @@ EQP_API void        db_prepare(Database* db, Query* query, const char* sql, int 
 void                db_exec(Database* db, const char*sql, const char* exceptionFormat);
 
 EQP_API void        db_schedule(Database* db, Query* query);
+void                db_schedule_transaction(Database* db, void* userdata, TransactionCallback callback, QueryCallback queryCallback);
 
 #define             db_get_core(db) ((db)->core)
 #define             db_get_sqlite(db) ((db)->sqlite)

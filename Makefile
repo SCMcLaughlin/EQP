@@ -56,8 +56,10 @@ HCOMMON_ALL+= $(HCOMMON_CONTAINER)
 ##############################################################################
 DIRCOMMON_DB= $(DIRCOMMON)db/
 BCOMMON_DB= $(BCOMMON)db/
-_OCOMMON_DB= database.o db_thread.o query.o
-_HCOMMON_DB= database.h db_thread.h query.h
+_OCOMMON_DB= \
+ database.o db_thread.o query.o
+_HCOMMON_DB= transaction.h \
+ database.h db_thread.h query.h
 OCOMMON_DB= $(patsubst %,$(BCOMMON_DB)%,$(_OCOMMON_DB))
 HCOMMON_DB= $(patsubst %,$(DIRCOMMON_DB)%,$(_HCOMMON_DB))
 

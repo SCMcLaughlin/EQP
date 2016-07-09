@@ -58,7 +58,7 @@ local function lookUpAndRunScript(envSet, zone, env, zoneShortName, id, name)
     end
     
     -- Fallback so that npcs with no scripts will share an empty script environment
-    if not env["__noscript"] then
+    if not envSet["__noscript"] then
         envSet["__noscript"] = env
     end
 end
@@ -93,5 +93,9 @@ end
 
 -- Lookup optimization
 Npc.ptr = Mob.ptr
+
+function Npc:getId()
+    return C.npc_adhoc_id(self:ptr())
+end
 
 return Npc

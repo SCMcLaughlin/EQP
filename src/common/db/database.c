@@ -183,3 +183,17 @@ void db_schedule(Database* db, Query* query)
 {
     db_thread_schedule_query(B(db->core), db->dbThread, query);
 }
+
+void db_schedule_transaction(Database* db, void* userdata, TransactionCallback callback, QueryCallback queryCallback)
+{
+    Transaction trans;
+    
+    memset(&trans, 0, sizeof(trans));
+    
+    transaction_set_db(&trans, db);
+    transaction_set_userdata(&trans, userdata);
+    transaction_set_callback(&trans, callback);
+    transaction_set_query_callback(&trans, queryCallback);
+    
+    db_thread_schedule_transaction(B(db->core), db->dbThread, &trans);
+}

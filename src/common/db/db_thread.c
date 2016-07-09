@@ -8,16 +8,83 @@ void db_thread_init(Basic* basic, DbThread* dbThread)
     atomic_mutex_init(&dbThread->mutexInQueue);
     atomic_mutex_init(&dbThread->mutexOutQueue);
     
-    dbThread->inQueue       = array_create_type(basic, Query);
-    dbThread->outQueue      = array_create_type(basic, Query);
-    dbThread->executeQueue  = array_create_type(basic, Query);
+    dbThread->inQueue               = array_create_type(basic, Query);
+    dbThread->inTransactionQueue    = array_create_type(basic, Transaction);
+    dbThread->outQueue              = array_create_type(basic, Query);
+    dbThread->executeQueue          = array_create_type(basic, Query);
 }
 
 void db_thread_deinit(DbThread* dbThread)
 {
-    array_destroy(dbThread->inQueue);
-    array_destroy(dbThread->outQueue);
-    array_destroy(dbThread->executeQueue);
+    if (dbThread->inQueue)
+    {
+        array_destroy(dbThread->inQueue);
+        dbThread->inQueue = NULL;
+    }
+    
+    if (dbThread->inTransactionQueue)
+    {
+        array_destroy(dbThread->inTransactionQueue);
+        dbThread->inTransactionQueue = NULL;
+    }
+    
+    if (dbThread->outQueue)
+    {
+        array_destroy(dbThread->outQueue);
+        dbThread->outQueue = NULL;
+    }
+    
+    if (dbThread->executeQueue)
+    {
+        array_destroy(dbThread->executeQueue);
+        dbThread->executeQueue = NULL;
+    }
+}
+
+static void db_thread_run_transactions(DbThread* dbThread)
+{
+    atomic_mutex_lock(&dbThread->mutexInQueue);
+            
+    if (!array_empty(dbThread->inTransactionQueue))
+    {
+        Transaction trans;
+        Query query;
+        TransactionCallback callback;
+        
+        array_back_copy(dbThread->inTransactionQueue, &trans);
+        array_pop_back(dbThread->inTransactionQueue);
+        
+        atomic_mutex_unlock(&dbThread->mutexInQueue);
+        
+        query_init(&query);
+        db_prepare_literal(transaction_db(&trans), &query, "BEGIN", NULL);
+        query_execute_synchronus(&query);
+        query_deinit(&query);
+        
+        callback = transaction_callback(&trans);
+        if (callback)
+            callback(&trans);
+        
+        query_init(&query);
+        query_set_userdata(&query, transaction_userdata(&trans));
+        db_prepare_literal(transaction_db(&trans), &query, "COMMIT", transaction_query_callback(&trans));
+        query_execute_synchronus(&query);
+        
+        if (transaction_query_callback(&trans))
+        {
+            atomic_mutex_lock(&dbThread->mutexOutQueue);
+            array_push_back(B(dbThread), &dbThread->outQueue, &query);
+            atomic_mutex_unlock(&dbThread->mutexOutQueue);
+        }
+        else
+        {
+            query_deinit(&query);
+        }
+        
+        atomic_mutex_lock(&dbThread->mutexInQueue);
+    }
+    
+    atomic_mutex_unlock(&dbThread->mutexInQueue);
 }
 
 static void db_thread_read_newly_scheduled(DbThread* dbThread)
@@ -102,6 +169,7 @@ void db_thread_main_loop(Thread* thread)
         
         for (;;)
         {
+            db_thread_run_transactions(dbThread);
             db_thread_read_newly_scheduled(dbThread);
             db_thread_execute_queries(dbThread);
 
@@ -126,6 +194,18 @@ void db_thread_schedule_query(Basic* basic, DbThread* dbThread, Query* query)
     
     // Reset the original copy of the query
     query_init(query);
+    // Trigger the thread loop in case it's not already running
+    thread_trigger(basic, T(dbThread));
+}
+
+void db_thread_schedule_transaction(Basic* basic, DbThread* dbThread, Transaction* trans)
+{
+    AtomicMutex* mutex = &dbThread->mutexInQueue;
+    
+    atomic_mutex_lock(mutex);
+    array_push_back(basic, &dbThread->inTransactionQueue, trans);
+    atomic_mutex_unlock(mutex);
+    
     // Trigger the thread loop in case it's not already running
     thread_trigger(basic, T(dbThread));
 }

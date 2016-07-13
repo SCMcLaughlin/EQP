@@ -112,6 +112,20 @@ OCOMMON_ALL+= $(OCOMMON_TIME)
 HCOMMON_ALL+= $(HCOMMON_TIME)
 
 ##############################################################################
+# Common / Item
+##############################################################################
+DIRCOMMON_ITEM= $(DIRCOMMON)item/
+BCOMMON_ITEM= $(BCOMMON)item/
+_OCOMMON_ITEM= item_prototype.o
+_HCOMMON_ITEM= item_prototype.h
+OCOMMON_ITEM= $(patsubst %,$(BCOMMON_ITEM)%,$(_OCOMMON_ITEM))
+HCOMMON_ITEM= $(patsubst %,$(DIRCOMMON_ITEM)%,$(_HCOMMON_ITEM))
+
+CINCLUDE+= -I$(DIRCOMMON_ITEM)
+OCOMMON_ALL+= $(OCOMMON_ITEM)
+HCOMMON_ALL+= $(HCOMMON_ITEM)
+
+##############################################################################
 # Non-Master
 ##############################################################################
 DIRNONMASTER= src/non_master/

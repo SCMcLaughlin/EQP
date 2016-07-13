@@ -106,7 +106,10 @@ function sys.createNpc(zone, ptr)
     local index = pushObj(obj)
     
     -- Npcs are always created and loaded from the Lua side, so we need to set their C-side object index from this side as well
-    obj:setObjectIndex(index)
+    obj:setLuaObjectIndex(index)
+    
+    -- Trigger the spawn event
+    sys.eventCall("event_spawn", zone, obj)
     
     return obj
 end
@@ -122,8 +125,7 @@ local function doEventCall(from, eventName, zone, obj, ...)
     local s, errOrRet = xpcall(func, traceback, zone, obj, ...)
     
     if not s then
-        --fixme: print error to zone
-        zone:log(errOrRet) --fixme: add identifying information before trace
+        zone:log(errOrRet)
     else
         return errOrRet
     end

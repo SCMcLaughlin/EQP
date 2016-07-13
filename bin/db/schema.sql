@@ -187,3 +187,44 @@ CREATE TABLE guild (
     guild_id    INTEGER PRIMARY KEY,
     name        TEXT    UNIQUE
 );
+
+CREATE TABLE item (
+    item_id     INTEGER PRIMARY KEY,
+    name        TEXT,
+    icon        INT,
+    size        INT,
+    weight      INT,
+    slot        INT,
+    race        INT,
+    class       INT,
+    script_path TEXT,
+    timestamp   INT
+);
+
+CREATE TRIGGER trigger_item_insert_timestamp AFTER INSERT ON item
+BEGIN
+    UPDATE item SET timestamp = strftime('%s', 'now') WHERE item_id = new.item_id;
+END;
+
+CREATE TRIGGER trigger_item_update_timestamp AFTER UPDATE ON item
+BEGIN
+    UPDATE item SET timestamp = strftime('%s', 'now') WHERE item_id = new.item_id;
+END;
+
+CREATE TABLE item_stat (
+    item_id     INT,
+    stat_id     INT,
+    value,
+    
+    PRIMARY KEY (item_id, stat_id)
+);
+
+CREATE TRIGGER trigger_item_stat_insert AFTER INSERT ON item_stat
+BEGIN
+    UPDATE item SET timestamp = strftime('%s', 'now') WHERE item_id = new.item_id;
+END;
+
+CREATE TRIGGER trigger_item_stat_update AFTER UPDATE ON item_stat
+BEGIN
+    UPDATE item SET timestamp = strftime('%s', 'now') WHERE item_id = new.item_id;
+END;

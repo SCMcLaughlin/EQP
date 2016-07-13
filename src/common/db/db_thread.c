@@ -44,8 +44,8 @@ void db_thread_deinit(DbThread* dbThread)
 static void db_thread_run_transactions(DbThread* dbThread)
 {
     atomic_mutex_lock(&dbThread->mutexInQueue);
-            
-    if (!array_empty(dbThread->inTransactionQueue))
+    
+    while (!array_empty(dbThread->inTransactionQueue))
     {
         Transaction trans;
         Query query;

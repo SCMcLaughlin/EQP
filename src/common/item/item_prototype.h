@@ -9,8 +9,6 @@ STRUCT_DECLARE(Basic);
 STRUCT_DEFINE(ItemPrototype)
 {
     uint32_t    itemId;
-    char        name[64];
-    char        loreText[64];
     uint32_t    modelId;
     uint8_t     isLore;
     uint8_t     isDroppable;
@@ -43,7 +41,6 @@ STRUCT_DEFINE(ItemPrototype)
     uint16_t    damage;
     uint16_t    delay;
     uint16_t    range;
-    uint16_t    scriptPathLength;
     uint32_t    slotBitfield;
     uint32_t    raceBitfield;
     uint32_t    classBitfield;
@@ -52,7 +49,9 @@ STRUCT_DEFINE(ItemPrototype)
     uint32_t    iconId;
     uint32_t    cost;
     uint32_t    tint;
-    char        scriptPath[0];
+    char        name[64];
+    char        loreText[64];
+    char        scriptPath[256];
 };
 
 EQP_API ItemPrototype*  item_proto_create(Basic* basic);
@@ -63,6 +62,7 @@ EQP_API void            item_proto_set_defaults(ItemPrototype* proto);
 EQP_API void            item_proto_set_item_id(ItemPrototype* proto, uint32_t itemId);
 EQP_API void            item_proto_set_name(ItemPrototype* proto, const char* name);
 EQP_API void            item_proto_set_lore_text(ItemPrototype* proto, const char* loreText);
+EQP_API void            item_proto_set_script_path(ItemPrototype* proto, const char* path);
 EQP_API void            item_proto_set_model_id(ItemPrototype* proto, uint32_t modelId);
 EQP_API void            item_proto_set_is_lore(ItemPrototype* proto, int isLore);
 EQP_API void            item_proto_set_is_droppable(ItemPrototype* proto, int isDroppable);
@@ -107,6 +107,7 @@ EQP_API void            item_proto_set_tint(ItemPrototype* proto, uint32_t tint)
 EQP_API uint32_t        item_proto_get_item_id(ItemPrototype* proto);
 EQP_API const char*     item_proto_get_name(ItemPrototype* proto);
 EQP_API const char*     item_proto_get_lore_text(ItemPrototype* proto);
+EQP_API const char*     item_proto_get_script_path(ItemPrototype* proto);
 EQP_API uint32_t        item_proto_get_model_id(ItemPrototype* proto);
 EQP_API int             item_proto_is_lore(ItemPrototype* proto);
 EQP_API int             item_proto_is_droppable(ItemPrototype* proto);

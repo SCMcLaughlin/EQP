@@ -50,6 +50,8 @@ void        query_update_last_insert_id(Query* query);
 
 int         query_execute_background(Query* query);
 void        query_execute_synchronus(Query* query);
+void        query_execute_synchronus_insert_update(Query* query);
+void        query_reset(Query* query);
 
 int         query_select(Query* query);
 

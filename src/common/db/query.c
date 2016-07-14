@@ -68,6 +68,17 @@ void query_execute_synchronus(Query* query)
     }
 }
 
+void query_execute_synchronus_insert_update(Query* query)
+{
+    query_execute_synchronus(query);
+    query_reset(query);
+}
+
+void query_reset(Query* query)
+{
+    sqlite3_reset(query->stmt);
+}
+
 int query_select(Query* query)
 {
     sqlite3_stmt* stmt;

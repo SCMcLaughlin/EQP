@@ -90,10 +90,16 @@ void log_from_format(Basic* basic, int sourceId, LogType type, const char* fmt, 
 void log_from_vformat(Basic* basic, int sourceId, LogType type, const char* fmt, va_list args)
 {
     char message[EQP_LOG_MESSAGE_SIZE];
-    uint32_t length = log_construct_message(basic, message, type, fmt, args);
+    uint32_t length;
+    IpcBuffer* ipc = basic_log_ipc(basic)->ipc;
+    
+    if (!ipc)
+        return;
+    
+    length = log_construct_message(basic, message, type, fmt, args);
     
     if (length)
-        ipc_buffer_write(basic, basic_log_ipc(basic)->ipc, ServerOp_LogMessage, sourceId, length, message);
+        ipc_buffer_write(basic, ipc, ServerOp_LogMessage, sourceId, length, message);
 }
 
 #undef ERR_STRFTIME

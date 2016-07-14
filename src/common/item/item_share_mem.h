@@ -28,4 +28,6 @@ void            item_share_mem_open(ItemShareMem* shm, const char* path, uint32_
 #define         item_share_mem_close(itemshm) shm_viewer_close(itemshm)
 ItemPrototype*  item_share_mem_get_prototype(ItemShareMem* shm, uint32_t itemId);
 
+uint32_t        item_share_mem_calc_hash(uint32_t itemId);
+
 #endif//EQP_ITEM_SHARE_MEM_H

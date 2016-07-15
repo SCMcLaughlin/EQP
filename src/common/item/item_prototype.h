@@ -59,10 +59,10 @@ EQP_API void            item_proto_destroy(ItemPrototype* proto);
 
 EQP_API void            item_proto_set_defaults(ItemPrototype* proto);
 
-EQP_API void            item_proto_set_item_id(ItemPrototype* proto, uint32_t itemId);
+void                    item_proto_set_item_id(ItemPrototype* proto, uint32_t itemId);
+void                    item_proto_set_script_path(ItemPrototype* proto, const char* path);
 EQP_API void            item_proto_set_name(ItemPrototype* proto, const char* name);
 EQP_API void            item_proto_set_lore_text(ItemPrototype* proto, const char* loreText);
-EQP_API void            item_proto_set_script_path(ItemPrototype* proto, const char* path);
 EQP_API void            item_proto_set_model_id(ItemPrototype* proto, uint32_t modelId);
 EQP_API void            item_proto_set_is_lore(ItemPrototype* proto, int isLore);
 EQP_API void            item_proto_set_is_droppable(ItemPrototype* proto, int isDroppable);
@@ -105,9 +105,9 @@ EQP_API void            item_proto_set_cost(ItemPrototype* proto, uint32_t cost)
 EQP_API void            item_proto_set_tint(ItemPrototype* proto, uint32_t tint);
 
 EQP_API uint32_t        item_proto_get_item_id(ItemPrototype* proto);
+EQP_API const char*     item_proto_get_script_path(ItemPrototype* proto);
 EQP_API const char*     item_proto_get_name(ItemPrototype* proto);
 EQP_API const char*     item_proto_get_lore_text(ItemPrototype* proto);
-EQP_API const char*     item_proto_get_script_path(ItemPrototype* proto);
 EQP_API uint32_t        item_proto_get_model_id(ItemPrototype* proto);
 EQP_API int             item_proto_is_lore(ItemPrototype* proto);
 EQP_API int             item_proto_is_droppable(ItemPrototype* proto);

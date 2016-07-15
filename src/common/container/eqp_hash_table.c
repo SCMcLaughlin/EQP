@@ -201,6 +201,7 @@ static void hash_table_realloc(Basic* basic, HashTable** ptbl, HashTable* oldTbl
                 
                 mainEnt->next = newFreeIndex;
                 hash_table_entry_copy(newEnt, oldEnt, elemSize);
+                newEnt->next = FREE_INDEX_INVALID;
             }
             else
             {
@@ -272,6 +273,7 @@ static int hash_table_do_set(Basic* basic, HashTable** ptbl, const char* key, ui
             mainEnt->next = freeIndex;
             hash_table_advance_free_index(tbl);
             hash_table_do_insert(basic, ent, key, length, value, hash, tbl->elemSize);
+            ent->next = FREE_INDEX_INVALID;
             goto ret_true;
         }
         

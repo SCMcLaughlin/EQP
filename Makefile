@@ -116,8 +116,8 @@ HCOMMON_ALL+= $(HCOMMON_TIME)
 ##############################################################################
 DIRCOMMON_ITEM= $(DIRCOMMON)item/
 BCOMMON_ITEM= $(BCOMMON)item/
-_OCOMMON_ITEM= item_prototype.o
-_HCOMMON_ITEM= item_prototype.h
+_OCOMMON_ITEM= item_prototype.o item_share_mem.o
+_HCOMMON_ITEM= item_prototype.h item_share_mem.h
 OCOMMON_ITEM= $(patsubst %,$(BCOMMON_ITEM)%,$(_OCOMMON_ITEM))
 HCOMMON_ITEM= $(patsubst %,$(DIRCOMMON_ITEM)%,$(_HCOMMON_ITEM))
 
@@ -326,6 +326,21 @@ INCLUDEZC+= $(INCLUDEZONEMAP)
 INCLUDEMAPGEN+= $(INCLUDEZONEMAP)
 
 ##############################################################################
+# Item Gen
+##############################################################################
+DIRITEMGEN= src/item_gen/
+BITEMGEN= build/$(BUILDTYPE)/item_gen/
+_OITEMGEN= item_gen_main.o \
+ item_gen.o
+_HITEMGEN= \
+ item_gen.h
+OITEMGEN= $(patsubst %,$(BITEMGEN)%,$(_OITEMGEN))
+HITEMGEN= $(patsubst %,$(DIRITEMGEN)%,$(_HITEMGEN))
+
+INCLUDEITEMGEN= -I$(DIRITEMGEN)
+BINITEMGEN= $(DIRBIN)eqp-item-gen
+
+##############################################################################
 # Core Linker flags
 ##############################################################################
 LFLAGS= -rdynamic
@@ -352,7 +367,7 @@ RM= rm -f
 ##############################################################################
 .PHONY: default all clean
 
-default all: master login char-select zone-cluster log-writer console map-gen
+default all: master login char-select zone-cluster log-writer console map-gen item-gen
 
 master: $(BINMASTER)
 
@@ -367,6 +382,8 @@ log-writer: $(BINLOGWRITER)
 console: $(BINCONSOLE)
 
 map-gen: $(BINMAPGEN)
+
+item-gen: $(BINITEMGEN)
 
 amalg: amalg-master amalg-login amalg-char-select amalg-zone-cluster amalg-log-writer amalg-console
 
@@ -434,6 +451,10 @@ $(BINMAPGEN): $(OMAPGEN)
 	$(E) "Linking $@"
 	$(Q)$(CC) -o $@ $^ $(LDYNAMIC)
 
+$(BINITEMGEN): $(OITEMGEN) $(OCOMMON_ALL)
+	$(E) "Linking $@"
+	$(Q)$(CC) -o $@ $^ $(LSTATIC) $(LDYNCORE) $(LFLAGS)
+
 # -std=gnu11 breaks longjmp somehow...
 $(BCOMMON)exception.o: $(DIRCOMMON)exception.c $(HCOMMON_ALL)
 	$(E) "\033[0;32mCC      $@\033[0m"
@@ -478,6 +499,10 @@ $(BMAPGEN)%.o: $(DIRMAPGEN)%.c $(HMAPGEN)
 $(BZONEMAP)%.o: $(DIRZONEMAP)%.c $(HZONEMAP)
 	$(E) "\033[0;32mCC      $@\033[0m"
 	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEZONEMAP)
+
+$(BITEMGEN)%.o: $(DIRITEMGEN)%.c $(HITEMGEN)
+	$(E) "\033[0;32mCC      $@\033[0m"
+	$(Q)$(CC) -c -o $@ $< $(COPT) $(CDEF) $(CWARN) $(CWARNIGNORE) $(CFLAGS) $(CINCLUDE) $(INCLUDEITEMGEN)
 
 ##############################################################################
 # Clean rules
@@ -534,5 +559,10 @@ clean-map-gen:
 	$(Q)$(RM) $(BINMAPGEN)
 	$(E) "Cleaned map-gen"
 
-clean: clean-common clean-non-master clean-master clean-login clean-char-select clean-zone-cluster clean-log-writer clean-console clean-map-gen
+clean-item-gen:
+	$(Q)$(RM) $(BITEMGEN)*.o
+	$(Q)$(RM) $(BINITEMGEN)
+	$(E) "Cleaned item-gen"
+
+clean: clean-common clean-non-master clean-master clean-login clean-char-select clean-zone-cluster clean-log-writer clean-console clean-map-gen clean-item-gen
 

@@ -1,6 +1,8 @@
 
 #include "item_gen.h"
 
+#define INVALID 0xffffffff
+
 void item_gen_init(ItemGen* gen)
 {
     core_init(C(gen), 0, NULL);
@@ -64,7 +66,8 @@ static void item_gen_read_db_entries(ItemGen* gen)
     
     while (query_select(&query))
     {
-        gen->nextItemId = query_get_int64(&query, 1) + 1;
+        if (!query_is_null(&query, 1))
+            gen->nextItemId = query_get_int64(&query, 1) + 1;
     }
     
     query_deinit(&query);
@@ -151,16 +154,41 @@ static void item_gen_commit_changes(ItemGen* gen)
     query_deinit(&query);
 }
 
+static void item_gen_advance_free_index(ItemShm_Entry* entries, uint32_t capMinusOne, uint32_t* freeIndex)
+{
+    uint32_t i;
+    
+    for (i = 0; i <= capMinusOne; i++)
+    {
+        if (entries[i].offset == 0)
+        {
+            *freeIndex = i;
+            return;
+        }
+    }
+}
+
+static void item_gen_set_hash_entry(ItemShm_Entry* ent, uint32_t itemId, uint32_t hash, uint32_t* offset)
+{
+    ent->key    = itemId;
+    ent->hash   = hash;
+    ent->offset = *offset;
+    *offset += sizeof(ItemPrototype);
+}
+
 static void item_gen_write_to_disk(ItemGen* gen)
 {
     ItemShm header;
-    ItemDbEntry* dbEntries      = array_data_type(gen->itemPrototypes, ItemPrototype);
+    ItemPrototype* prototypes   = array_data_type(gen->itemPrototypes, ItemPrototype);
     uint32_t n                  = array_count(gen->itemPrototypes);
     uint32_t cap                = bit_pow2_greater_or_equal(n);
     ItemShm_Entry* hashEntries  = eqp_alloc_type_array(B(gen), cap, ItemShm_Entry);
+    uint32_t freeIndex          = 0;
+    uint32_t offset             = sizeof(header) + (sizeof(ItemShm_Entry) * cap);
     FILE* fp;
     uint32_t i;
     
+    header.itemCount = n;
     header.timestamp = clock_unix_seconds();
     
     for (i = 0; i < cap; i++)
@@ -169,7 +197,7 @@ static void item_gen_write_to_disk(ItemGen* gen)
         
         ent->key    = 0;
         ent->hash   = 0;
-        ent->next   = 0xffffffff;
+        ent->next   = INVALID;
         ent->offset = 0;
     }
     
@@ -177,24 +205,76 @@ static void item_gen_write_to_disk(ItemGen* gen)
     
     for (i = 0; i < n; i++)
     {
-        ItemDbEntry* dbEnt  = &dbEntries[i];
-        uint32_t hash       = item_share_mem_calc_hash(dbEnt->itemId);
-        //do insert
+        ItemPrototype* proto    = &prototypes[i];
+        uint32_t itemId         = item_proto_get_item_id(proto);
+        uint32_t hash           = item_share_mem_calc_hash(itemId);
+        uint32_t index          = hash & cap;
+        ItemShm_Entry* ent      = &hashEntries[index];
+        
+        if (ent->offset == 0)
+        {
+            item_gen_set_hash_entry(ent, itemId, hash, &offset);
+            
+            if (index == freeIndex)
+                item_gen_advance_free_index(hashEntries, cap, &freeIndex);
+        }
+        else
+        {
+            uint32_t mainIndex = ent->hash & cap;
+            
+            if (mainIndex != index)
+            {
+                ItemShm_Entry* mainEnt;
+                
+                // Evict this entry to the free index
+                hashEntries[freeIndex] = *ent;
+                
+                // Follow this entry's chain to the end, then point the last entry to the free index
+                mainEnt = &hashEntries[mainIndex];
+                
+                while (mainEnt->next != index)
+                {
+                    mainEnt = &hashEntries[mainEnt->next];
+                }
+                
+                mainEnt->next   = freeIndex;
+                ent->next       = INVALID;
+                item_gen_set_hash_entry(ent, itemId, hash, &offset);
+                item_gen_advance_free_index(hashEntries, cap, &freeIndex);
+            }
+            else
+            {
+                for (;;)
+                {
+                    if (ent->key == itemId)
+                        exception_throw_format(B(gen), ErrorDuplicate, "Duplicate itemId '%u' found, aborting", itemId);
+                    
+                    if (ent->next != INVALID)
+                        ent = &hashEntries[ent->next];
+                    else
+                        break;
+                }
+
+                ent->next = freeIndex;
+                item_gen_set_hash_entry(&hashEntries[freeIndex], itemId, hash, &offset);
+                item_gen_advance_free_index(hashEntries, cap, &freeIndex);
+            }
+        }
     }
     
     header.capacityMinusOne = cap;
     
-    fp = fopen("fixme", "wb+");
+    fp = fopen(EQP_ITEM_GEN_SHM_PATH_DEFAULT, "wb+");
     
     if (!fp)
-        return; //exception_throw
+        exception_throw_format(B(gen), ErrorDoesNotExist, "Could not open '%s' for writing", EQP_ITEM_GEN_SHM_PATH_DEFAULT);
     
     // Header
     fwrite(&header, 1, sizeof(header), fp);
     // Hash table
     fwrite(hashEntries, sizeof(ItemShm_Entry), cap + 1, fp);
     // ItemPrototypes
-    fwrite(dbEntries, sizeof(ItemPrototype), n, fp);
+    fwrite(prototypes, sizeof(ItemPrototype), n, fp);
     
     fclose(fp);
 }
@@ -207,14 +287,17 @@ void item_gen_scan_and_generate(ItemGen* gen)
     item_gen_write_to_disk(gen);
 }
 
-void item_gen_add(ItemGen* gen, ItemPrototype* proto, const char* scriptPath, uint32_t len, int changed)
+void item_gen_add(ItemGen* gen, ItemPrototype* proto, const char* scriptPath, uint32_t len, uint64_t timestamp)
 {
     ItemDbEntry insert;
-    ItemDbEntry* ent = hash_table_get_type_by_cstr(gen->scriptPathToDbEntry, scriptPath, len, ItemDbEntry);
+    ItemDbEntry* ent    = hash_table_get_type_by_cstr(gen->scriptPathToDbEntry, scriptPath, len, ItemDbEntry);
+    int changed         = false;
     
     if (!ent)
     {
         len++; // Include null terminator
+        
+        item_proto_set_item_id(proto, gen->nextItemId++);
         
         insert.itemId   = item_proto_get_item_id(proto);
         insert.isUpdate = false;
@@ -225,10 +308,20 @@ void item_gen_add(ItemGen* gen, ItemPrototype* proto, const char* scriptPath, ui
         ent     = &insert;
         changed = true;
     }
+    else
+    {
+        item_proto_set_item_id(proto, ent->itemId);
+        
+        if (timestamp > ent->timestamp)
+            changed = true;
+    }
     
-    //fixme: make sure scriptPath is set in the prototype before this call
+    item_proto_set_script_path(proto, scriptPath);
+    
     array_push_back(B(gen), &gen->itemPrototypes, proto);
     
     if (changed)
         array_push_back(B(gen), &gen->changes, ent);
 }
+
+#undef INVALID

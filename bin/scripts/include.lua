@@ -3,6 +3,10 @@ local ffi = require "ffi"
 
 local lua = {
     "scripts/?.lua",
+    "scripts/common/?.lua",
+    "scripts/common/enums/?.lua",
+    "scripts/common/cdefs/?.lua",
+    "scripts/common/classes/?.lua",
 }
 
 local dll = {

@@ -13,6 +13,7 @@ ENUM_DEFINE(ErrorCode)
     ErrorDoesNotExist,
     ErrorMismatch,
     ErrorNoData,
+    ErrorDuplicate,
     ErrorFormatString,
     ErrorSpawnProcess,
     ErrorDatabase,

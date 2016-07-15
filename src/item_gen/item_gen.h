@@ -14,7 +14,9 @@
 #include "query.h"
 #include "lua_sys.h"
 
-#define EQP_ITEM_GEN_SCRIPT "scripts/item_gen/item_gen_main.lua"
+#define EQP_ITEM_GEN_SCRIPT             "scripts/item_gen/item_gen_main.lua"
+#define EQP_ITEM_GEN_SHM_PATH_DEFAULT   "shm/eqp_item_prototypes"
+#define EQP_ITEM_GEN_SHM_PATH_ALTERNATE "shm/eqp_item_prototypes2"
 
 STRUCT_DEFINE(ItemGen)
 {
@@ -35,10 +37,10 @@ STRUCT_DEFINE(ItemDbEntry)
 };
 
 void    item_gen_init(ItemGen* gen);
-void    item_gen_deinit(ItemGen* gen)
+void    item_gen_deinit(ItemGen* gen);
 
 void    item_gen_scan_and_generate(ItemGen* gen);
 
-EQP_API void    item_gen_add(ItemGen* gen, ItemPrototype* proto, const char* scriptPath, uint32_t len, int changed);
+EQP_API void    item_gen_add(ItemGen* gen, ItemPrototype* proto, const char* scriptPath, uint32_t len, uint64_t timestamp);
 
 #endif//EQP_ITEM_GEN_H

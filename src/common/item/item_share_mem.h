@@ -3,6 +3,7 @@
 #define EQP_ITEM_SHARE_MEM_H
 
 #include "define.h"
+#include "bit.h"
 #include "share_mem.h"
 #include "item_prototype.h"
 
@@ -18,7 +19,7 @@ STRUCT_DEFINE(ItemShm)
 {
     uint64_t        timestamp;
     uint32_t        capacityMinusOne;
-    uint32_t        padding;
+    uint32_t        itemCount;
     ItemShm_Entry   entries[0];
 };
 

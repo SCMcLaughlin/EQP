@@ -16,6 +16,7 @@
 #include "timer.h"
 #include "eqp_array.h"
 #include "zone_cluster.h"
+#include "item_shm_loader.h"
 
 #define EQP_MASTER_SHM_PATH                 "shm/eqp-master-"
 #define EQP_LOG_WRITER_SHM_PATH             "shm/eqp-log-writer-"
@@ -58,6 +59,9 @@ STRUCT_DEFINE(Master)
     MasterIpcThread ipcThread;
     ShmViewer       shmViewerMaster;
     ShmCreator      shmCreatorMaster;
+    
+    // Item shared memory
+    ItemShmLoader   items;
     
     // Child processes and associated shared memory
     ChildProcess    procCharSelect;

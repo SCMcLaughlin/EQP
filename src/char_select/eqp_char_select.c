@@ -20,6 +20,8 @@ void char_select_init(CharSelect* charSelect, const char* ipcPath, const char* m
     
     charSelect->loginServerConnections = array_create_type(B(charSelect), TcpClient);
     
+    item_share_mem_init(&charSelect->items);
+    
     timer_init(&charSelect->timerUnclaimedAuths, &charSelect->timerPool, EQP_CHAR_SELECT_UNCLAIMED_AUTHS_TIMEOUT,
         char_select_unclaimed_auths_timer_callback, charSelect, true);
     
@@ -32,6 +34,7 @@ void char_select_deinit(CharSelect* charSelect)
 {
     core_deinit(C(charSelect));
     ipc_set_deinit(&charSelect->ipcSet);
+    item_share_mem_close(&charSelect->items);
     
     if (charSelect->L)
     {
@@ -137,6 +140,16 @@ static void char_select_handle_op_client_zoning_rejected(CharSelect* charSelect,
     }
 }
 
+static void char_select_handle_op_item_shm_open(CharSelect* charSelect, byte* data, uint32_t length)
+{
+    Server_ItemSharedMemoryOpen* open = (Server_ItemSharedMemoryOpen*)data;
+    
+    if (length < (sizeof(Server_ItemSharedMemoryOpen) + 1))
+        return;
+    
+    item_share_mem_open(B(charSelect), charSelect->L, &charSelect->items, open->path, open->length);
+}
+
 void ipc_set_handle_packet(Basic* basic, IpcPacket* packet)
 {
     CharSelect* charSelect      = (CharSelect*)basic;
@@ -152,6 +165,10 @@ void ipc_set_handle_packet(Basic* basic, IpcPacket* packet)
     
     case ServerOp_ClientZoningReject:
         char_select_handle_op_client_zoning_rejected(charSelect, data, length);
+        break;
+    
+    case ServerOp_ItemSharedMemoryOpen:
+        char_select_handle_op_item_shm_open(charSelect, data, length);
         break;
     
     default:

@@ -23,6 +23,8 @@ ENUM_DEFINE(ServerOp)
     ServerOp_ZoneAddress,
     /* ZoneCluster */
     ServerOp_StartZone,
+    /* Items */
+    ServerOp_ItemSharedMemoryOpen,
     ServerOp_COUNT
 };
 

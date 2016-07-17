@@ -15,8 +15,8 @@
 #include "lua_sys.h"
 
 #define EQP_ITEM_GEN_SCRIPT             "scripts/item_gen/item_gen_main.lua"
-#define EQP_ITEM_GEN_SHM_PATH_DEFAULT   "shm/eqp_item_prototypes"
-#define EQP_ITEM_GEN_SHM_PATH_ALTERNATE "shm/eqp_item_prototypes2"
+#define EQP_ITEM_GEN_SHM_PATH_DEFAULT   EQP_ITEM_SHM_PATH1
+#define EQP_ITEM_GEN_SHM_PATH_ALTERNATE EQP_ITEM_SHM_PATH2
 
 STRUCT_DEFINE(ItemGen)
 {

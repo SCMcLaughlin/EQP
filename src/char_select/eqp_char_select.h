@@ -19,6 +19,7 @@
 #include "auth.h"
 #include "char_select_client.h"
 #include "server_structs.h"
+#include "item_share_mem.h"
 
 #define EQP_CHAR_SELECT_PORT            9000
 #define EQP_CHAR_SELECT_SERVER_UP       0
@@ -33,22 +34,24 @@
 STRUCT_DEFINE(CharSelect)
 {
     // Core MUST be the first member of this struct
-    Core        core;
+    Core            core;
     
-    int         serverStatus;
-    int         serverPlayerCount;
-    TimerPool   timerPool;
-    lua_State*  L;
-    UdpSocket*  socket;
-    Array*      loginServerConnections;
+    int             serverStatus;
+    int             serverPlayerCount;
+    TimerPool       timerPool;
+    lua_State*      L;
+    UdpSocket*      socket;
+    Array*          loginServerConnections;
     
-    IpcSet      ipcSet;
+    IpcSet          ipcSet;
     
-    Timer       timerUnclaimedAuths;
-    Array*      unclaimedAuths;
-    Array*      unauthedClients;
+    ItemShareMem    items;
     
-    Array*      clientsAttemptingToZoneIn;
+    Timer           timerUnclaimedAuths;
+    Array*          unclaimedAuths;
+    Array*          unauthedClients;
+    
+    Array*          clientsAttemptingToZoneIn;
 };
 
 void        char_select_init(CharSelect* charSelect, const char* ipcPath, const char* masterIpcPath, const char* logWriterIpcPath);

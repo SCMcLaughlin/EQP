@@ -15,6 +15,9 @@ void master_init(Master* M)
     
     master_ipc_thread_init(M, &M->ipcThread);
     
+    item_shm_loader_init(&M->items);
+    item_shm_loader_open_main(M, &M->items);
+    
     proc_init(&M->procCharSelect);
     proc_init(&M->procLogWriter);
     proc_init(&M->procLogin);
@@ -45,6 +48,7 @@ void master_deinit(Master* M)
     core_deinit(C(M));
     
     share_mem_destroy(&M->shmCreatorMaster, &M->shmViewerMaster);
+    item_shm_loader_deinit(&M->items);
 }
 
 void master_shut_down_all_child_processes(Master* M)
@@ -150,6 +154,7 @@ static void master_start_process(Master* M, const char* binPath, ChildProcess* p
 void master_start_char_select(Master* M)
 {
     master_start_process(M, BIN_CHAR_SELECT, &M->procCharSelect, EQP_CHAR_SELECT_SHM_PATH, NULL, NULL);
+    item_shm_loader_send_details(M, &M->items, &M->procCharSelect);
 }
 
 void master_start_login(Master* M)

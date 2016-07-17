@@ -78,13 +78,11 @@ static void shm_pick_name(ShmCreator* creator, const char* pathBase)
     }
 }
 
-void share_mem_create(Basic* basic, ShmCreator* creator, ShmViewer* viewer, const char* pathBase, uint32_t length)
+static void share_mem_do_create_open(Basic* basic, ShmCreator* creator, ShmViewer* viewer, uint32_t length)
 {
 #ifdef EQP_LINUX
     int fd;
 #endif
-    
-    shm_pick_name(creator, pathBase);
     
 #ifdef EQP_WINDOWS
     viewer->handle = CreateFileMappingA(INVALID_HANDLE_VALUE, NULL, PAGE_READWRITE, 0, length, creator->name);
@@ -117,6 +115,18 @@ void share_mem_create(Basic* basic, ShmCreator* creator, ShmViewer* viewer, cons
         exception_throw_format(basic, ErrorShareMemInit, "[share_mem_create] memory mapping failed for '%s', errno: %i", creator->name, errno);
     
     viewer->length = length;
+}
+
+void share_mem_create_open(Basic* basic, ShmCreator* creator, ShmViewer* viewer, const char* path, uint32_t length)
+{
+    snprintf(creator->name, sizeof(creator->name), "%s", path);
+    share_mem_do_create_open(basic, creator, viewer, length);
+}
+
+void share_mem_create(Basic* basic, ShmCreator* creator, ShmViewer* viewer, const char* pathBase, uint32_t length)
+{
+    shm_pick_name(creator, pathBase);
+    share_mem_do_create_open(basic, creator, viewer, length);
 }
 
 void share_mem_destroy(ShmCreator* creator, ShmViewer* viewer)

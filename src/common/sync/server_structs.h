@@ -32,4 +32,10 @@ STRUCT_DEFINE(Server_ZoneAddress)
     char        messageOfTheDay[1];
 };
 
+STRUCT_DEFINE(Server_ItemSharedMemoryOpen)
+{
+    uint32_t    length;
+    char        path[0];
+};
+
 #endif//EQP_SERVER_STRUCTS_H

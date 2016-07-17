@@ -78,7 +78,6 @@ local function stat(proto, str)
         if v then
             val = v
         else
-            print(s, val)
             local func = stats[s:lower()]
             if func then
                 func(proto, val)

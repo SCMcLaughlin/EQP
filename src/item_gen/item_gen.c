@@ -109,7 +109,6 @@ static void item_gen_commit_changes(ItemGen* gen)
     Database* db            = core_db(C(gen));
     ItemDbEntry* entries    = array_data_type(gen->changes, ItemDbEntry);
     uint32_t n              = array_count(gen->changes);
-    uint64_t timestamp      = clock_unix_seconds();
     Query query;
     Query update;
     Query insert;
@@ -122,11 +121,9 @@ static void item_gen_commit_changes(ItemGen* gen)
     
     query_init(&update);
     db_prepare_literal(db, &update, "UPDATE item SET timestamp = ? WHERE item_id = ?", NULL);
-    query_bind_int64(&update, 1, timestamp);
     
     query_init(&insert);
     db_prepare_literal(db, &insert, "INSERT INTO item (item_id, timestamp, script_path) VALUES (?, ?, ?)", NULL);
-    query_bind_int64(&insert, 2, timestamp);
     
     for (i = 0; i < n; i++)
     {
@@ -134,12 +131,14 @@ static void item_gen_commit_changes(ItemGen* gen)
         
         if (ent->isUpdate)
         {
+            query_bind_int64(&update, 1, ent->timestamp);
             query_bind_int64(&update, 2, ent->itemId);
             query_execute_synchronus_insert_update(&update);
         }
         else
         {
             query_bind_int64(&insert, 1, ent->itemId);
+            query_bind_int64(&insert, 2, ent->timestamp);
             query_bind_string_no_copy(&insert, 3, ent->addPath, QUERY_CALC_LENGTH);
             query_execute_synchronus_insert_update(&insert);
         }
@@ -277,6 +276,8 @@ static void item_gen_write_to_disk(ItemGen* gen)
     fwrite(prototypes, sizeof(ItemPrototype), n, fp);
     
     fclose(fp);
+    
+    free(hashEntries);
 }
 
 void item_gen_scan_and_generate(ItemGen* gen)
@@ -321,7 +322,10 @@ void item_gen_add(ItemGen* gen, ItemPrototype* proto, const char* scriptPath, ui
     array_push_back(B(gen), &gen->itemPrototypes, proto);
     
     if (changed)
+    {
+        ent->timestamp = timestamp;
         array_push_back(B(gen), &gen->changes, ent);
+    }
 }
 
 #undef INVALID

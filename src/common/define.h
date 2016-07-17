@@ -66,4 +66,7 @@ typedef _Bool bool;
 
 #define sizeof_field(type, name) sizeof(((type*)0)->name)
 
+#define EQP_ITEM_SHM_PATH1  "shm/item_prototypes"
+#define EQP_ITEM_SHM_PATH2  "shm/item_prototypes2"
+
 #endif//EQP_DEFINE_H

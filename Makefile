@@ -168,10 +168,10 @@ DIRMASTER= src/master/
 BMASTER= build/$(BUILDTYPE)/master/
 _OMASTER= master_main.o \
  eqp_master.o master_ipc.o child_process.o console_interface.o client_manager.o client.o \
- zone_cluster.o zone_cluster_manager.o
+ zone_cluster.o zone_cluster_manager.o item_shm_loader.o
 _HMASTER= \
  eqp_master.h master_ipc.h child_process.h console_interface.h client_manager.h client.h \
- zone_cluster.h zone_cluster_manager.h
+ zone_cluster.h zone_cluster_manager.h item_shm_loader.h
 OMASTER= $(patsubst %,$(BMASTER)%,$(_OMASTER))
 HMASTER= $(patsubst %,$(DIRMASTER)%,$(_HMASTER))
 

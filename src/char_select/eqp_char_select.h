@@ -20,6 +20,8 @@
 #include "char_select_client.h"
 #include "server_structs.h"
 #include "item_share_mem.h"
+#include "zone_id.h"
+#include "char_create_lua.h"
 
 #define EQP_CHAR_SELECT_PORT            9000
 #define EQP_CHAR_SELECT_SERVER_UP       0
@@ -28,30 +30,31 @@
 #define EQP_CHAR_SELECT_UNCLAIMED_AUTHS_TIMEOUT TIMER_SECONDS(30)
 #define EQP_CHAR_SELECT_ZONE_ATTEMPT_TIMEOUT    TIMER_SECONDS(10)
 
-#define EQP_CHAR_SELECT_SCRIPT_CHAR_CREATE  "scripts/char_select/char_create.lua"
+#define EQP_CHAR_SELECT_SCRIPT_CHAR_CREATE  "char_select/char_create.lua"
 #define EQP_CHAR_SELECT_LOGIN_CONFIG        "scripts/char_select/login_config_loader.lua"
 
 STRUCT_DEFINE(CharSelect)
 {
     // Core MUST be the first member of this struct
-    Core            core;
+    Core                core;
     
-    int             serverStatus;
-    int             serverPlayerCount;
-    TimerPool       timerPool;
-    lua_State*      L;
-    UdpSocket*      socket;
-    Array*          loginServerConnections;
+    int                 serverStatus;
+    int                 serverPlayerCount;
+    TimerPool           timerPool;
+    lua_State*          L;
+    UdpSocket*          socket;
+    Array*              loginServerConnections;
     
-    IpcSet          ipcSet;
+    IpcSet              ipcSet;
     
-    ItemShareMem    items;
+    ZoneShortNameMap*   zoneIdsByShortName;
+    ItemShareMem        items;
     
-    Timer           timerUnclaimedAuths;
-    Array*          unclaimedAuths;
-    Array*          unauthedClients;
+    Timer               timerUnclaimedAuths;
+    Array*              unclaimedAuths;
+    Array*              unauthedClients;
     
-    Array*          clientsAttemptingToZoneIn;
+    Array*              clientsAttemptingToZoneIn;
 };
 
 void        char_select_init(CharSelect* charSelect, const char* ipcPath, const char* masterIpcPath, const char* logWriterIpcPath);
@@ -69,8 +72,8 @@ void        char_select_remove_client_from_unauthed_list(CharSelect* charSelect,
 
 void        char_select_send_client_zone_in_request(CharSelect* charSelect, CharSelectClient* client, ProtocolHandler* handler, const char* charName);
 
-void        char_select_get_starting_zone_and_loc(CharSelect* charSelect, uint16_t race, uint8_t class, uint8_t gender, bool isTrilogy,
-                int* zoneId, float* x, float* y, float* z);
+int         char_select_get_zone_id(CharSelect* charSelect, const char* shortName);
+void        char_select_char_create_lua_event(CharSelect* charSelect, CharCreateLua* ccl);
 
 int         char_select_is_ip_address_local(uint32_t ip);
 

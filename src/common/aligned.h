@@ -51,6 +51,7 @@ uint32_t    aligned_read_uint32(Aligned* a);
 #define     aligned_read_int(a) aligned_read_int32(a)
 uint64_t    aligned_read_uint64(Aligned* a);
 #define     aligned_read_int64(a) ((int64_t)aligned_read_uint64((a)))
+float       aligned_read_float(Aligned* a);
 void        aligned_read_buffer(Aligned* a, void* dst, uint32_t len);
 
 uint8_t     aligned_peek_uint8(Aligned* a);

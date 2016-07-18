@@ -13,7 +13,6 @@ void char_select_init(CharSelect* charSelect, const char* ipcPath, const char* m
     core_init(C(charSelect), EQP_SOURCE_ID_CHAR_SELECT, ipc_set_log_writer_ipc(&charSelect->ipcSet));
     
     charSelect->L = lua_sys_open(B(charSelect));
-    lua_sys_run_file(B(charSelect), charSelect->L, EQP_CHAR_SELECT_SCRIPT_CHAR_CREATE, 0);
     
     charSelect->socket = udp_socket_create(B(charSelect));
     udp_socket_open(charSelect->socket, EQP_CHAR_SELECT_PORT);
@@ -28,6 +27,8 @@ void char_select_init(CharSelect* charSelect, const char* ipcPath, const char* m
     charSelect->unclaimedAuths              = array_create_type(B(charSelect), CharSelectAuth);
     charSelect->unauthedClients             = array_create_type(B(charSelect), CharSelectClient*);
     charSelect->clientsAttemptingToZoneIn   = array_create_type(B(charSelect), CharSelectClientAttemptingZoneIn);
+    
+    charSelect->zoneIdsByShortName          = zone_short_name_map_create(B(charSelect));
 }
 
 void char_select_deinit(CharSelect* charSelect)
@@ -79,6 +80,12 @@ void char_select_deinit(CharSelect* charSelect)
     {
         array_destroy(charSelect->clientsAttemptingToZoneIn);
         charSelect->clientsAttemptingToZoneIn = NULL;
+    }
+    
+    if (charSelect->zoneIdsByShortName)
+    {
+        zone_short_name_map_destroy(charSelect->zoneIdsByShortName);
+        charSelect->zoneIdsByShortName = NULL;
     }
 }
 
@@ -467,39 +474,28 @@ void char_select_send_client_zone_in_request(CharSelect* charSelect, CharSelectC
         char_select_client_zone_in_timeout_callback, client, true);
 }
 
-void char_select_get_starting_zone_and_loc(CharSelect* charSelect, uint16_t race, uint8_t class, uint8_t gender, bool isTrilogy,
-        int* zoneId, float* x, float* y, float* z)
+int char_select_get_zone_id(CharSelect* charSelect, const char* shortName)
+{
+    return zone_id_by_short_name(charSelect->zoneIdsByShortName, shortName, strlen(shortName));
+}
+
+void char_select_char_create_lua_event(CharSelect* charSelect, CharCreateLua* ccl)
 {
     lua_State* L = charSelect->L;
     
-    lua_getglobal(L, "char_select_get_starting_zone_and_loc");
+    luaL_dostring(L,
+        "return function(ptr)                                                   \n"
+        "   require 'char_select/CharCreate'                                    \n"
+        "   local ffi      = require 'ffi'                                      \n"
+        "   local script   = loadfile('" EQP_CHAR_SELECT_SCRIPT_CHAR_CREATE "') \n"
+        "   if script then                                                      \n"
+        "       local func = script()                                           \n"
+        "       func(ffi.cast('CharCreate*', ptr))                              \n"
+        "   end                                                                 \n"
+        "end");
     
-    if (!lua_isfunction(L, -1))
-        goto err_default;
-    
-    lua_pushinteger(L, race);
-    lua_pushinteger(L, class);
-    lua_pushinteger(L, gender);
-    lua_pushboolean(L, isTrilogy);
-    
-    if (lua_sys_call_no_throw(B(charSelect), L, 4, 4))
-    {
-        *zoneId = lua_tointeger(L, -4);
-        *x      = lua_tonumber(L, -3);
-        *y      = lua_tonumber(L, -2);
-        *z      = lua_tonumber(L, -1);
-        
-        lua_clear(L);
-        return;
-    }
-    
-err_default:
-    lua_clear(L);
-    
-    *zoneId = 1;
-    *x      = 0.0f;
-    *y      = 0.0f;
-    *z      = 0.0f;
+    lua_pushlightuserdata(L, ccl);
+    lua_sys_call_no_throw(B(charSelect), L, 1, 0);
 }
 
 #define make_ip(a, b, c, d) (((a << 0) & 0xff) | ((b << 8) & 0xff00) | ((c << 16) & 0xff0000) | ((d << 24) & 0xff000000))

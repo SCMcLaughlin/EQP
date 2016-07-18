@@ -25,10 +25,11 @@ STRUCT_DEFINE(Transaction)
 #define transaction_set_lua_callback(trans, index)  ((trans)->luaCallback = (index))
 #define transaction_set_query_callback(trans, cb)   ((trans)->queryCallback = (cb))
 
-#define transaction_db(trans)               ((trans)->db)
-#define transaction_userdata(trans)         ((trans)->userdata)
-#define transaction_callback(trans)         ((trans)->callback)
-#define transaction_lua_callback(trans)     ((trans)->luaCallback)
-#define transaction_query_callback(trans)   ((trans)->queryCallback)
+#define transaction_db(trans)                   ((trans)->db)
+#define transaction_userdata(trans)             ((trans)->userdata)
+#define transaction_userdata_type(trans, type)  ((type*)transaction_userdata(trans))
+#define transaction_callback(trans)             ((trans)->callback)
+#define transaction_lua_callback(trans)         ((trans)->luaCallback)
+#define transaction_query_callback(trans)       ((trans)->queryCallback)
 
 #endif//EQP_TRANSACTION_H

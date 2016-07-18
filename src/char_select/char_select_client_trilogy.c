@@ -265,10 +265,10 @@ void cs_client_trilogy_on_character_name_checked(CharSelectClient* client, int t
     cs_trilogy_schedule_packet(handler, packet);
 }
 
-static int cs_client_trilogy_char_creation_params_are_valid(CSTrilogy_CharCreateParams* params)
+static int cs_client_trilogy_char_creation_params_are_valid(CharCreateLua* ccl)
 {
-    uint32_t class  = params->class - 1;
-    uint32_t race   = params->race - 1;
+    uint32_t class  = char_create_lua_class(ccl) - 1;
+    uint32_t race   = char_create_lua_race(ccl) - 1;
     uint32_t totalExpected;
     uint32_t total;
     uint32_t maxSpendableOneStat;
@@ -378,7 +378,7 @@ static int cs_client_trilogy_char_creation_params_are_valid(CSTrilogy_CharCreate
     
     for (i = 0; i < 7; i++)
     {
-        uint32_t statValue  = params->stats[i];
+        uint32_t statValue  = ccl->stats[i];
         uint32_t statTotal  = baseStatsByRace[race][i] + statBonusesByClass[class][i];
 
         // Does this stat exceed the maximum possible value for this race and class?
@@ -407,128 +407,328 @@ static void cs_client_trilogy_send_char_create_failure(CharSelectClient* client)
     cs_trilogy_schedule_packet(handler, packet);
 }
 
-static void cs_client_trilogy_create_character_callback(Query* query)
+static void cs_client_trilogy_transaction(Transaction* trans)
 {
-    CharSelectClient* client = query_userdata_type(query, CharSelectClient);
+    CharCreateLua* ccl      = transaction_userdata_type(trans, CharCreateLua);
+    int64_t charId          = char_create_lua_character_id(ccl);
+    CharCreateItem* items   = array_data_type(ccl->startingItems, CharCreateItem);
+    uint32_t n              = array_count(ccl->startingItems);
+    Database* db            = transaction_db(trans);
+    Query query;
+    uint32_t i;
     
-    if (query_affected_rows(query) == 0)
-        cs_client_trilogy_send_char_create_failure(client);
-    else
-        cs_client_trilogy_on_account_id(client, char_select_client_account_id(client));
+    // Bind points
+    
+    query_init(&query);
+    db_prepare_literal(db, &query, "INSERT INTO bind_point "
+        "(character_id, bind_id, zone_id, x, y, z, heading) "
+        "VALUES "
+        "(?, ?, ?, ?, ?, ?, ?)", NULL);
+    
+    query_bind_int64(&query, 1, charId);
+    
+    for (i = 0; i < 5; i++)
+    {
+        CharCreatePoint* b = &ccl->bindPoints[i];
+        
+        if (b->zoneId == 0)
+            continue;
+        
+        query_bind_int(&query, 2, i);
+        query_bind_int(&query, 3, b->zoneId);
+        query_bind_double(&query, 4, b->x);
+        query_bind_double(&query, 5, b->y);
+        query_bind_double(&query, 6, b->z);
+        query_bind_double(&query, 7, b->heading);
+        
+        query_execute_synchronus(&query);
+    }
+    
+    query_deinit(&query);
+    
+    // Starting inventory
+    
+    query_init(&query);
+    db_prepare_literal(db, &query, "INSERT INTO inventory "
+        "(character_id, slot_id, stack_amount, charges, item_id) "
+        "VALUES "
+        "(?, ?, ?, ?, ?)", NULL);
+    
+    query_bind_int64(&query, 1, charId);
+    
+    for (i = 0; i < n; i++)
+    {
+        CharCreateItem* item = &items[i];
+        
+        query_bind_int(&query, 2, item->slotId);
+        query_bind_int(&query, 3, item->stackAmount);
+        query_bind_int(&query, 4, item->charges);
+        query_bind_int(&query, 5, item->itemId);
+        
+        query_execute_synchronus(&query);
+    }
+    
+    query_deinit(&query);
+}
+
+static void cs_client_trilogy_transaction_finished(Query* query)
+{
+    CharCreateLua* ccl          = query_userdata_type(query, CharCreateLua);
+    CharSelectClient* client    = char_create_lua_client(ccl);
+    
+    cs_client_trilogy_on_account_id(client, char_select_client_account_id(client));
     
     char_select_client_drop(client);
+    char_create_lua_destroy(ccl);
+}
+
+static void cs_client_trilogy_create_character_callback(Query* query)
+{
+    CharCreateLua* ccl          = query_userdata_type(query, CharCreateLua);
+    CharSelectClient* client    = char_create_lua_client(ccl);
+    
+    if (query_affected_rows(query) == 0)
+    {
+        cs_client_trilogy_send_char_create_failure(client);
+    }
+    else if (char_create_lua_has_bind_points_or_items(ccl))
+    {
+        Database* db = query_get_db(query);
+        char_create_lua_set_character_id(ccl, query_last_insert_id(query));
+        db_schedule_transaction(db, ccl, cs_client_trilogy_transaction, cs_client_trilogy_transaction_finished);
+        return;
+    }
+    else
+    {
+        cs_client_trilogy_on_account_id(client, char_select_client_account_id(client));
+    }
+    
+    char_select_client_drop(client);
+    char_create_lua_destroy(ccl);
 }
 
 static void cs_trilogy_handle_op_create_character(CharSelectClient* client, ProtocolHandler* handler, Aligned* a)
 {
-    CSTrilogy_CharCreateParams params;
+    CharCreateLua* ccl;
+    CharSelect* charSelect;
+    CharCreatePoint p;
+    CharCreatePoint bind[5];
     Database* db;
     Query query;
+    uint32_t i;
     
-    if (!char_select_client_is_authed(client) || !char_select_client_is_name_approved(client) || aligned_remaining(a) < sizeof(CSTrilogy_CreateCharacter))
+    if (!char_select_client_is_authed(client) || !char_select_client_is_name_approved(client) || aligned_remaining(a) < sizeof(Trilogy_PlayerProfile_CharCreation))
         return;
     
-    params.accountId = char_select_client_account_id(client);
+    charSelect  = (CharSelect*)protocol_handler_basic(handler);
+    ccl         = char_create_lua_create(charSelect, client, true);
+    
+    char_create_lua_set_account_id(ccl, char_select_client_account_id(client));
     
     // name
-    snprintf(params.name, sizeof(params.name), "%s", (const char*)aligned_current(a));
-    aligned_advance(a, sizeof_field(CSTrilogy_CreateCharacter, name) + sizeof_field(CSTrilogy_CreateCharacter, surname));
+    char_create_lua_set_name(ccl, (const char*)aligned_current(a));
+    aligned_advance(a, sizeof_field(Trilogy_PlayerProfile_CharCreation, name) + sizeof_field(Trilogy_PlayerProfile_CharCreation, surname));
     // gender
-    params.gender       = aligned_read_uint16(a);
+    char_create_lua_set_gender(ccl, aligned_read_uint16(a));
     // race
-    params.race         = aligned_read_uint16(a);
+    char_create_lua_set_race(ccl, aligned_read_uint16(a));
     // class
-    params.class        = aligned_read_uint16(a);
+    char_create_lua_set_class(ccl, aligned_read_uint16(a));
     // level, experience, trainingPoints, currentMana
-    aligned_advance(a, sizeof(uint32_t) * 2 + sizeof(uint16_t) * 2);
+    aligned_advance(a, 
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, level)             +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, experience)        +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, trainingPoints)    +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, currentMana));
     // face
-    params.face         = aligned_read_uint8(a);
+    char_create_lua_set_face(ccl, aligned_read_uint8(a));
     // unknownA[47]
-    aligned_advance(a, sizeof(uint8_t) * 47);
+    aligned_advance(a, sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownA));
     // currentHp
-    params.currentHp    = aligned_read_int16(a);
+    char_create_lua_set_current_hp(ccl, aligned_read_int16(a));
     // unknownB
-    aligned_advance(a, sizeof(uint8_t));
+    aligned_advance(a, sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownB));
     // STR
-    params.STR          = aligned_read_uint8(a);
+    char_create_lua_set_str(ccl, aligned_read_uint8(a));
     // STA
-    params.STA          = aligned_read_uint8(a);
+    char_create_lua_set_sta(ccl, aligned_read_uint8(a));
     // CHA
-    params.CHA          = aligned_read_uint8(a);
+    char_create_lua_set_cha(ccl, aligned_read_uint8(a));
     // DEX
-    params.DEX          = aligned_read_uint8(a);
+    char_create_lua_set_dex(ccl, aligned_read_uint8(a));
     // INT
-    params.INT          = aligned_read_uint8(a);
+    char_create_lua_set_int(ccl, aligned_read_uint8(a));
     // AGI
-    params.AGI          = aligned_read_uint8(a);
+    char_create_lua_set_agi(ccl, aligned_read_uint8(a));
     // WIS
-    params.WIS          = aligned_read_uint8(a);
-    // stuff we don't care about
-    aligned_advance(a, sizeof_field(CSTrilogy_CreateCharacter, stuffCharSelectDoesntCareAboutA));
-    // deity
-    params.deity        = aligned_read_uint16(a);
+    char_create_lua_set_wis(ccl, aligned_read_uint8(a));
+    // languages, unknownC, mainInventory, buffs, baggedItems, spellbook, memmedSpellIds, unknownD
+    aligned_advance(a,
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, languages)                     +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownC)                      +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, mainInventoryItemIds)          +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, mainInventoryInternalUnused)   +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, mainInventoryItemProperties)   +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, buffs)                         +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, baggedItemIds)                 +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, baggedItemProperties)          +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, spellbook)                     +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, memmedSpellIds)                +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownD));
+    // y
+    p.y         = aligned_read_float(a);
+    // x
+    p.x         = aligned_read_float(a);
+    // z
+    p.z         = aligned_read_float(a);
+    // heading
+    p.heading   = aligned_read_float(a);
+    // zoneShortName
+    p.zoneId    = char_select_get_zone_id(charSelect, (const char*)aligned_current(a));
+    aligned_advance(a, sizeof_field(Trilogy_PlayerProfile_CharCreation, zoneShortName));
     
-    char_select_get_starting_zone_and_loc((CharSelect*)protocol_handler_basic(handler), params.race, params.class, params.gender, true,
-        &params.zoneId, &params.x, &params.y, &params.z);
+    char_create_lua_set_starting_zone(ccl, p.zoneId, p.x, p.y, p.z, p.heading);
+    
+    // lots of stuff...
+    aligned_advance(a,
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownEDefault100)    +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, coins)                 +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, coinsBank)             +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, coinsCursor)           +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, skills)                +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownF)              +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, autoSplit)             +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, pvpEnabled)            +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownG)              +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, isGM)                  +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownH)              +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, disciplinesReady)      +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownI)              +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, hunger)                +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, thirst)                +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownJ));
+        
+    // bindZoneShortName[5]
+    for (i = 0; i < 5; i++)
+    {
+        bind[i].zoneId = char_select_get_zone_id(charSelect, (const char*)aligned_current(a));
+        aligned_advance(a, sizeof_field(Trilogy_PlayerProfile_CharCreation, bindZoneShortName[0]));
+    }
+    
+    // bankInventoryItemProperties, bankedBaggedItemProperties, unknownK
+    aligned_advance(a,
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, bankInventoryItemProperties)   +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, bankBaggedItemProperties)      +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownK));
+    
+    // bindLocY[5]
+    for (i = 0; i < 5; i++)
+    {
+        bind[i].y = aligned_read_float(a);
+    }
+    
+    // bindLocX[5]
+    for (i = 0; i < 5; i++)
+    {
+        bind[i].x = aligned_read_float(a);
+    }
+    
+    // bindLocZ[5]
+    for (i = 0; i < 5; i++)
+    {
+        bind[i].z = aligned_read_float(a);
+    }
+    
+    // bindLocHeading[5]
+    for (i = 0; i < 5; i++)
+    {
+        bind[i].heading = aligned_read_float(a);
+    }
+    
+    for (i = 0; i < 5; i++)
+    {
+        CharCreatePoint* b = &bind[i];
+        char_create_lua_set_bind_point(ccl, b->zoneId, b->x, b->y, b->z, b->heading, i);
+    }
+    
+    // more stuff
+    aligned_advance(a,
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownL)                      +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, bankInventoryInternalUnused)   +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownM)                      +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unixTimeA)                     +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownN)                      +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownODefault1)              +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownP)                      +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, bankInventoryItemIds)          +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, bankBaggedItemIds));
+    
+    // deity
+    char_create_lua_set_deity(ccl, aligned_read_uint16(a));
     
     // Verify that the given character creation parameters are valid
-    if (!cs_client_trilogy_char_creation_params_are_valid(&params))
+    if (!cs_client_trilogy_char_creation_params_are_valid(ccl))
     {
+        char_create_lua_destroy(ccl);
         cs_client_trilogy_send_char_create_failure(client);
         return;
     }
     
+    char_select_char_create_lua_event(charSelect, ccl);
+
     char_select_client_grab(client);
     
-    db = core_db(C(protocol_handler_basic(handler)));
+    db = core_db(C(charSelect));
     
     query_init(&query);
-    query_set_userdata(&query, client);
+    query_set_userdata(&query, ccl);
     db_prepare_literal(db, &query,
         "INSERT OR IGNORE INTO character " // Why OR IGNORE? Just in case two people try to make a character with the same name at the same time...
-            "(name_id_pair, name, gender, race, class, face, current_hp, base_str, base_sta, base_cha, base_dex, base_int, base_agi, base_wis, deity, zone_id, x, y, z) "
+            "(name_id_pair, name, gender, race, class, face, current_hp, base_str, base_sta, base_cha, base_dex, base_int, base_agi, base_wis, deity, zone_id, x, y, z, heading) "
         "VALUES "
-            "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
+            "(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
         cs_client_trilogy_create_character_callback);
     
     // accountId
-    query_bind_int64(&query, 1, (int64_t)params.accountId);
+    query_bind_int64(&query, 1, char_create_lua_account_id(ccl));
     // name
-    query_bind_string(&query, 2, params.name, -1);
+    query_bind_string(&query, 2, char_create_lua_name(ccl), QUERY_CALC_LENGTH);
     // gender
-    query_bind_int(&query, 3, params.gender);
+    query_bind_int(&query, 3, char_create_lua_gender(ccl));
     // race
-    query_bind_int(&query, 4, params.race);
+    query_bind_int(&query, 4, char_create_lua_race(ccl));
     // class
-    query_bind_int(&query, 5, params.class);
+    query_bind_int(&query, 5, char_create_lua_class(ccl));
     // face
-    query_bind_int(&query, 6, params.face);
+    query_bind_int(&query, 6, char_create_lua_face(ccl));
     // currentHp
-    query_bind_int(&query, 7, params.currentHp);
+    query_bind_int(&query, 7, char_create_lua_current_hp(ccl));
     // STR
-    query_bind_int(&query, 8, params.STR);
+    query_bind_int(&query, 8, char_create_lua_str(ccl));
     // STA
-    query_bind_int(&query, 9, params.STA);
+    query_bind_int(&query, 9, char_create_lua_sta(ccl));
     // CHA
-    query_bind_int(&query, 10, params.CHA);
+    query_bind_int(&query, 10, char_create_lua_cha(ccl));
     // DEX
-    query_bind_int(&query, 11, params.DEX);
+    query_bind_int(&query, 11, char_create_lua_dex(ccl));
     // INT
-    query_bind_int(&query, 12, params.INT);
+    query_bind_int(&query, 12, char_create_lua_int(ccl));
     // AGI
-    query_bind_int(&query, 13, params.AGI);
+    query_bind_int(&query, 13, char_create_lua_agi(ccl));
     // WIS
-    query_bind_int(&query, 14, params.WIS);
+    query_bind_int(&query, 14, char_create_lua_wis(ccl));
     // deity
-    query_bind_int(&query, 15, params.deity);
+    query_bind_int(&query, 15, char_create_lua_deity(ccl));
     // zoneId
-    query_bind_int(&query, 16, params.zoneId);
+    query_bind_int(&query, 16, char_create_lua_zone_id(ccl));
     // x
-    query_bind_double(&query, 17, params.x);
+    query_bind_double(&query, 17, char_create_lua_zone_x(ccl));
     // y
-    query_bind_double(&query, 18, params.y);
+    query_bind_double(&query, 18, char_create_lua_zone_y(ccl));
     // z
-    query_bind_double(&query, 19, params.z);
+    query_bind_double(&query, 19, char_create_lua_zone_z(ccl));
+    // heading
+    query_bind_double(&query, 20, char_create_lua_zone_heading(ccl));
     
     db_schedule(db, &query);
 }

@@ -3,6 +3,8 @@
 #define EQP_CHAR_SELECT_STRUCTS_TRILOGY_H
 
 #include "define.h"
+#include "player_profile.h"
+#include "char_create_lua.h"
 
 #define EQP_CHAR_SELECT_MAX_GUILDS          512
 #define EQP_CHAR_SELECT_MAX_NAME_LENGTH     30
@@ -50,41 +52,6 @@ STRUCT_DEFINE(CSTrilogy_NameApproval)
     char        name[32];
     uint32_t    race;
     uint32_t    class;
-};
-
-STRUCT_DEFINE(CSTrilogy_CreateCharacter)
-{
-    char        name[EQP_CHAR_SELECT_MAX_NAME_LENGTH];
-    char        surname[EQP_CHAR_SELECT_MAX_SURNAME_LENGTH];
-    uint16_t    gender;
-    uint16_t    race;
-    uint16_t    class;
-    uint32_t    level;
-    uint32_t    experience;
-    uint16_t    trainingPoints;
-    int16_t     currentMana;
-    uint8_t     face;
-    uint8_t     unknownA[47];
-    int16_t     currentHp;
-    uint8_t     unknownB;
-    union
-    {
-        struct
-        {
-            uint8_t STR;
-            uint8_t STA;
-            uint8_t CHA;
-            uint8_t DEX;
-            uint8_t INT;
-            uint8_t AGI;
-            uint8_t WIS;
-        };
-        
-        uint8_t stats[7];
-    };
-    uint8_t     stuffCharSelectDoesntCareAboutA[4026];
-    uint16_t    deity;
-    uint8_t     stuffCharSelectDoesntCareAboutB[3946];
 };
 
 STRUCT_DEFINE(CSTrilogy_WearChange)

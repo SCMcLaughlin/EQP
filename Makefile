@@ -27,7 +27,7 @@ BCOMMON= build/$(BUILDTYPE)/common/
 _OCOMMON= \
  eqp_basic.o eqp_core.o eqp_alloc.o bit.o exception.o eqp_thread.o file.o \
  random.o zone_id.o lua_sys.o aligned.o
-_HCOMMON= define.h netcode.h \
+_HCOMMON= define.h netcode.h player_profile.h \
  eqp_basic.h eqp_core.h eqp_alloc.h bit.h exception.h eqp_thread.h file.h \
  random.h zone_id.h lua_sys.h aligned.h
 OCOMMON= $(patsubst %,$(BCOMMON)%,$(_OCOMMON))
@@ -201,9 +201,11 @@ BINLOGIN= $(DIRBIN)eqp-login
 DIRCHARSELECT= src/char_select/
 BCHARSELECT= build/$(BUILDTYPE)/char_select/
 _OCHARSELECT= char_select_main.o \
- eqp_char_select.o char_select_client.o char_select_client_trilogy.o tcp_client.o
+ eqp_char_select.o char_select_client.o char_select_client_trilogy.o tcp_client.o \
+ char_create_lua.o
 _HCHARSELECT= \
- eqp_char_select.h char_select_client.h char_select_client_trilogy.h tcp_client.h
+ eqp_char_select.h char_select_client.h char_select_client_trilogy.h tcp_client.h \
+ char_create_lua.h
 OCHARSELECT= $(patsubst %,$(BCHARSELECT)%,$(_OCHARSELECT))
 HCHARSELECT= $(patsubst %,$(DIRCHARSELECT)%,$(_HCHARSELECT))
 
@@ -237,7 +239,7 @@ _OZC_MOB= \
  client_packet_trilogy_input.o client_packet_trilogy_output.o npc_prototype.o \
  npc.o
 _HZC_MOB= \
- mob.h client.h client_packet_standard.h inventory.h skills.h spellbook.h \
+ mob.h client.h client_packet_standard.h inventory.h          spellbook.h \
  client_packet_trilogy_input.h client_packet_trilogy_output.h npc_prototype.h \
  npc.h
 OZC_MOB= $(patsubst %,$(BZC_MOB)%,$(_OZC_MOB))

@@ -33,37 +33,6 @@
 #define TrilogyOp_TimeOfDay         0x20f2
 #define TrilogyOp_ZoneAddress       0x8004
 
-STRUCT_DEFINE(CSTrilogy_CharCreateParams)
-{
-    uint32_t    accountId;
-    char        name[32];
-    uint8_t     gender;
-    uint8_t     race;
-    uint8_t     class;
-    uint8_t     face;
-    uint8_t     currentHp;
-    union
-    {
-        struct
-        {
-            uint8_t     STR;
-            uint8_t     STA;
-            uint8_t     CHA;
-            uint8_t     DEX;
-            uint8_t     INT;
-            uint8_t     AGI;
-            uint8_t     WIS;
-        };
-        
-        uint8_t stats[7];
-    };
-    uint8_t     deity;
-    int         zoneId;
-    float       x;
-    float       y;
-    float       z;
-};
-
 void    cs_client_trilogy_on_auth(CharSelectClient* client);
 void    cs_client_trilogy_on_account_id(CharSelectClient* client, uint32_t accountId);
 void    cs_client_trilogy_on_character_name_checked(CharSelectClient* client, int taken);

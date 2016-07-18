@@ -144,6 +144,12 @@ uint64_t aligned_read_uint64(Aligned* a)
     return ret;
 }
 
+float aligned_read_float(Aligned* a)
+{
+    uint32_t u = aligned_read_uint32(a);
+    return *(float*)&u;
+}
+
 void aligned_read_buffer(Aligned* a, void* ptr, uint32_t len)
 {
     byte* dst   = (byte*)ptr;

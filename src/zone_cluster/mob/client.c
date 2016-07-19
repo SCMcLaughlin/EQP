@@ -198,22 +198,28 @@ static void client_load_stats_callback(Query* query)
 static void client_load_inventory_callback(Query* query)
 {
     Client* client  = query_userdata_type(query, Client);
-    Basic* basic    = B(client_zone_cluster(client));
+    ZC* zc          = client_zone_cluster(client);
     Inventory* inv  = &client->inventory;
     InventorySlot slot;
     
     while (query_select(query))
     {
-        slot.slotId         = query_get_int(query, 1);
-        slot.augSlotId      = query_get_int(query, 2);
-        slot.stackAmount    = query_get_int(query, 3);
-        slot.charges        = query_get_int(query, 4);
-        slot.isBag          = query_get_int(query, 5);
-        slot.itemId         = query_get_int(query, 6);
+        uint32_t itemId         = query_get_int(query, 5);
+        ItemPrototype* proto    = zc_item_by_id(zc, itemId);
+        uint16_t stackAmount;
+        uint16_t charges;
         
-        //fixme: create Item object with pointer from shared memory region...
+        if (!proto)
+            continue;
         
-        inventory_add_from_database(basic, inv, &slot);
+        slot.slotId     = query_get_int(query, 1);
+        slot.augSlotId  = query_get_int(query, 2);
+        stackAmount     = query_get_int(query, 3);
+        charges         = query_get_int(query, 4);
+        slot.itemId     = itemId;
+        slot.item       = item_create(zc, proto, charges, stackAmount);
+        
+        inventory_add_from_database(B(zc), inv, &slot);
     }
     
     client->loaded.inventory = true;
@@ -334,7 +340,7 @@ Client* client_create(ZC* zc, Zone* zone, Server_ClientZoning* zoning)
     query_init(&query);
     query_set_userdata(&query, client);
     db_prepare_literal(db, &query, 
-        "SELECT slot_id, aug_slot_id, stack_amount, charges, is_bag, item_id FROM inventory "
+        "SELECT slot_id, aug_slot_id, stack_amount, charges, item_id FROM inventory "
         "WHERE character_id = ? "
         "ORDER BY slot_id ASC", // Putting lower slots first will be a decent micro-optimization in the average case
         client_load_inventory_callback);

@@ -24,6 +24,9 @@ void zc_init(ZC* zc, const char* ipcPath, const char* masterIpcPath, const char*
     zc->socket = udp_socket_create(B(zc));
     udp_socket_open(zc->socket, strtol(port, NULL, 10));
     
+    // Etc
+    item_share_mem_init(&zc->items);
+    
     // Always-running timers
     timer_init(&zc->timerClientKeepAlive, &zc->timerPool, EQP_ZC_CLIENT_KEEP_ALIVE_DELAY_MS, zc_client_keep_alive_callback, zc, true);
 }
@@ -32,6 +35,8 @@ void zc_deinit(ZC* zc)
 {
     core_deinit(C(zc));
     ipc_set_deinit(&zc->ipcSet);
+    
+    item_share_mem_close(&zc->items);
     
     if (zc->L)
     {
@@ -329,6 +334,18 @@ void zc_remove_connected_client(ZC* zc, Client* client, int isLinkdead)
             break;
         }
     }
+}
+
+void zc_items_open(ZC* zc, IpcPacket* packet)
+{
+    Server_ItemSharedMemoryOpen* open;
+
+    if (ipc_packet_length(packet) < (sizeof(Server_ItemSharedMemoryOpen) + 1))
+        return;
+    
+    open = ipc_packet_data_type(packet, Server_ItemSharedMemoryOpen);
+    
+    item_share_mem_open(B(zc), zc_lua(zc), &zc->items, open->path, open->length);
 }
 
 void zc_zone_log_format(ZC* zc, Zone* zone, LogType type, const char* fmt, ...)

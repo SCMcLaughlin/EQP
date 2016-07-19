@@ -229,7 +229,7 @@ void client_trilogy_send_player_profile(Client* client)
         aligned_advance(w, sizeof(Trilogy_PPItem) * (slot->slotId - 1)); // No charm slot
         
         aligned_advance(w, sizeof(uint16_t));
-        aligned_write_uint8(w, slot->charges);
+        aligned_write_uint8(w, item_get_charges(slot->item));
         
         aligned_reset_to(w, reset);
     }
@@ -282,7 +282,7 @@ void client_trilogy_send_player_profile(Client* client)
         aligned_advance(w, sizeof(Trilogy_PPItem) * (slot->slotId - InvSlot_BagsSlotsIncludingCursorBegin));
         
         aligned_advance(w, sizeof(uint16_t));
-        aligned_write_uint8(w, slot->charges);
+        aligned_write_uint8(w, item_get_charges(slot->item));
         
         aligned_reset_to(w, reset);
     }
@@ -421,7 +421,7 @@ void client_trilogy_send_player_profile(Client* client)
         aligned_advance(w, sizeof(Trilogy_PPItem) * (slot->slotId - InvSlot_BankBegin));
         
         aligned_advance(w, sizeof(uint16_t));
-        aligned_write_uint8(w, slot->charges);
+        aligned_write_uint8(w, item_get_charges(slot->item));
 
         aligned_reset_to(w, reset);
     }
@@ -448,7 +448,7 @@ void client_trilogy_send_player_profile(Client* client)
         aligned_advance(w, sizeof(Trilogy_PPItem) * (slot->slotId - InvSlot_BankBagSlotsBegin));
         
         aligned_advance(w, sizeof(uint16_t));
-        aligned_write_uint8(w, slot->charges);
+        aligned_write_uint8(w, item_get_charges(slot->item));
         
         aligned_reset_to(w, reset);
     }
@@ -1058,4 +1058,166 @@ PacketTrilogy* client_trilogy_make_op_custom_message_format(ZC* zc, uint32_t cha
         len = sizeof(buf) - 1;
     
     return client_trilogy_make_op_custom_message(zc, chatChannel, buf, len);
+}
+
+PacketTrilogy* client_trilogy_make_item_packet(ZC* zc, uint16_t opcode, Item* item, uint16_t slotId)
+{
+    ItemPrototype* proto    = item_get_prototype(item);
+    PacketTrilogy* packet   = packet_trilogy_create(B(zc), opcode, sizeof(Trilogy_Item));
+    Aligned write;
+    Aligned* w = &write;
+    uint32_t i = 0;
+    
+    aligned_init(B(zc), w, packet_trilogy_data(packet), packet_trilogy_length(packet));
+    
+    // name
+    aligned_write_snprintf_full_advance(w, sizeof_field(Trilogy_Item, name), "%s", item_proto_get_name(proto));
+    
+    // The first character of the lore text controls certain item tags: '*' = lore, '&' = summoned, '#' = artifact, '~' = pending lore
+    if (item_proto_is_lore(proto))
+    {
+        aligned_write_byte(w, '*');
+        i = 1;
+    }
+    
+    // lore
+    aligned_write_snprintf_full_advance(w, sizeof_field(Trilogy_Item, lore) - i, "%s", item_proto_get_lore_text(proto));
+    // model
+    aligned_write_snprintf_full_advance(w, sizeof_field(Trilogy_Item, model), "IT%u", item_proto_get_model_id(proto));
+    
+    // typeFlag
+    switch (item_proto_get_item_type_id(proto))
+    {
+    default:
+        aligned_write_uint16(w, 0x3336);
+        break;
+    }
+    
+    // unknownA
+    aligned_write_zeroes(w, sizeof_field(Trilogy_Item, unknownA));
+    // weight
+    aligned_write_uint8(w, item_proto_get_weight(proto));
+    // isPermanent
+    aligned_write_uint8(w, item_proto_is_permanent(proto) ? 255 : 0);
+    // isDroppable
+    aligned_write_uint8(w, item_proto_is_droppable(proto));
+    // size
+    aligned_write_uint8(w, item_proto_get_size(proto));
+    // itemType
+    aligned_write_uint8(w, 0); //fixme
+    // itemId
+    aligned_write_uint16(w, item_proto_get_item_id(proto));
+    // icon
+    aligned_write_uint16(w, item_proto_get_icon_id(proto));
+    // currentSlot
+    aligned_write_uint16(w, slotId);
+    // slotsBitfield
+    aligned_write_uint32(w, item_proto_get_slot_bitfield(proto));
+    // cost
+    aligned_write_uint32(w, item_proto_get_cost(proto));
+    // unknownB
+    aligned_write_zeroes(w, sizeof_field(Trilogy_Item, unknownB));
+    // instanceId
+    aligned_write_uint32(w, 0);
+    // isDroppableRoleplayServer
+    aligned_write_uint8(w, item_proto_is_droppable(proto));
+    // unknownC
+    aligned_write_zeroes(w, sizeof_field(Trilogy_Item, unknownC));
+    
+    // Split for basic vs book (fixme: implement books)
+    
+    // Basic
+    
+    // STR
+    aligned_write_int8(w, item_proto_get_str(proto));
+    // STA
+    aligned_write_int8(w, item_proto_get_sta(proto));
+    // CHA
+    aligned_write_int8(w, item_proto_get_cha(proto));
+    // DEX
+    aligned_write_int8(w, item_proto_get_dex(proto));
+    // INT
+    aligned_write_int8(w, item_proto_get_int(proto));
+    // AGI
+    aligned_write_int8(w, item_proto_get_agi(proto));
+    // WIS
+    aligned_write_int8(w, item_proto_get_wis(proto));
+    // MR
+    aligned_write_int8(w, item_proto_get_sv_magic(proto));
+    // FR
+    aligned_write_int8(w, item_proto_get_sv_fire(proto));
+    // CR
+    aligned_write_int8(w, item_proto_get_sv_cold(proto));
+    // DR
+    aligned_write_int8(w, item_proto_get_sv_disease(proto));
+    // PR
+    aligned_write_int8(w, item_proto_get_sv_poison(proto));
+    // hp
+    aligned_write_int8(w, item_proto_get_hp(proto));
+    // mana
+    aligned_write_int8(w, item_proto_get_mana(proto));
+    // AC
+    aligned_write_int8(w, item_proto_get_ac(proto));
+    // isStackable/hasUnlimitedCharges
+    aligned_write_uint8(w, item_proto_is_stackable(proto) ? 1 : 0);
+    // isTestItem
+    aligned_write_uint8(w, 0);
+    // light
+    aligned_write_uint8(w, item_proto_get_light(proto));
+    // delay
+    aligned_write_uint8(w, item_proto_get_delay(proto));
+    // damage
+    aligned_write_uint8(w, item_proto_get_damage(proto));
+    // clickyType
+    aligned_write_uint8(w, 0); //fixme: implement this; 0 = none/proc, 1 = unrestricted clicky, 2 = worn, 3 = unrestricted expendable, 4 = must-equip clicky, 5 = class-restricted clicky
+    // range
+    aligned_write_uint8(w, item_proto_get_range(proto));
+    // skill
+    aligned_write_uint8(w, item_proto_get_item_type_id(proto));
+    // isMagic
+    aligned_write_uint8(w, item_proto_is_magic(proto));
+    // clickableLevel
+    aligned_write_uint8(w, 0); //fixme
+    // material
+    aligned_write_uint8(w, item_proto_get_material(proto));
+    // unknownA
+    aligned_write_zeroes(w, sizeof_field(Trilogy_ItemBasic, unknownA));
+    // tint
+    aligned_write_uint32(w, item_proto_get_tint(proto));
+    // unknownB
+    aligned_write_zeroes(w, sizeof_field(Trilogy_ItemBasic, unknownB));
+    // spellId
+    aligned_write_uint16(w, item_proto_get_spell_id(proto));
+    // classesBitfield
+    aligned_write_uint32(w, item_proto_get_class_bitfield(proto));
+    
+    // Split for basic vs bag (fixme: implement bags)
+    
+    // racesBitfield
+    aligned_write_uint32(w, item_proto_get_race_bitfield(proto));
+    // consumableType
+    aligned_write_uint8(w, 3); // Weird field, is this value always good?
+    
+    // procLevel/hastePercent (fixme: doesn't seem to work for haste the way the 6.2 client does)
+    aligned_write_uint8(w, 0);
+    // charges
+    aligned_write_uint8(w, item_get_charges(item));
+    // effectType
+    aligned_write_uint8(w, 0); //fixme: same as clickyType above
+    // clickySpellId
+    aligned_write_uint16(w, item_proto_get_spell_id(proto));
+    // unknownC
+    aligned_write_zeroes(w, sizeof_field(Trilogy_ItemBasic, unknownC));
+    // castingTime
+    aligned_write_uint32(w, item_proto_get_casting_time(proto));
+    // unknownD
+    aligned_write_zeroes(w, sizeof_field(Trilogy_ItemBasic, unknownD));
+    // recommendedLevel
+    aligned_write_uint8(w, 0); //fixme
+    // unknownE
+    aligned_write_zeroes(w, sizeof_field(Trilogy_ItemBasic, unknownE));
+    // deityBitfield
+    aligned_write_uint32(w, 0xffff); //fixme
+    
+    return packet;
 }

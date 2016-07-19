@@ -20,6 +20,7 @@
 #include "lua_sys.h"
 #include "lua_object.h"
 #include "zone_cluster_ipc.h"
+#include "item_share_mem.h"
 
 #define EQP_ZC_CLIENT_KEEP_ALIVE_DELAY_MS       500
 #define EQP_ZC_CLIENT_LINKDEAD_LINGER_TIMEOUT   TIMER_SECONDS(30)
@@ -27,22 +28,24 @@
 STRUCT_DEFINE(ZC)
 {
     // Core MUST be the first member of this struct
-    Core        core;
+    Core            core;
     
-    lua_State*  L;
-    TimerPool   timerPool;
-    UdpSocket*  socket;
+    lua_State*      L;
+    TimerPool       timerPool;
+    UdpSocket*      socket;
     
-    Array*      zoneList;
-    HashTable*  expectedClientsByName;  // Clients that haven't connected yet, but are expected to soon
-    Array*      connectedClients;
-    HashTable*  connectedClientsByName;
-    //Array*      npcList;
+    Array*          zoneList;
+    HashTable*      expectedClientsByName;  // Clients that haven't connected yet, but are expected to soon
+    Array*          connectedClients;
+    HashTable*      connectedClientsByName;
+    //Array*          npcList;
     
-    int         sourceId;
-    IpcSet      ipcSet;
+    ItemShareMem    items;
     
-    Timer       timerClientKeepAlive;
+    int             sourceId;
+    IpcSet          ipcSet;
+    
+    Timer           timerClientKeepAlive;
 };
 
 STRUCT_DEFINE(ConnectedClient)
@@ -68,6 +71,9 @@ void    zc_client_match_with_expected(ZC* zc, Client* clientStub, ProtocolHandle
 void    zc_client_keep_alive_callback(Timer* timer);
 void    zc_add_connected_client(ZC* zc, Client* client);
 void    zc_remove_connected_client(ZC* zc, Client* client, int isLinkdead);
+
+void    zc_items_open(ZC* zc, IpcPacket* packet);
+#define zc_item_by_id(zc, itemId) item_share_mem_get_prototype(&(zc)->items, (itemId))
 
 void    zc_zone_log_format(ZC* zc, Zone* zone, LogType type, const char* fmt, ...);
 

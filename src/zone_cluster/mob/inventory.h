@@ -4,6 +4,7 @@
 
 #include "define.h"
 #include "eqp_array.h"
+#include "item.h"
 
 /*
     The Inventory is a flat, orderless, dynamically-sized array.
@@ -23,11 +24,8 @@ STRUCT_DEFINE(InventorySlot)
 {
     uint16_t    slotId;
     uint16_t    augSlotId;  // Augs use the same slotId as the item they are inserted into, but a non-zero augSlotId
-    int16_t     stackAmount;
-    int16_t     charges;
-    bool        isBag;
     uint32_t    itemId;
-    void*       item;
+    Item*       item;
 };
 
 STRUCT_DEFINE(Inventory)
@@ -111,5 +109,8 @@ void    inventory_add_from_database(Basic* basic, Inventory* inv, InventorySlot*
 
 void    inventory_iterator_init(InventoryIterator* itr, uint32_t slotFrom, uint32_t slotTo);
 int     inventory_iterate_no_augs(Inventory* inv, InventoryIterator* itr);
+
+#define inventory_array(inv) array_data_type((inv)->slots, InventorySlot)
+#define inventory_array_count(inv) array_count((inv)->slots)
 
 #endif//EQP_INVENTORY_H

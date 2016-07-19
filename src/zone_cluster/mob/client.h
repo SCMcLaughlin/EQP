@@ -172,6 +172,8 @@ int64_t client_calc_base_hp_trilogy(Client* client);
 #define client_primary_model_id(cli) mob_primary_model_id(&(cli)->mob)
 #define client_secondary_model_id(cli) mob_secondary_model_id(&(cli)->mob)
 
+#define client_inventory(cli) (&(cli)->inventory)
+
 EQP_API int         client_expansion(Client* client);
 EQP_API int         client_is_pvp(Client* client);
 EQP_API int         client_is_gm(Client* client);

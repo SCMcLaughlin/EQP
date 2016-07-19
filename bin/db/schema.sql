@@ -137,7 +137,6 @@ CREATE TABLE inventory (
     aug_slot_id     INT     DEFAULT 0,
     stack_amount    INT     DEFAULT 0,
     charges         INT     DEFAULT 65535,
-    is_bag          BOOLEAN DEFAULT 0,
     item_id         INT
 );
 

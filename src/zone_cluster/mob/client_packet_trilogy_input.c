@@ -56,62 +56,23 @@ static void client_trilogy_echo_packet(Client* client, uint16_t opcode, Aligned*
 
 static void client_trilogy_handle_op_inventory_request(Client* client)
 {
-    //just a test
-    ZC* zc = client_zone_cluster(client);
-    Trilogy_Item item;
-    PacketTrilogy* packet;
+    ZC* zc                  = client_zone_cluster(client);
+    Inventory* inv          = client_inventory(client);
+    InventorySlot* slots    = inventory_array(inv);
+    uint32_t n              = inventory_array_count(inv);
+    uint32_t i;
     
-    memset(&item, 0, sizeof(item));
-    
-    item.typeFlag = 0x3336;
-    item.isPermanent = 0xff;
-    item.basic.classesBitfield = 65535;
-    item.basic.delay = 25;
-    item.basic.damage = 15;
-    item.slotsBitfield = 24576;
-    item.basic.racesBitfield = 65535;
-    item.basic.skill = 2;
-    item.basic.isMagic = 1;
-    
-    item.itemId = 1000;
-    item.icon = 592;
-    item.currentSlot = InvSlot_MainInventory1;
-    
-    /*item.basic.spellId = 998;
-    item.basic.clickySpellId = 998;
-    item.basic.effectType = 2;
-    item.basic.clickyType = 2;
-    item.basic.consumableType = 3;
-    item.basic.charges = 0xff;*/
-    
-    snprintf(item.name, sizeof(item.name), "Shitty Dagger");
-    snprintf(item.model, sizeof(item.model), "IT1");
-    
-    packet = packet_trilogy_create(B(zc), TrilogyOp_Inventory, sizeof(item));
-    memcpy(packet_trilogy_data(packet), &item, sizeof(item));
-    client_trilogy_schedule_packet_individual(client, packet);
-    
-    
-    item.itemId = 1057;//11057;
-    item.icon = 1183;
-    item.currentSlot = InvSlot_MainInventory0;
-    item.basic.spellId = 1927;
-    item.basic.clickySpellId = 1927;
-    item.basic.effectType = 2;
-    item.basic.clickyType = 2;
-    item.basic.consumableType = 3;
-    item.basic.light = 10;
-    item.basic.hastePercent = 1;
-    item.basic.castingTime = 0;
-    
-    snprintf(item.name, sizeof(item.name), "Wagebringer");
-    snprintf(item.model, sizeof(item.model), "IT140");
-    
-    packet = packet_trilogy_create(B(zc), TrilogyOp_Inventory, sizeof(item));
-    memcpy(packet_trilogy_data(packet), &item, sizeof(item));
-    client_trilogy_schedule_packet_individual(client, packet);
-    
-    //fixme: send items
+    for (i = 0; i < n; i++)
+    {
+        InventorySlot* slot = &slots[i];
+        PacketTrilogy* packet;
+        
+        if (slot->augSlotId != 0)
+            continue;
+        
+        packet = client_trilogy_make_item_packet(zc, TrilogyOp_Inventory, slot->item, slot->slotId);
+        client_trilogy_schedule_packet_individual(client, packet);
+    }
 }
 
 static void client_trilogy_handle_op_zone_info_request(Client* client)

@@ -13,6 +13,7 @@ local itemTypeIds = {
     shield                  = 8,
     bash                    = 8,
     armor                   = 10,
+    stackable               = 11,
     lockpick                = 12,
     food                    = 14,
     drink                   = 15,

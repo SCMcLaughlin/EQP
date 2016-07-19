@@ -4,6 +4,50 @@
 
 #include "define.h"
 
+ENUM_DEFINE(ItemTypeId)
+{
+    ItemType_1HSlash                = 0,
+    ItemType_2HSlash                = 1,
+    ItemType_1HPiercing             = 2,
+    ItemType_1HBlunt                = 3,
+    ItemType_2HBlunt                = 4,
+    ItemType_Archery                = 5,
+    ItemType_Throwing               = 7,
+    ItemType_Bash                   = 8,
+    ItemType_Shield                 = ItemType_Bash,
+    ItemType_Armor                  = 10,
+    ItemType_Stackable              = 11,
+    ItemType_Lockpick               = 12,
+    ItemType_Food                   = 14,
+    ItemType_Drink                  = 15,
+    ItemType_Bandage                = 18,
+    ItemType_Throwing2              = 19,
+    ItemType_SpellScroll            = 20,
+    ItemType_Potion                 = 21,
+    ItemType_WindInstrument         = 23,
+    ItemType_StringInstrument       = 24,
+    ItemType_BrassInstrument        = 25,
+    ItemType_PercussionInstrument   = 26,
+    ItemType_Arrow                  = 27,
+    ItemType_Jewelry                = 29,
+    ItemType_Book                   = 31,
+    ItemType_Note                   = 32,
+    ItemType_Key                    = 33,
+    ItemType_2HPiercing             = 35,
+    ItemType_Fishing                = 36,
+    ItemType_FishingBait            = 37,
+    ItemType_Alcohol                = 38,
+    ItemType_Compass                = 40,
+    ItemType_Poison                 = 42,
+    ItemType_HandToHand             = 45,
+    ItemType_Singing                = 50,
+    ItemType_AllInstruments         = 51,
+    ItemType_Charm                  = 52,
+    ItemType_Augment                = 54,
+    ItemType_AugSolvent             = 55,
+    ItemType_AugDistiller           = 56,
+};
+
 STRUCT_DECLARE(Basic);
 
 STRUCT_DEFINE(ItemPrototype)
@@ -18,7 +62,7 @@ STRUCT_DEFINE(ItemPrototype)
     uint8_t     size;
     uint8_t     weight;
     uint8_t     itemTypeId;
-    uint8_t     itemSkillId;
+    uint8_t     itemSkillId; //fixme: any point in having this? seems handled by itemTypeId
     uint8_t     material;
     uint8_t     light;
     uint8_t     effectTypeId;
@@ -55,6 +99,7 @@ STRUCT_DEFINE(ItemPrototype)
 };
 
 EQP_API ItemPrototype*  item_proto_create(Basic* basic);
+ItemPrototype*          item_proto_copy(Basic* basic, ItemPrototype* orig);
 EQP_API void            item_proto_destroy(ItemPrototype* proto);
 
 EQP_API void            item_proto_set_defaults(ItemPrototype* proto);

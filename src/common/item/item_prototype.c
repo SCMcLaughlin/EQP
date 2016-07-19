@@ -6,8 +6,14 @@
 ItemPrototype* item_proto_create(Basic* basic)
 {
     ItemPrototype* proto = eqp_alloc_type(basic, ItemPrototype);
-    
     item_proto_set_defaults(proto);
+    return proto;
+}
+
+ItemPrototype* item_proto_copy(Basic* basic, ItemPrototype* orig)
+{
+    ItemPrototype* proto = eqp_alloc_type(basic, ItemPrototype);
+    memcpy(proto, orig, sizeof(ItemPrototype));
     return proto;
 }
 

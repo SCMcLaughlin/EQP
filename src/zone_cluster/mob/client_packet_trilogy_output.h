@@ -11,6 +11,8 @@
 #include "crc.h"
 #include "eqp_clock.h"
 #include "zone_id.h"
+#include "item.h"
+#include "item_prototype.h"
 #include <zlib.h>
 
 void    client_trilogy_schedule_packet_individual(Client* client, PacketTrilogy* packet);
@@ -27,5 +29,6 @@ PacketTrilogy*  client_trilogy_make_op_spawn_appearance(ZC* zc, uint16_t entityI
 PacketTrilogy*  client_trilogy_make_op_spawn(ZC* zc, Mob* spawningMob);
 PacketTrilogy*  client_trilogy_make_op_custom_message(ZC* zc, uint32_t chatChannel, const char* str, uint32_t len);
 PacketTrilogy*  client_trilogy_make_op_custom_message_format(ZC* zc, uint32_t chatChannel, const char* fmt, va_list args);
+PacketTrilogy*  client_trilogy_make_item_packet(ZC* zc, uint16_t opcode, Item* item, uint16_t slotId);
 
 #endif//EQP_CLIENT_PACKET_TRILOGY_OUTPUT_H

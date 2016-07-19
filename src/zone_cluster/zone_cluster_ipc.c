@@ -18,6 +18,10 @@ void ipc_set_handle_packet(Basic* basic, IpcPacket* packet)
         zc_client_expected_to_zone_in(zc, sourceId, packet);
         break;
     
+    case ServerOp_ItemSharedMemoryOpen:
+        zc_items_open(zc, packet);
+        break;
+    
     default:
         break;
     }

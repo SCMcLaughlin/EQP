@@ -48,8 +48,13 @@ int lua_sys_run_file_no_throw(Basic* basic, lua_State* L, const char* path, int 
 
 void lua_sys_run_file(Basic* basic, lua_State* L, const char* path, int numReturns)
 {
-    if (!lua_sys_run_file_no_throw(basic, L, path, numReturns))
+    if (luaL_loadfile(L, path) || lua_pcall(L, 0, numReturns, TRACEBACK_INDEX))
+    {
+        log_format(basic, LogLua, "[lua_sys_run_file] %s", lua_tostring(L, -1));
+        exception_set_message(basic, lua_tostring(L, -1), lua_objlen(L, -1));
+        lua_pop(L, 1);
         exception_throw(basic, ErrorLua);
+    }
 }
 
 int lua_sys_call_no_throw(Basic* basic, lua_State* L, int numArgs, int numReturns)
@@ -68,8 +73,13 @@ int lua_sys_call_no_throw(Basic* basic, lua_State* L, int numArgs, int numReturn
 
 void lua_sys_call(Basic* basic, lua_State* L, int numArgs, int numReturns)
 {
-    if (!lua_sys_call_no_throw(basic, L, numArgs, numReturns))
+    if (lua_pcall(L, numArgs, numReturns, TRACEBACK_INDEX))
+    {
+        log_format(basic, LogLua, "[lua_sys_call] %s", lua_tostring(L, -1));
+        exception_set_message(basic, lua_tostring(L, -1), lua_objlen(L, -1));
+        lua_pop(L, 1);
         exception_throw(basic, ErrorLua);
+    }
 }
 
 String* lua_sys_field_to_string(Basic* basic, lua_State* L, int index, const char* field)

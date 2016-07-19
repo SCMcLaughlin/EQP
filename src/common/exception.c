@@ -105,6 +105,11 @@ void exception_end_try_with_finally(Basic* basic)
     }
 }
 
+void exception_set_message(Basic* basic, const char* msg, uint32_t len)
+{
+    string_set_from_cstr(basic, &basic->exceptionState.errMsg, msg, len ? len : strlen(msg));
+}
+
 String* exception_get_message(Basic* basic)
 {
     return basic->exceptionState.errMsg;

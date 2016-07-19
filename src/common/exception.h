@@ -34,6 +34,7 @@ void    exception_begin_try(Basic* basic, ExceptionScope* scope);
 void    exception_handled(Basic* basic);
 void    exception_end_try(Basic* basic);
 void    exception_end_try_with_finally(Basic* basic);
+void    exception_set_message(Basic* basic, const char* msg, uint32_t len);
 String* exception_get_message(Basic* basic);
 #define exception_message(basic) exception_get_message((basic))
 

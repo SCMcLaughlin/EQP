@@ -30,7 +30,7 @@
 #define EQP_CHAR_SELECT_UNCLAIMED_AUTHS_TIMEOUT TIMER_SECONDS(30)
 #define EQP_CHAR_SELECT_ZONE_ATTEMPT_TIMEOUT    TIMER_SECONDS(10)
 
-#define EQP_CHAR_SELECT_SCRIPT_CHAR_CREATE  "char_select/char_create.lua"
+#define EQP_CHAR_SELECT_SCRIPT_CHAR_CREATE  "scripts/char_select/char_create.lua"
 #define EQP_CHAR_SELECT_LOGIN_CONFIG        "scripts/char_select/login_config_loader.lua"
 
 STRUCT_DEFINE(CharSelect)

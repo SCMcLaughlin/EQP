@@ -199,7 +199,7 @@ function NpcProto:setSvDisease(value)
 end
 
 function NpcProto:getName()
-    return toLuaString(C.npc_proto_get_name_cstr(self:ptr())
+    return toLuaString(C.npc_proto_get_name_cstr(self:ptr()))
 end
 
 function NpcProto:getId()

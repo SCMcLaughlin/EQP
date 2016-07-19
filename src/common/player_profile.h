@@ -8,6 +8,8 @@
 #include "defines_trilogy.h"
 #include "structs.h"
 
+#pragma pack(1)
+
 STRUCT_DEFINE(Trilogy_Buff)
 {
     uint8_t     visibility; // 0 = not visible, 1 = permanent, 2 = normal
@@ -132,6 +134,8 @@ STRUCT_DEFINE(Trilogy_PlayerProfile_CharCreation)
 {
     TRILOGY_PP_FIELDS;
 };
+
+#pragma pack()
 
 #undef TRILOGY_PP_FIELDS
 

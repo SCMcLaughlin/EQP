@@ -441,7 +441,7 @@ static void cs_client_trilogy_transaction(Transaction* trans)
         query_bind_double(&query, 6, b->z);
         query_bind_double(&query, 7, b->heading);
         
-        query_execute_synchronus(&query);
+        query_execute_synchronus_insert_update(&query);
     }
     
     query_deinit(&query);
@@ -465,7 +465,7 @@ static void cs_client_trilogy_transaction(Transaction* trans)
         query_bind_int(&query, 4, item->charges);
         query_bind_int(&query, 5, item->itemId);
         
-        query_execute_synchronus(&query);
+        query_execute_synchronus_insert_update(&query);
     }
     
     query_deinit(&query);

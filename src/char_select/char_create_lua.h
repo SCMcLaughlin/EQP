@@ -43,12 +43,12 @@ STRUCT_DEFINE(CharCreateLua)
         struct
         {
             uint8_t     STR;
-            uint8_t     DEX;
-            uint8_t     AGI;
             uint8_t     STA;
-            uint8_t     INT;
-            uint8_t     WIS;
             uint8_t     CHA;
+            uint8_t     DEX;
+            uint8_t     INT;
+            uint8_t     AGI;
+            uint8_t     WIS;
         };
         
         uint8_t stats[7];

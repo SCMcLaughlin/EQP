@@ -78,8 +78,8 @@ function Timer.once(args)
     local timer
     
     local function callback()
-        func(timer)
         onceEnd(timer)
+        func(timer)
     end
     
     timer = make(ms, callback, not args.stopped)
@@ -101,10 +101,10 @@ function Timer.times(args)
     
     local function callback()
         i = i + 1
-        func(timer, i)
         if i >= n then
             onceEnd(timer)
         end
+        func(timer, i)
     end
     
     timer = make(ms, callback, not args.stopped)

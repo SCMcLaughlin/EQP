@@ -51,7 +51,7 @@ end
 
 function Zone:spawnNpc(proto, x, y, z, heading)
     local npc = C.zone_spawn_npc(ZC:ptr(), self:ptr(), proto:ptr(), x or 0, y or 0, z or 0, heading or 0)
-    return sys.createNpc(zone, npc)
+    return sys.createNpc(self, npc)
 end
 
 function Zone:getSourceId()

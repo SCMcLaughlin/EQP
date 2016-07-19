@@ -43,6 +43,7 @@ void client_on_disconnect(void* vclient, int isLinkdead)
     client_drop(client);
     
     printf("DISCONNECT (%s)\n", isLinkdead ? "timeout" : "explicit");
+    log_format(B(zc), LogInfo, "DISCONNECT (%s)\n", isLinkdead ? "timeout" : "explicit");
 }
 
 static void client_load_skills_callback(Query* query)

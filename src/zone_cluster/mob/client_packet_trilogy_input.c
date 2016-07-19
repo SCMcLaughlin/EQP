@@ -67,7 +67,7 @@ static void client_trilogy_handle_op_inventory_request(Client* client)
         InventorySlot* slot = &slots[i];
         PacketTrilogy* packet;
         
-        if (slot->augSlotId != 0)
+        if (slot->itemId == 0 || slot->augSlotId != 0)
             continue;
         
         packet = client_trilogy_make_item_packet(zc, TrilogyOp_Inventory, slot->item, slot->slotId);

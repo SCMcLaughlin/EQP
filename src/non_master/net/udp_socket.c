@@ -138,6 +138,7 @@ static void udp_socket_handle_dead_client(UdpSocket* sock, UdpClient* cli, uint3
     if (array_swap_and_pop(sock->clients, index))
         protocol_handler_update_index(udp_client_handler(array_get_type(sock->clients, index, UdpClient)), index);
     printf("Destroyed UdpClient at index %u\n", index);
+    log_format(sock->basic, LogInfo, "Destroyed UdpClient at index %u\n", index);
 }
 
 void udp_socket_check_timeouts(UdpSocket* sock)

@@ -38,7 +38,7 @@ int main(int argc, const char** argv)
 {
     ZC zc;
     
-    // argv[1] = path to login ipc buffer
+    // argv[1] = path to zc ipc buffer
     // argv[2] = path to master ipc buffer
     // argv[3] = path to log-writer ipc buffer
     // argv[4] = id number for this zone cluster

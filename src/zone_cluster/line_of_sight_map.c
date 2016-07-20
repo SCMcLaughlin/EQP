@@ -117,6 +117,8 @@ void los_map_open(ZC* zc, Zone* zone, LineOfSightMap* map)
         map->triangles          = NULL;
         map->zSlices            = NULL;
         map->zSliceTriangles    = NULL;
+        map->incrementX         = 1.0f; // Avoid division by zero
+        map->incrementY         = 1.0f;
     }
 }
 
@@ -228,6 +230,9 @@ int los_map_points_are_in_line_of_sight(ZC* zc, LineOfSightMap* map, float ax, f
     uint32_t x = 0;
     uint32_t y = 0;
     uint32_t z = 0;
+    
+    if (!nodes)
+        goto ret_true;
     
     vector_set(&start, ax, ay, az);
     vector_set(&direction, bx, by, bz);

@@ -40,8 +40,18 @@ static int item_gen_main(ItemGen* gen, int argc, const char** argv)
 int main(int argc, const char** argv)
 {
     ItemGen gen;
+    const char* binPath;
     
     memset(&gen, 0, sizeof(gen));
+    
+    binPath = getenv(EQP_PATH_ENV_VARIABLE);
+    
+    if (binPath)
+#ifdef EQP_WINDOWS
+        SetCurrentDirectoryA(binPath);
+#else
+        chdir(binPath);
+#endif
     
     basic_preinit(B(&gen));
     return item_gen_main(&gen, argc, argv);

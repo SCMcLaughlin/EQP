@@ -1207,7 +1207,7 @@ PacketTrilogy* client_trilogy_make_item_packet(ZC* zc, uint16_t opcode, Item* it
     // unknownE
     aligned_write_zeroes(w, sizeof_field(Trilogy_ItemBasic, unknownE));
     // deityBitfield
-    aligned_write_uint32(w, 0xffff); //fixme
+    aligned_write_uint32(w, 0); //fixme
     
     return packet;
 }

@@ -171,6 +171,7 @@ void master_start_zone_cluster(Master* M, ZoneCluster* zoneCluster, uint16_t id,
     snprintf(portBuf, sizeof(portBuf), "%u", port);
     
     master_start_process(M, BIN_ZONE_CLUSTER, zone_cluster_proc(zoneCluster), EQP_ZONE_CLUSTER_SHM_PATH, idBuf, portBuf);
+    item_shm_loader_send_details(M, &M->items, zone_cluster_proc(zoneCluster));
     
     array_push_back(B(M), &M->zoneClusterProcs, (void*)&zoneCluster);
 }

@@ -10,8 +10,6 @@
 #include "file.h"
 #include <zlib.h>
 
-#define EQP_PATH_ENV_VARIABLE   "EQP_PATH"
-
 STRUCT_DECLARE(ZC);
 STRUCT_DECLARE(Zone);
 
@@ -25,29 +23,6 @@ STRUCT_DECLARE(Zone);
     octree nodes will be excluded; in practice, this is a good assumption. May
     as well exclude them as fast as possible.
 */
-
-#if 0
-STRUCT_DEFINE(LineOfSightBox)
-{
-    Vertex      center;
-    Vertex      halfExtent;
-};
-
-STRUCT_DEFINE(LineOfSightTriangles)
-{
-    uint32_t    count;
-    Triangle64* triangles;
-};
-
-STRUCT_DEFINE(LineOfSightMap)
-{
-    uint32_t                boxCount;
-    uint32_t                triangleCount;
-    LineOfSightBox*         boxes;
-    LineOfSightTriangles*   triangleSets;
-    Triangle64*             triangles;
-};
-#endif
 
 STRUCT_DEFINE(LineOfSightBspNode)
 {

@@ -51,7 +51,7 @@ int main(int argc, const char** argv)
         return 0;
     }
     
-    binPath = getenv(EQP_CONSOLE_PATH_ENV_VARIABLE);
+    binPath = getenv(EQP_PATH_ENV_VARIABLE);
     
     if (binPath)
 #ifdef EQP_WINDOWS

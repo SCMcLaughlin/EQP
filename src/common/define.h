@@ -62,11 +62,11 @@ typedef _Bool bool;
     typedef enum name name;     \
     enum name
     
-#define ptrType ptrType     restrict
-
 #define sizeof_field(type, name) sizeof(((type*)0)->name)
 
 #define EQP_ITEM_SHM_PATH1  "shm/item_prototypes"
 #define EQP_ITEM_SHM_PATH2  "shm/item_prototypes2"
+
+#define EQP_PATH_ENV_VARIABLE "EQP_PATH"
 
 #endif//EQP_DEFINE_H

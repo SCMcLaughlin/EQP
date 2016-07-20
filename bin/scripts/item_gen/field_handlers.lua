@@ -21,16 +21,16 @@ local function loretext(proto, str)
 end
 
 local function tag(proto, str)
-    for tag in str:gmatch("%w+") do
+    for tag in str:gmatch("[%w ]+") do
         tag = tag:lower()
         
         if tag == "magic" then
             proto:setIsMagic(true)
         elseif tag == "lore" then
             proto:setIsLore(true)
-        elseif tag == "nodrop" or tag == "notrade" then
+        elseif tag == "nodrop" or tag == "no drop" or tag == "notrade" or tag == "no trade" then
             proto:setIsDroppable(false)
-        elseif tag == "norent" then
+        elseif tag == "norent" or tag == "no rent" then
             proto:setIsPermanent(false)
         end
     end

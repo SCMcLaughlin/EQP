@@ -14,7 +14,6 @@
 # include <dirent.h>
 #endif
 
-#define EQP_CONSOLE_PATH_ENV_VARIABLE "EQP_PATH"
 #define EQP_CONSOLE_SHM_PATH "./shm/eqp-console-"
 #define EQP_CONSOLE_TIMEOUT_MILLISECONDS 5000
 

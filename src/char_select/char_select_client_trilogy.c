@@ -619,7 +619,8 @@ static void cs_trilogy_handle_op_create_character(CharSelectClient* client, Prot
     aligned_advance(a,
         sizeof_field(Trilogy_PlayerProfile_CharCreation, bankInventoryItemProperties)   +
         sizeof_field(Trilogy_PlayerProfile_CharCreation, bankBaggedItemProperties)      +
-        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownK));
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownK)                      +
+        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownL));
     
     // bindLocY[5]
     for (i = 0; i < 5; i++)
@@ -640,20 +641,21 @@ static void cs_trilogy_handle_op_create_character(CharSelectClient* client, Prot
     }
     
     // bindLocHeading[5]
+    /*
     for (i = 0; i < 5; i++)
     {
         bind[i].heading = aligned_read_float(a);
     }
+    */
     
     for (i = 0; i < 5; i++)
     {
         CharCreatePoint* b = &bind[i];
-        char_create_lua_set_bind_point(ccl, b->zoneId, b->x, b->y, b->z, b->heading, i);
+        char_create_lua_set_bind_point(ccl, b->zoneId, b->x, b->y, b->z, 0, i);
     }
     
     // more stuff
     aligned_advance(a,
-        sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownL)                      +
         sizeof_field(Trilogy_PlayerProfile_CharCreation, bankInventoryInternalUnused)   +
         sizeof_field(Trilogy_PlayerProfile_CharCreation, unknownM)                      +
         sizeof_field(Trilogy_PlayerProfile_CharCreation, unixTimeA)                     +

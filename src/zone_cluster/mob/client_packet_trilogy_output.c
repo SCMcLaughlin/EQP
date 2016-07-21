@@ -445,8 +445,8 @@ void client_trilogy_send_player_profile(Client* client)
     
     aligned_advance(w, sizeof(pp.bankBaggedItemProperties));
     
-    // unknownK
-    aligned_advance(w, sizeof(pp.unknownK));
+    // unknownK and unknownL
+    aligned_advance(w, sizeof(pp.unknownK) + sizeof(pp.unknownL));
     
     // bindLocY[5]
     aligned_write_float(w, client->bindPoints[0].loc.y);
@@ -473,8 +473,6 @@ void client_trilogy_send_player_profile(Client* client)
     aligned_write_float(w, client->bindPoints[3].loc.heading);
     aligned_write_float(w, client->bindPoints[4].loc.heading);
     
-    // unknownL
-    aligned_advance(w, sizeof(pp.unknownL));
     // bankInventoryInternalUnused[8]
     aligned_advance(w, sizeof(pp.bankInventoryInternalUnused));
     // unknownM[12]

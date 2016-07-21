@@ -92,11 +92,11 @@ STRUCT_DEFINE(Trilogy_PPGroupMember)
     Trilogy_PPItem          bankInventoryItemProperties[8];                                                             \
     Trilogy_PPItem          bankBaggedItemProperties[80];                                                               \
     uint32_t                unknownK;                                                                                   \
+    uint32_t                unknownL;                                                                                   \
     float                   bindLocY[5];                                                                                \
     float                   bindLocX[5];                                                                                \
     float                   bindLocZ[5];                                                                                \
     float                   bindLocHeading[5];                                                                          \
-    uint8_t                 unknownL[4];                                                                                \
     uint32_t                bankInventoryInternalUnused[8];                                                             \
     uint8_t                 unknownM[12];                                                                               \
     uint32_t                unixTimeA;  /*creation time?*/                                                              \

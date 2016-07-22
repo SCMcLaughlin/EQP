@@ -1100,7 +1100,7 @@ PacketTrilogy* client_trilogy_make_item_packet(ZC* zc, uint16_t opcode, Item* it
     // currentSlot
     aligned_write_uint16(w, slotId);
     // slotsBitfield
-    aligned_write_uint32(w, item_proto_get_slot_bitfield(proto));
+    aligned_write_uint32(w, item_proto_get_slot_bitfield(proto) << 1); // In Trilogy, the zeroth bit is for the "HELD" slot; everything else is shifted over by 1
     // cost
     aligned_write_uint32(w, item_proto_get_cost(proto));
     // unknownB

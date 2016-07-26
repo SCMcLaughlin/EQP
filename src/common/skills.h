@@ -5,6 +5,8 @@
 #include "define.h"
 #include "enums.h"
 
+#define EQP_SKILL_MAX_VALUE 250
+
 ENUM_DEFINE(SkillId)
 {
     Skill_1HBlunt,
@@ -113,7 +115,7 @@ ENUM_DEFINE(LanguageId)
     Lang_COUNT
 };
 
-#define EQP_DB_LANGUAGE_SKILL_OFFSET (Skill_COUNT + 1)   /* Languages are stored as skills in the database, using this offset */
+#define EQP_DB_LANGUAGE_SKILL_OFFSET (100)   /* Languages are stored as skills in the database, using this offset */
 
 STRUCT_DEFINE(Skills)
 {

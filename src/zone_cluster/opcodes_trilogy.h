@@ -23,4 +23,7 @@
 #define TrilogyOp_Spawn                 0x2149
 #define TrilogyOp_CustomMessage         0x2180
 
+#define TrilogyOp_SwapItem              0x212c
+#define TrilogyOp_MoveCoin              0x212d
+
 #endif//EQP_OPCODES_TRILOGY_H

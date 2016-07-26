@@ -15,7 +15,7 @@ STRUCT_DEFINE(DbThread)
     Thread      thread;
     AtomicMutex mutexInQueue;
     Array*      inQueue;
-    Array*      inTransactionQueue; //fixme: implement this
+    Array*      inTransactionQueue;
     AtomicMutex mutexOutQueue;
     Array*      outQueue;
     Array*      executeQueue;

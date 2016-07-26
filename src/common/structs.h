@@ -4,6 +4,8 @@
 
 #include "define.h"
 
+#define EQP_CLIENT_BIND_POINT_COUNT 5
+
 STRUCT_DEFINE(Coin)
 {
     uint32_t    pp;

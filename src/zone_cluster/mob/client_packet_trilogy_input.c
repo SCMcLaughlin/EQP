@@ -124,6 +124,23 @@ static void client_trilogy_handle_op_enter_zone(Client* client)
     zc_lua_event(zc, zone, client, "event_spawn");
 }
 
+static void client_trilogy_handle_op_swap_item(Client* client, Aligned* a)
+{
+    uint32_t srcSlot;
+    uint32_t dstSlot;
+    uint32_t stackAmt;
+    
+    if (aligned_remaining(a) < sizeof(Trilogy_SwapItem))
+        return;
+    
+    // srcSlotId
+    srcSlot     = aligned_read_uint32(a);
+    // dstSlotId
+    dstSlot     = aligned_read_uint32(a);
+    // stackAmount
+    stackAmt    = aligned_read_uint32(a);
+}
+
 void client_recv_packet_trilogy(void* vclient, uint16_t opcode, Aligned* a)
 {
     Client* client = (Client*)vclient;
@@ -148,6 +165,10 @@ void client_recv_packet_trilogy(void* vclient, uint16_t opcode, Aligned* a)
     
     case TrilogyOp_EnterZone:
         client_trilogy_handle_op_enter_zone(client);
+        break;
+    
+    case TrilogyOp_SwapItem:
+        client_trilogy_handle_op_swap_item(client, a);
         break;
     
     // Echo packets

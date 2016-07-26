@@ -286,6 +286,13 @@ STRUCT_DEFINE(Trilogy_Item)
     };
 };
 
+STRUCT_DEFINE(Trilogy_SwapItem)
+{
+    uint32_t    srcSlotId;
+    uint32_t    dstSlotId;
+    uint32_t    stackAmount;
+};
+
 #pragma pack()
 
 #endif//EQP_STRUCTS_TRILOGY_H

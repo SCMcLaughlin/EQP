@@ -44,15 +44,15 @@ static void client_save_transaction(Transaction* trans)
     query_bind_int(&query, 3, save->level);
     query_bind_int(&query, 4, save->class);
     query_bind_int(&query, 5, save->race);
-    query_bind_int(&query, 6, save->zoneId);
-    query_bind_int(&query, 7, save->instanceId);
+    query_bind_int(&query, 6, save->point.zoneId);
+    query_bind_int(&query, 7, save->point.instanceId);
     query_bind_int(&query, 8, save->gender);
     query_bind_int(&query, 9, save->face);
     query_bind_int(&query, 10, save->deity);
-    query_bind_double(&query, 11, save->x);
-    query_bind_double(&query, 12, save->y);
-    query_bind_double(&query, 13, save->z);
-    query_bind_double(&query, 14, save->heading);
+    query_bind_double(&query, 11, save->point.loc.x);
+    query_bind_double(&query, 12, save->point.loc.y);
+    query_bind_double(&query, 13, save->point.loc.z);
+    query_bind_double(&query, 14, save->point.loc.heading);
     query_bind_int(&query, 15, save->hp);
     query_bind_int(&query, 16, save->mana);
     query_bind_int(&query, 17, save->endurance);
@@ -176,7 +176,7 @@ static void client_save_transaction(Transaction* trans)
     client_save_delete_literal(db, "DELETE FROM bind_point WHERE character_id = ?", charId);
     
     query_init(&query);
-    db_prepare_literal(db, &query, "INSERT INTO bind_point (character_id, bind_id, zone_id, x, y, z, heading) VALUES (?, ?, ?, ?, ?, ?, ?)", NULL);
+    db_prepare_literal(db, &query, "INSERT INTO bind_point (character_id, bind_id, zone_id, instance_id, x, y, z, heading) VALUES (?, ?, ?, ?, ?, ?, ?, ?)", NULL);
     query_bind_int64(&query, 1, charId);
     
     for (i = 0; i < EQP_CLIENT_BIND_POINT_COUNT; i++)
@@ -188,10 +188,11 @@ static void client_save_transaction(Transaction* trans)
         
         query_bind_int(&query, 2, i);
         query_bind_int(&query, 3, b->zoneId);
-        query_bind_double(&query, 4, b->loc.x);
-        query_bind_double(&query, 5, b->loc.y);
-        query_bind_double(&query, 6, b->loc.z);
-        query_bind_double(&query, 7, b->loc.heading);
+        query_bind_int(&query, 4, b->instanceId);
+        query_bind_double(&query, 5, b->loc.x);
+        query_bind_double(&query, 6, b->loc.y);
+        query_bind_double(&query, 7, b->loc.z);
+        query_bind_double(&query, 8, b->loc.heading);
         
         query_execute_synchronus_insert_update(&query);
     }
@@ -271,10 +272,9 @@ static void client_save_transaction(Transaction* trans)
         free(save);
 }
 
-void client_save(Client* client, QueryCallback onCompletion)
+void client_save_override_location_and_vitals(Client* client, QueryCallback onCompletion, int isAutoSave, BindPoint* point, int hp, int mana, int endurance)
 {
     ZC* zc              = client_zone_cluster(client);
-    Zone* zone          = client_zone(client);
     Inventory* inv      = client_inventory(client);
     Spellbook* book     = client_spellbook(client);
     Database* db        = core_db(C(zc));
@@ -287,6 +287,10 @@ void client_save(Client* client, QueryCallback onCompletion)
     
     ptr += sizeof(ClientSave);
     
+    // If this is an on-demand save, we can put off the next auto-save
+    if (!isAutoSave)
+        timer_restart(&client->timerAutoSave);
+    
     save->zc                    = zc;
     save->characterId           = client_character_id(client);
     snprintf(save->name, sizeof_field(ClientSave, name), "%s", client_name_cstr(client));
@@ -297,15 +301,10 @@ void client_save(Client* client, QueryCallback onCompletion)
     save->face                  = client_face(client);
     save->race                  = client_base_race(client);
     save->deity                 = client_deity(client);
-    save->zoneId                = zone_get_zone_id(zone); //fixme: need to be able to override this if the client is heading to another zone
-    save->instanceId            = zone_get_instance_id(zone); //fixme: ditto
-    save->x                     = client_x(client);
-    save->y                     = client_y(client);
-    save->z                     = client_z(client);
-    save->heading               = client_heading(client);
-    save->hp                    = client_current_hp(client);
-    save->mana                  = client_current_mana(client);
-    save->endurance             = client_current_endurance(client);
+    memcpy(&save->point, point, sizeof(BindPoint));
+    save->hp                    = hp;
+    save->mana                  = mana;
+    save->endurance             = endurance;
     save->STR                   = client_base_str(client);
     save->DEX                   = client_base_dex(client);
     save->AGI                   = client_base_agi(client);
@@ -377,4 +376,20 @@ void client_save(Client* client, QueryCallback onCompletion)
         memcpy(ptr, spellbook_array(book), sizeof(SpellbookSlot) * bookCount);
     
     db_schedule_transaction(db, save, client_save_transaction, onCompletion);
+}
+
+void client_save(Client* client, QueryCallback onCompletion, int isAutoSave)
+{
+    Zone* zone = client_zone(client);
+    BindPoint point;
+    
+    point.zoneId        = zone_get_zone_id(zone);
+    point.instanceId    = zone_get_instance_id(zone);
+    point.loc.x         = client_x(client);
+    point.loc.y         = client_y(client);
+    point.loc.z         = client_z(client);
+    point.loc.heading   = client_heading(client);
+    
+    client_save_override_location_and_vitals(client, onCompletion, isAutoSave, &point,
+        client_current_hp(client), client_current_mana(client), client_current_endurance(client));
 }

@@ -52,6 +52,7 @@ typedef _Bool bool;
 #define MEGABYTES(n) (1024 * KILOBYTES(n))
 
 #define TIMER_SECONDS(n)    ((n) * 1000)
+#define TIMER_MINUTES(n)    ((n) * TIMER_SECONDS(60))
 
 #define STRUCT_DECLARE(name) typedef struct name name
 #define STRUCT_DEFINE(name)     \

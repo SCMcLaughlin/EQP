@@ -24,8 +24,9 @@ STRUCT_DEFINE(Loc)
 
 STRUCT_DEFINE(BindPoint)
 {
-    int     zoneId;
-    Loc     loc;
+    uint16_t    zoneId;
+    uint16_t    instanceId;
+    Loc         loc;
 };
 
 STRUCT_DEFINE(FogStats)

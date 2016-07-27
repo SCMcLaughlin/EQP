@@ -174,6 +174,7 @@ CREATE TABLE bind_point (
     character_id    INT,
     bind_id         INT,
     zone_id         INT,
+    instance_id     INT     DEFAULT 0,
     x               REAL,
     y               REAL,
     z               REAL,

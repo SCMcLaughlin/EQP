@@ -25,12 +25,7 @@ STRUCT_DEFINE(ClientSave)
     uint8_t         face;
     uint16_t        race;
     uint16_t        deity;
-    uint16_t        zoneId;
-    uint16_t        instanceId;
-    float           x;
-    float           y;
-    float           z;
-    float           heading;
+    BindPoint       point;
     int             hp;
     int             mana;
     int             endurance;
@@ -87,6 +82,7 @@ STRUCT_DEFINE(ClientSave_Inv)
     The ClientSave userdata does not contain any direct pointer to the Client becasue it is
     not assumed that the Client will still exist when the save is finished committing.
 */
-void    client_save(Client* client, QueryCallback onCompletion);
+void    client_save(Client* client, QueryCallback onCompletion, int isAutoSave);
+void    client_save_override_location_and_vitals(Client* client, QueryCallback onCompletion, int isAutoSave, BindPoint* point, int hp, int mana, int endurance);
 
 #endif//EQP_CLIENT_SAVE_H

@@ -284,12 +284,13 @@ static void client_load_bind_points_callback(Query* query)
     {
         uint32_t bindId = query_get_int(query, 1);
         int zoneId      = query_get_int(query, 2);
-        float x         = query_get_double(query, 3);
-        float y         = query_get_double(query, 4);
-        float z         = query_get_double(query, 5);
-        float heading   = query_get_double(query, 6);
+        int instId      = query_get_int(query, 3);
+        float x         = query_get_double(query, 4);
+        float y         = query_get_double(query, 5);
+        float z         = query_get_double(query, 6);
+        float heading   = query_get_double(query, 7);
         
-        client_set_bind_point(client, bindId, zoneId, x, y, z, heading);
+        client_set_bind_point(client, bindId, zoneId, instId, x, y, z, heading);
     }
     
     client_fill_in_missing_bind_points(client);
@@ -300,6 +301,12 @@ static void client_load_bind_points_callback(Query* query)
         client_check_loading_finished(client);
     
     client_drop(client);
+}
+
+static void client_timer_auto_save_callback(Timer* timer)
+{
+    Client* client = timer_userdata_type(timer, Client);
+    client_save(client, NULL, true);
 }
 
 Client* client_create(ZC* zc, Zone* zone, Server_ClientZoning* zoning)
@@ -321,6 +328,9 @@ Client* client_create(ZC* zc, Zone* zone, Server_ClientZoning* zoning)
     client->accountName         = string_create_from_cstr(B(zc), zoning->accountName, strlen(zoning->accountName));
     client->accountId           = zoning->accountId;
     client->ipAddress           = zoning->ipAddress;
+    
+    // Init timers, but don't start them yet
+    timer_init(&client->timerAutoSave, zc_timer_pool(zc), EQP_CLIENT_AUTO_SAVE_DELAY, client_timer_auto_save_callback, client, false);
     
     // Character stats
     client_grab(client);
@@ -373,7 +383,7 @@ Client* client_create(ZC* zc, Zone* zone, Server_ClientZoning* zoning)
     query_init(&query);
     query_set_userdata(&query, client);
     db_prepare_literal(db, &query, 
-        "SELECT bind_id, zone_id, x, y, z, heading FROM bind_point WHERE character_id = ? ORDER BY bind_id ASC",
+        "SELECT bind_id, zone_id, instance_id, x, y, z, heading FROM bind_point WHERE character_id = ? ORDER BY bind_id ASC",
         client_load_bind_points_callback);
     query_bind_int64(&query, 1, zoning->characterId);
     db_schedule(db, &query);
@@ -392,6 +402,8 @@ void client_drop(Client* client)
         goto stub;
     
     zc = client_zone_cluster(client);
+    
+    timer_deinit(&client->timerAutoSave);
     
     spellbook_deinit(&client->spellbook);
     inventory_deinit(&client->inventory);
@@ -435,6 +447,9 @@ void client_check_loading_finished(Client* client)
     
     zc      = client_zone_cluster(client);
     zone    = client_zone(client);
+    
+    // Start pre-initialized timers
+    timer_start(&client->timerAutoSave);
     
     zc_lua_create_client(zc, zone, client);
     zc_lua_event(zc, zone, client, "event_pre_spawn");
@@ -644,7 +659,7 @@ void client_send_custom_message(Client* client, uint32_t chatChannel, const char
     }
 }
 
-void client_set_bind_point(Client* client, uint32_t bindId, int zoneId, float x, float y, float z, float heading)
+void client_set_bind_point(Client* client, uint32_t bindId, int zoneId, int instId, float x, float y, float z, float heading)
 {
     BindPoint* bind;
     
@@ -654,6 +669,7 @@ void client_set_bind_point(Client* client, uint32_t bindId, int zoneId, float x,
     bind = &client->bindPoints[bindId];
     
     bind->zoneId        = zoneId;
+    bind->instanceId    = instId;
     bind->loc.x         = x;
     bind->loc.y         = y;
     bind->loc.z         = z;

@@ -19,6 +19,7 @@
 
 #define EQP_CLIENT_ZONE_IN_EXPECTED_TIMEOUT TIMER_SECONDS(30)
 #define EQP_CLIENT_ZONE_IN_NO_AUTH_TIMEOUT  TIMER_SECONDS(30)
+#define EQP_CLIENT_AUTO_SAVE_DELAY          TIMER_MINUTES(3)
 
 STRUCT_DECLARE(ZC);
 STRUCT_DECLARE(Zone);
@@ -93,6 +94,8 @@ STRUCT_DEFINE(Client)
     String*     accountName;
     uint32_t    accountId;
     uint32_t    ipAddress;
+    
+    Timer       timerAutoSave;
 };
 
 Client* client_create(ZC* zc, Zone* zone, Server_ClientZoning* zoning);
@@ -207,6 +210,6 @@ EQP_API const char* client_surname_cstr(Client* client);
 
 EQP_API void        client_send_custom_message(Client* client, uint32_t chatChannel, const char* str, uint32_t len);
 
-EQP_API void        client_set_bind_point(Client* client, uint32_t bindId, int zoneId, float x, float y, float z, float heading);
+EQP_API void        client_set_bind_point(Client* client, uint32_t bindId, int zoneId, int instId, float x, float y, float z, float heading);
 
 #endif//EQP_CLIENT_H

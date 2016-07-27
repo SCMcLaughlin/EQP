@@ -178,6 +178,24 @@ int64_t client_calc_base_hp_trilogy(Client* client);
 #define client_spellbook(cli)               (&(cli)->spellbook)
 #define client_bind_points(cli)             (&(cli)->bindPoints)
 
+#define client_coins(cli)                   (&(cli)->coins)
+#define client_coins_bank(cli)              (&(cli)->coinsBank)
+#define client_coins_cursor(cli)            (&(cli)->coinsCursor)
+
+#define client_harmtouch_timestamp(cli)     ((cli)->harmtouchTimestamp)
+#define client_discipline_timestamp(cli)    ((cli)->disciplineTimestamp)
+
+#define client_hunger_level(cli)            ((cli)->hungerLevel)
+#define client_thirst_level(cli)            ((cli)->thirstLevel)
+#define client_training_points(cli)         ((cli)->trainingPoints)
+#define client_experience(cli)              ((cli)->experience)
+#define client_drunkeness(cli)              ((cli)->drunkeness)
+
+#define client_get_tint(cli, i)             mob_get_tint(&(cli)->mob, (i))
+#define client_get_material(cli, i)         mob_get_material(&(cli)->mob, (i))
+#define client_primary_model_id(cli)        mob_primary_model_id(&(cli)->mob)
+#define client_secondary_model_id(cli)      mob_secondary_model_id(&(cli)->mob)
+
 EQP_API int         client_expansion(Client* client);
 EQP_API int         client_is_pvp(Client* client);
 EQP_API int         client_is_gm(Client* client);

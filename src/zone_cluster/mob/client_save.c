@@ -26,7 +26,87 @@ static void client_save_transaction(Transaction* trans)
     uint32_t n;
     uint32_t i;
     
-    //fixme: do updates for the huge 'character' table...
+    query_init(&query);
+    db_prepare_literal(db, &query,
+        "UPDATE character SET "
+            "name = ?, surname = ?, level = ?, class = ?, race = ?, zone_id = ?, instance_id = ?, gender = ?, face = ?, deity = ?, "
+            "x = ?, y = ?, z = ?, heading = ?, current_hp = ?, current_mana = ?, current_endurance = ?, experience = ?, training_points = ?, "
+            "base_str = ?, base_sta = ?, base_dex = ?, base_agi = ?, base_int = ?, base_wis = ?, base_cha = ?, guild_id = ?, guild_rank = ?, "
+            "harmtouch_timestamp = ?, discipline_timestamp = ?, pp = ?, gp = ?, sp = ?, cp = ?, pp_cursor = ?, gp_cursor = ?, sp_cursor = ?, "
+            "cp_cursor = ?, pp_bank = ?, gp_bank = ?, sp_bank = ?, cp_bank = ?, hunger = ?, thirst = ?, is_gm = ?, anon = ?, drunkeness = ?, "
+            "material0 = ?, material1 = ?, material2 = ?, material3 = ?, material4 = ?, material5 = ?, material6 = ?, material7 = ?, material8 = ?, "
+            "tint0 = ?, tint1 = ?, tint2 = ?, tint3 = ?, tint4 = ?, tint5 = ?, tint6 = ? "
+        "WHERE character_id = ?",
+        NULL);
+    
+    query_bind_string(&query, 1, save->name, QUERY_CALC_LENGTH);
+    query_bind_string(&query, 2, save->surname, QUERY_CALC_LENGTH);
+    query_bind_int(&query, 3, save->level);
+    query_bind_int(&query, 4, save->class);
+    query_bind_int(&query, 5, save->race);
+    query_bind_int(&query, 6, save->zoneId);
+    query_bind_int(&query, 7, save->instanceId);
+    query_bind_int(&query, 8, save->gender);
+    query_bind_int(&query, 9, save->face);
+    query_bind_int(&query, 10, save->deity);
+    query_bind_double(&query, 11, save->x);
+    query_bind_double(&query, 12, save->y);
+    query_bind_double(&query, 13, save->z);
+    query_bind_double(&query, 14, save->heading);
+    query_bind_int(&query, 15, save->hp);
+    query_bind_int(&query, 16, save->mana);
+    query_bind_int(&query, 17, save->endurance);
+    query_bind_int64(&query, 18, save->experience);
+    query_bind_int(&query, 19, save->trainingPoints);
+    query_bind_int(&query, 20, save->STR);
+    query_bind_int(&query, 21, save->STA);
+    query_bind_int(&query, 22, save->DEX);
+    query_bind_int(&query, 23, save->AGI);
+    query_bind_int(&query, 24, save->INT);
+    query_bind_int(&query, 25, save->WIS);
+    query_bind_int(&query, 26, save->CHA);
+    query_bind_int(&query, 27, save->guildId);
+    query_bind_int(&query, 28, save->guildRank);
+    query_bind_int64(&query, 29, save->harmtouchTimestamp);
+    query_bind_int64(&query, 30, save->disciplineTimestamp);
+    query_bind_int(&query, 31, save->coins.pp);
+    query_bind_int(&query, 32, save->coins.gp);
+    query_bind_int(&query, 33, save->coins.sp);
+    query_bind_int(&query, 34, save->coins.cp);
+    query_bind_int(&query, 35, save->coinsCursor.pp);
+    query_bind_int(&query, 36, save->coinsCursor.gp);
+    query_bind_int(&query, 37, save->coinsCursor.sp);
+    query_bind_int(&query, 38, save->coinsCursor.cp);
+    query_bind_int(&query, 39, save->coinsBank.pp);
+    query_bind_int(&query, 40, save->coinsBank.gp);
+    query_bind_int(&query, 41, save->coinsBank.sp);
+    query_bind_int(&query, 42, save->coinsBank.cp);
+    query_bind_int(&query, 43, save->hungerLevel);
+    query_bind_int(&query, 44, save->thirstLevel);
+    query_bind_int(&query, 45, save->isGM);
+    query_bind_int(&query, 46, save->anonSetting);
+    query_bind_int(&query, 47, save->drunkeness);
+    query_bind_int(&query, 48, save->material[0]);
+    query_bind_int(&query, 49, save->material[1]);
+    query_bind_int(&query, 50, save->material[2]);
+    query_bind_int(&query, 51, save->material[3]);
+    query_bind_int(&query, 52, save->material[4]);
+    query_bind_int(&query, 53, save->material[5]);
+    query_bind_int(&query, 54, save->material[6]);
+    query_bind_int(&query, 55, save->primaryModelId);
+    query_bind_int(&query, 56, save->secondaryModelId);
+    query_bind_int(&query, 57, save->tint[0]);
+    query_bind_int(&query, 58, save->tint[1]);
+    query_bind_int(&query, 59, save->tint[2]);
+    query_bind_int(&query, 60, save->tint[3]);
+    query_bind_int(&query, 61, save->tint[4]);
+    query_bind_int(&query, 62, save->tint[5]);
+    query_bind_int(&query, 63, save->tint[6]);
+    
+    query_bind_int64(&query, 64, charId);
+
+    query_execute_synchronus_insert_update(&query);
+    query_deinit(&query);
     
     ////////////////////////////////////////////////////////////////////////////////
     // Memmed Spells
@@ -194,6 +274,7 @@ static void client_save_transaction(Transaction* trans)
 void client_save(Client* client, QueryCallback onCompletion)
 {
     ZC* zc              = client_zone_cluster(client);
+    Zone* zone          = client_zone(client);
     Inventory* inv      = client_inventory(client);
     Spellbook* book     = client_spellbook(client);
     Database* db        = core_db(C(zc));
@@ -206,12 +287,65 @@ void client_save(Client* client, QueryCallback onCompletion)
     
     ptr += sizeof(ClientSave);
     
-    save->zc            = zc;
-    save->characterId   = client_character_id(client);
+    save->zc                    = zc;
+    save->characterId           = client_character_id(client);
+    snprintf(save->name, sizeof_field(ClientSave, name), "%s", client_name_cstr(client));
+    snprintf(save->surname, sizeof_field(ClientSave, surname), "%s", client_surname_cstr(client));
+    save->level                 = client_level(client);
+    save->class                 = client_class(client);
+    save->gender                = client_base_gender(client);
+    save->face                  = client_face(client);
+    save->race                  = client_base_race(client);
+    save->deity                 = client_deity(client);
+    save->zoneId                = zone_get_zone_id(zone); //fixme: need to be able to override this if the client is heading to another zone
+    save->instanceId            = zone_get_instance_id(zone); //fixme: ditto
+    save->x                     = client_x(client);
+    save->y                     = client_y(client);
+    save->z                     = client_z(client);
+    save->heading               = client_heading(client);
+    save->hp                    = client_current_hp(client);
+    save->mana                  = client_current_mana(client);
+    save->endurance             = client_current_endurance(client);
+    save->STR                   = client_base_str(client);
+    save->DEX                   = client_base_dex(client);
+    save->AGI                   = client_base_agi(client);
+    save->STA                   = client_base_sta(client);
+    save->INT                   = client_base_int(client);
+    save->WIS                   = client_base_wis(client);
+    save->CHA                   = client_base_cha(client);
+    memcpy(&save->coins, client_coins(client), sizeof(Coin));
+    memcpy(&save->coinsBank, client_coins_bank(client), sizeof(Coin));
+    memcpy(&save->coinsCursor, client_coins_cursor(client), sizeof(Coin));
+    save->guildRank             = client_guild_rank(client);
+    save->guildId               = client_guild_id(client);
+    save->harmtouchTimestamp    = client_harmtouch_timestamp(client);
+    save->hungerLevel           = client_hunger_level(client);
+    save->thirstLevel           = client_thirst_level(client);
+    save->trainingPoints        = client_training_points(client);
+    save->experience            = client_experience(client);
+    save->anonSetting           = client_anon_setting(client);
+    save->isGM                  = client_is_gm(client);
+    save->drunkeness            = client_drunkeness(client);
+    save->material[0]           = client_get_material(client, 0);
+    save->material[1]           = client_get_material(client, 1);
+    save->material[2]           = client_get_material(client, 2);
+    save->material[3]           = client_get_material(client, 3);
+    save->material[4]           = client_get_material(client, 4);
+    save->material[5]           = client_get_material(client, 5);
+    save->material[6]           = client_get_material(client, 6);
+    save->tint[0]               = client_get_tint(client, 0);
+    save->tint[1]               = client_get_tint(client, 1);
+    save->tint[2]               = client_get_tint(client, 2);
+    save->tint[3]               = client_get_tint(client, 3);
+    save->tint[4]               = client_get_tint(client, 4);
+    save->tint[5]               = client_get_tint(client, 5);
+    save->tint[6]               = client_get_tint(client, 6);
+    save->primaryModelId        = client_primary_model_id(client);
+    save->secondaryModelId      = client_secondary_model_id(client);
     
     memcpy(save->memmedSpell, spellbook_memorized(book), sizeof_field(Spellbook, memorized));
     memcpy(&save->skill, client_skills(client), sizeof(Skills));
-    memcpy(&save->bindPoints, client_bind_points(client), sizeof(BindPoint) * EQP_CLIENT_BIND_POINT_COUNT);
+    memcpy(save->bindPoints, client_bind_points(client), sizeof(BindPoint) * EQP_CLIENT_BIND_POINT_COUNT);
     
     save->invCount          = invCount;
     save->spellbookCount    = bookCount;
